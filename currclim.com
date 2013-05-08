@@ -1,0 +1,3 @@
+	LOGICAL L_CLIMCURR, L_UPD_CLIMCURR
+	INTEGER ndtupdcurr
+	COMMON /curr_clim/ L_CLIMCURR,L_UPD_CLIMCURR,ndtupdcurr

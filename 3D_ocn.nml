@@ -1,0 +1,32 @@
+ &NAME_CONSTANTS &END
+ &NAME_PROCSWIT &END
+ &NAME_DOMAIN
+ lstretchgrid=.T.,dmax=200.,dscale=4.0,
+ alat=30.00,alon=20.00,delta_lat=-0.83333,delta_lon=1.125
+ &END
+ &NAME_LANDSEA	
+ L_LANDSEA=.T., landsea_file='lsm_ocndepth_for_kpp.nc'
+ &END
+ &NAME_START
+ L_INITDATA=T,initdata_file='may1_initial_conditions_degC.nc',L_RESTART=T
+ &END
+ &NAME_TIMES
+ dtsec=10800.,startt=135.0,finalt=150.0,ndtocn=3
+ &END
+ &NAME_COUPLE
+ L_COUPLE=.F.,L_UPD_CLIMSST=.T.,L_UPD_CLIMICE=.F.,sstin_file='ghrsst_for_kpp_mmean.nc',
+ ndtupdsst=24
+ &END
+ &NAME_ADVEC
+ L_ADVECT=.F.,advect_file='um_advec_n144.nc',L_RELAX=T,relax_in=73*50
+ &END
+ &NAME_PARAS
+ paras_file='um_aqua_paras_n144.nc',
+ L_JERLOV=F
+ &END
+ &NAME_FORCING
+ L_FLUXDATA=.T., forcing_file='xccbh.fluxes_for_kpp.september.n144.nc'
+ &END
+ &NAME_OUTPUT
+ ndtout=3,L_RESTARTW=T
+ &END
