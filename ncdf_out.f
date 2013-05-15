@@ -16,10 +16,11 @@
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER k,ix,iy,ncid
-      CHARACTER*10 varname(N_VAROUTS),singname(N_SINGOUTS)
+      CHARACTER*11 varname(N_VAROUTS),singname(N_SINGOUTS)
       CHARACTER*40 longname(N_VAROUTS),singlong(N_SINGOUTS),
      &     filename
       CHARACTER*15 units(N_VAROUTS) ,singunits(N_SINGOUTS)
+      CHARACTER*6 type
 
       integer vert_dimid(N_VAROUTS)
       integer dims(4)
@@ -96,54 +97,37 @@
      &     'solar_in',
      &     'nsolar_in',
      &     'PminusE_in',
-     &     'cplwght'/ 
+     &     'cplwght', 
+     &     'freeze_flag',
+     &     'reset_flag'/
 #ifdef COUPLE
 #ifdef OASIS2
-      DATA singlong/
-     &     'Mixed Layer Depth',
-     &     'Flux Correction',
-     &     'Zonal wind stress from OASIS2',
-     &     'Meridional wind stress from OASIS2',
-     &     'Solar from OASIS2',
-     &     'Non-solar from OASIS2',
-     &     'P minus E from OASIS2',
-     &     'Coupling weight'/
+      DATA type /'OASIS2'/
 #else
 #ifdef OASIS3
-      DATA singlong/
-     &     'Mixed Layer Depth',
-     &     'Flux Correction',
-     &     'Zonal wind stress from OASIS3',
-     &     'Meridional wind stress from OASIS3',
-     &     'Solar from OASIS3',
-     &     'Non-solar from OASIS3',
-     &     'P minus E from OASIS3',
-     &     'Coupling weight'/
+      DATA type /'OASIS3'/
 #else
-#ifdef CFS
-      DATA singlong/
-     &     'Mixed Layer Depth',
-     &     'Flux Correction',
-     &     'Zonal wind stress from GFS',
-     &     'Meridional wind stress from GFS',
-     &     'Solar from GFS',
-     &     'Non-solar from GFS',
-     &     'P minus E from GFS',
-     &     'Coupling weight'/
-#endif /*CFS*/
+#ifdef GFS
+      DATA type /' GFS  '/
+#endif /*GFS*/
 #endif /*OASIS3*/
 #endif /*OASIS2*/
 #else
+      DATA type /'netCDF'/
+#endif /*COUPLE*/
+
       DATA singlong/
      &     'Mixed Layer Depth',
      &     'Flux Correction',
-     &     'Zonal wind stress from netCDF file',
-     &     'Meridional wind stress from netCDF file',
-     &     'Solar from netCDF file',
-     &     'Non-solar from netCDF file',
-     &     'P minus E from netCDF file',
-     &     'Coupling weight'/
-#endif /*COUPLE*/
+     &     'Zonal wind stress from ',
+     &     'Meridional wind stress from ',
+     &     'Solar from ',
+     &     'Non-solar from ',
+     &     'P minus E from ',
+     &     'Coupling weight',
+     &     'Fraction of levels below freezing',
+     &     'Binary flag for isothermal reset'/
+
       DATA singunits/
      &     'm',
      &     'W/m^2',
@@ -152,9 +136,12 @@
      &     'W/m^2',
      &     'W/m^2',
      &     'mm/s',
-     &     'none'/
+     &     'none',
+     &     'fraction',
+     &     'binary'/
       
       nout=1
+      singlong(3:7)=singlong(3:7)//type
 
       DO ix=1,nx
          alon(ix)=kpp_3d_fields%dlon(ix)
@@ -652,6 +639,22 @@ c            WRITE(nuout,*) 'In output_inst for varout, ivar=',ivar
                      ipt=(iy-1)*NX_GLOBE+ix
                      SINGOUT(ix-ifirst+1,iy-jfirst+1)=cplwght(ipt)
                   ENDDO 
+               ENDDO
+            ELSEIF (ivar .EQ. 9) THEN
+               DO ix=1,nx
+                  DO iy=1,ny
+                     ipt=(iy-1)*NX+ix
+                     IF (kpp_3d_fields%L_OCEAN(ipt))
+     &                    SINGOUT(ix,iy)=kpp_3d_fields%freeze_flag(ipt)
+                  ENDDO
+               ENDDO
+            ELSEIF (ivar .EQ. 10) THEN
+               DO ix=1,nx
+                  DO iy=1,ny
+                     ipt=(iy-1)*NX+ix
+                     IF (kpp_3d_fields%L_OCEAN(ipt))
+     &                    SINGOUT(ix,iy)=kpp_3d_fields%reset_flag(ipt)
+                  ENDDO
                ENDDO
             ELSE
                write(nuerr,*) 'You need to extend the outputs in'//
@@ -1516,6 +1519,18 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
                      SCLR_mean(ipt,i)=SCLR_mean(ipt,i) + 
      &                    cplwght(ipt_globe) / ndtout_mean
                   ENDDO 
+               ENDDO
+            ELSEIF (ivar.EQ.9) THEN
+               DO j=1,NPTS
+                  IF (kpp_3d_fields%L_OCEAN(j))
+     &                 SCLR_mean(j,i)=kpp_3d_fields%freeze_flag(j) /
+     +                 ndtout_mean + SCLR_mean(j,i)
+               ENDDO
+            ELSEIF (ivar.EQ.10) THEN
+               DO j=1,NPTS
+                  IF (kpp_3d_fields%L_OCEAN(j))
+     &                 SCLR_mean(j,i)=kpp_3d_fields%reset_flag(j) /
+     +                 ndtout_mean + SCLR_mean(j,i)
                ENDDO
             ENDIF
             i=i+1

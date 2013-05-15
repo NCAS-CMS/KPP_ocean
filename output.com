@@ -1,6 +1,6 @@
       INTEGER N_VAROUTS
       INTEGER N_SINGOUTS
-      PARAMETER (N_VAROUTS=22,N_SINGOUTS=8)
+      PARAMETER (N_VAROUTS=22,N_SINGOUTS=10)
       LOGICAL L_VAROUT(N_VAROUTS),L_SINGOUT(N_SINGOUTS)
       LOGICAL L_MEAN_VAROUT(N_VAROUTS),L_MEAN_SINGOUT(N_SINGOUTS)
       LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST
@@ -44,14 +44,15 @@
 *     22   =    ocnTcorr    (K/s)
 *
 *     SINGOUTS
-*     1   =    hmix     (m)  : single level field.
-*     2   =    fcorr    (W/m^2) : single level field
-*     3   =    taux_in  (N/m^2)
-*     4   =    tauy_in  (N/m^2)
-*     5   =    solar_in    (W/m^2)
-*     6   =    nsolar_in   (W/m^2)
-*     7   =    PminusE_in  (W/m^2)
-*     8   =    cplwght
+*     1 = hmix     (m)  : single level field.
+*     2 = fcorr    (W/m^2) : single level field
+*     3 = taux_in  (N/m^2)
+*     4 = tauy_in  (N/m^2)
+*     5 = solar_in    (W/m^2)*     6 = nsolar_in   (W/m^2)
+*     7 = PminusE_in  (W/m^2)
+*     8 = cplwght
+*     9 = freeze_flag (unitless) : fraction of levels at which temperature was < -1.8C and was reset to -1.8C.
+*    10 = isotherm_flag (unitless)  : 1/0 for whether T/S profile was reset to climatology because of isothermal detection routine 
 ************************************************************************
       INTEGER ncid_out,mean_ncid_out,day_out,flen,ndt_per_file
       CHARACTER*40 output_file,mean_output_file,restart_outfile

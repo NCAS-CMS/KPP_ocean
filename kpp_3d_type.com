@@ -35,7 +35,8 @@
      +     uref(npts),vref(npts),Ssurf(npts),
      +     Sref(npts),SSref(npts),
      +     sflux(npts,NSFLXS,5,0:NJDT),
-     +     dlat(npts),dlon(npts)
+     +     dlat(npts),dlon(npts),
+     +     freeze_flag(npts),reset_flag(npts)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
@@ -81,7 +82,7 @@
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax) ! Not needed outside physics
       integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
-      logical :: l_ocean,l_initflag 
+      logical :: l_ocean,l_initflag
       ENDTYPE kpp_2D_type
 
       TYPE kpp_const_type
@@ -91,10 +92,11 @@
      +     spd,dpy,twopi,onepi,
      +     grav,vonk,TK0,sbc,epsw,
      +     albocn,sice,EL,SL,FL,FLSN,dto,time,
-     +     tri(0:NZtmax,0:1,NGRID),startt,finalt,dtsec
+     +     tri(0:NZtmax,0:1,NGRID),startt,finalt,dtsec,
+     +     iso_thresh
       real wmt(0:891,0:49)      ! lookup table for wm
       real wst(0:891,0:49)      ! lookup table for ws
-      integer :: ntime
+      integer :: ntime,iso_bot
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,

@@ -334,10 +334,18 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
-         IF (L_NO_FREEZE) THEN 
+         IF (L_NO_FREEZE) THEN             
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            kpp_3d_fields%freeze_flag(:)=0.
             CALL check_freezing(kpp_3d_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+         ENDIF
+         IF (L_NO_ISOTHERM) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL check_isothermal(kpp_3d_fields,kpp_const_fields)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
@@ -642,7 +650,8 @@ c      INTEGER old(npts),new(npts)
      &     L_PERIODIC_FCORR,L_PERIODIC_BOTTOM_TEMP,fcorr_period,
      &     bottom_temp_period,sal_file,L_UPD_SAL,L_PERIODIC_SAL,
      &     sal_period,ndtupdsal,ocnt_file,L_UPD_OCNT,L_PERIODIC_OCNT,
-     &     ocnt_period,ndtupdocnt,L_NO_FREEZE
+     &     ocnt_period,ndtupdocnt,L_NO_FREEZE,L_NO_ISOTHERM,
+     &     isotherm_bottom,isotherm_threshold
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -873,7 +882,10 @@ c     Initialize and read the forcing namelist
       L_VARY_BOTTOM_TEMP=.FALSE.
       L_UPD_BOTTOM_TEMP=.FALSE.
       L_REST=.FALSE.
+      L_NO_FREEZE=.FALSE.
+      L_NO_ISOTHERM=.FALSE.
       forcing_file='1D_ocean_forcing.nc'
+      ocnT_file='none'
       READ(75,NAME_FORCING)
       write(nuout,*) 'KPP : Read Namelist FORCING'
       WRITE(6,*) 'L_REST=',L_REST,'after namelist'
@@ -886,6 +898,17 @@ c     Initialize and read the forcing namelist
          WRITE(nuerr,*) 'KPP : L_FCORR_WITHZ and L_RELAX_SST are '
      &        //'mutually exclusive.  Choose one or neither.'
          CALL MIXED_ABORT
+      ENDIF
+      IF (L_NO_ISOTHERM .AND. (ocnT_file .eq. 'none' .or.
+     &     sal_file .eq. 'none')) THEN
+         WRITE(nuerr,*) 'KPP : If you specify L_NO_ISOTHERM for '
+     &        //'reseting of isothermal points, you must specify files '
+     &        //'from which to read climatological ocean temperature '
+     &        //'(ocnT_file) and salinity (sal_file).'
+         CALL MIXED_ABORT
+      ELSEIF (L_NO_ISOTHERM) THEN
+         kpp_const_fields%iso_bot=isotherm_bottom
+         kpp_const_fields%iso_thresh=isotherm_threshold
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
@@ -914,6 +937,11 @@ c     Initialize and read the forcing namelist
      +     CALL read_salinity(kpp_3d_fields,kpp_const_fields)
       IF (L_RELAX_OCNT)
      +     CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
+      IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL 
+     +     .AND. .NOT. L_RELAX_OCNT) THEN
+         CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
+         CALL read_salinity(kpp_3d_fields,kpp_const_fields)
+      ENDIF
 c
 c     We need to initialize the forcing file (for atmospheric fluxes)
 c     only if KPP is not coupled to an atmospheric model.
@@ -1294,32 +1322,19 @@ c      REAL U(NPTS,NZP1,NSCLR)
      +        kpp_3d_fields%rho(ipt,NZP1)*kpp_3d_fields%cp(ipt,NZP1)/
      +        kpp_const_fields%dto
          kpp_3d_fields%X(ipt,NZP1,1) = bottom_temp(ipt)
-c         IF (ipt .ne. 1 .and. ipt .ne. npts) THEN 
-c            DO z=1,NZP1
-c               IF (ABS(kpp_3d_fields%X(ipt,z,1)) .gt. 50 
-c     +              .and. kpp_3d_fields%L_OCEAN(ipt) .and.
-c     +              kpp_3d_fields%L_OCEAN(ipt-1)) THEN
-c                  kpp_3d_fields%X(ipt,:,1)=kpp_3d_fields%X(ipt-1,:,1)
-c                  kpp_3d_fields%X(ipt,:,2)=kpp_3d_fields%X(ipt-1,:,2)
-c                  kpp_3d_fields%U(ipt,:,1)=kpp_3d_fields%U(ipt-1,:,1)
-c                  kpp_3d_fields%U(ipt,:,2)=kpp_3d_fields%U(ipt-1,:,2)
-c               ELSEIF (ABS(kpp_3d_fields%X(ipt,z,1)) .gt. 50 
-c     +                 .and. kpp_3d_fields%L_OCEAN(ipt) .and.
-c     +                 kpp_3d_fields%L_OCEAN(ipt+1)) THEN
-c                  kpp_3d_fields%X(ipt,:,1)=kpp_3d_fields%X(ipt+1,:,1)
-c                  kpp_3d_fields%X(ipt,:,2)=kpp_3d_fields%X(ipt+1,:,2)
-c                  kpp_3d_fields%U(ipt,:,1)=kpp_3d_fields%U(ipt+1,:,1)
-c                  kpp_3d_fields%U(ipt,:,2)=kpp_3d_fields%U(ipt+1,:,2)
-c               ENDIF
-c            ENDDO
-c         ENDIF
       ENDDO      
 
       RETURN
       END
 
       SUBROUTINE check_freezing(kpp_3d_fields)
-
+c
+c     Check whether the temperature at any (x,z) point is less than the
+c     threshold for sea ice (-1.8C).  If it is, reset it to -1.8C and
+c     set a flag.  The flag can be requested as a diagnostic (singout 9).
+c     Note that the value of the flag is equal to the *fraction* of levels
+c     at that point that were < -1.8C.
+c
       IMPLICIT NONE
 #include <kpp_3d_type.com>
       INTEGER ipt,z
@@ -1327,18 +1342,76 @@ c         ENDIF
       TYPE(kpp_3d_type) :: kpp_3d_fields
       
       DO ipt=1,npts
-         DO z=1,NZP1
-            IF (kpp_3d_fields%X(ipt,z,1) .lt. -1.8) THEN
-               WRITE(6,*) 'KPP : CHECK_FREEZING reports temperature ',
-     +              'less than -1.8C at point ',ipt,' and level ',z
-               WRITE(6,*) 'KPP : Temperature will be reset to -1.8C'
-               kpp_3d_fields%tinc_fcorr(ipt,z)=
-     +              kpp_3d_fields%tinc_fcorr(ipt,z)+
-     +              (-1.8-kpp_3d_fields%X(ipt,z,1))
-               kpp_3d_fields%X(ipt,z,1)=-1.8
-            ENDIF
-         ENDDO
+         IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+            DO z=1,NZP1
+               IF (kpp_3d_fields%X(ipt,z,1) .lt. -1.8) THEN
+                  WRITE(6,*) 'KPP : CHECK_FREEZING reports ',
+     +                 'temperature less than -1.8C at point ',ipt,
+     +                 ' and level ',z
+                  WRITE(6,*) 'KPP : Temperature will be reset to -1.8C'
+                  kpp_3d_fields%tinc_fcorr(ipt,z)=
+     +                 kpp_3d_fields%tinc_fcorr(ipt,z)+
+     +                 (-1.8-kpp_3d_fields%X(ipt,z,1))
+                  kpp_3d_fields%X(ipt,z,1)=-1.8
+                  kpp_3d_fields%freeze_flag(ipt)=
+     +                 kpp_3d_fields%freeze_flag(ipt)+1.0/REAL(NZP1)
+               ENDIF               
+            ENDDO
+         ENDIF
       ENDDO
       
+      RETURN
+      END
+     
+      SUBROUTINE check_isothermal(kpp_3d_fields,kpp_const_fields)
+c
+c     Check whether the temperature difference between the surface
+c     and a user-specified level (presumably deep) is less than a user-specified 
+c     threshold (presumably small).  If so, reset the temperature and salinity
+c     profiles to climatological values.  Added to prevent spurious very
+c     deep mixing that creates unrealistic isothermal (and isohaline) layers.
+c
+c     NPK 15/5/2013 for R4.
+c
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+      INTEGER ipt,z,j
+      REAL dz_total,dtdz_total,dz
+
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+
+#ifdef OPENMP
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
+!$OMP DO SCHEDULE(dynamic)
+#endif
+      DO ipt=1,npts
+         IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+            dtdz_total=0.
+            dz_total=0.
+            DO j=2,kpp_const_fields%iso_bot
+               dz=kpp_const_fields%zm(j)-kpp_const_fields%zm(j-1)
+               dtdz_total=dtdz_total+
+     +              ABS((kpp_3d_fields%X(ipt,j,1)-
+     +              kpp_3d_fields%X(ipt,j-1,1)))*dz
+               dz_total=dz_total+dz
+            ENDDO
+            dtdz_total=dtdz_total/dz_total
+            IF (ABS(dtdz_total).lt.kpp_const_fields%iso_thresh) THEN
+               kpp_3d_fields%X(ipt,:,1)=kpp_3d_fields%ocnT_clim(ipt,:)
+               kpp_3d_fields%X(ipt,:,2)=kpp_3d_fields%sal_clim(ipt,:)
+               kpp_3d_fields%reset_flag(ipt)=ABS(dtdz_total)
+            ELSE
+               kpp_3d_fields%reset_flag(ipt)=0
+            ENDIF
+         ELSE
+            kpp_3d_fields%reset_flag(ipt)=0
+         ENDIF
+      ENDDO
+#ifdef OPENMP
+!$OMP END DO
+!$OMP END PARALLEL
+#endif 
+
       RETURN
       END
