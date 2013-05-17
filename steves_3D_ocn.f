@@ -310,6 +310,28 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
                CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
                CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,1)
                CALL ocnstep(kpp_2d_fields,kpp_const_fields)
+c     If the integration has failed because of unrealistic values in T, S, U or V
+c     or very high RMS difference between the old and new profiles, then reset
+c     T and S to climatology (if available) and U and V to the initial profiles.
+c     NPK 17/5/13.
+               IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne. 'none'
+     +              .and. sal_file .ne. 'none') THEN
+                  WRITE(6,*) 'Resetting point to climatology ...'
+                  CALL read_ocean_temperatures(kpp_3d_fields,
+     +                 kpp_const_fields)
+                  CALL read_salinity(kpp_3d_fields,kpp_const_fields)
+                  kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
+                  kpp_2d_fields%X(:,2)=kpp_2d_fields%sal_clim(:)
+                  kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
+                  kpp_2d_fields%reset_flag=999
+               ELSE IF (kpp_2d_fields%comp_flag) THEN
+                  WRITE(6,*) 'Cannot reset point to T,S climatology '//
+     +                 'as either ocean temperature or salinity data '//
+     +                 'not provided.  Will reset currents to initial'//
+     +                 'conditions and keep going.'
+                  kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
+                  kpp_2d_fields%reset_flag=999
+               ENDIF
                CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,0)
                CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
                CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
@@ -1028,9 +1050,8 @@ c
       CALL init_ocn(kpp_3d_fields,kpp_const_fields)
 c      WRITE(6,*) 'Temps at ipt=500 ',kpp_3d_fields%X(500,:,1)
 c     Write out the data from the initial condition
-      IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
-         CALL output_inst(kpp_3d_fields,kpp_const_fields)
-      ENDIF
+      IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) 
+     +     CALL output_inst(kpp_3d_fields,kpp_const_fields)
       
 c     Set the means to zero initially      
       VEC_mean(:,:,:) = 0.
@@ -1065,7 +1086,7 @@ c     Inputs
 c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=40) :: restart_outfile
+      CHARACTER(LEN=50) :: restart_outfile
 c
 c     Local variables and common blocks
 c     
@@ -1345,10 +1366,10 @@ c
          IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
             DO z=1,NZP1
                IF (kpp_3d_fields%X(ipt,z,1) .lt. -1.8) THEN
-                  WRITE(6,*) 'KPP : CHECK_FREEZING reports ',
-     +                 'temperature less than -1.8C at point ',ipt,
-     +                 ' and level ',z
-                  WRITE(6,*) 'KPP : Temperature will be reset to -1.8C'
+c                  WRITE(6,*) 'KPP : CHECK_FREEZING reports ',
+c     +                 'temperature less than -1.8C at point ',ipt,
+c     +                 ' and level ',z
+c                  WRITE(6,*) 'KPP : Temperature will be reset to -1.8C'
                   kpp_3d_fields%tinc_fcorr(ipt,z)=
      +                 kpp_3d_fields%tinc_fcorr(ipt,z)+
      +                 (-1.8-kpp_3d_fields%X(ipt,z,1))
@@ -1397,12 +1418,14 @@ c
                dz_total=dz_total+dz
             ENDDO
             dtdz_total=dtdz_total/dz_total
+c If resetting to climatology because of isothermal layer (rather than because of 
+c computational instability trap in ocn.f), then set reset_flag to a negative
+c value (-1*number of interations in of semi-implicit integration in ocn.f).
             IF (ABS(dtdz_total).lt.kpp_const_fields%iso_thresh) THEN
                kpp_3d_fields%X(ipt,:,1)=kpp_3d_fields%ocnT_clim(ipt,:)
                kpp_3d_fields%X(ipt,:,2)=kpp_3d_fields%sal_clim(ipt,:)
-               kpp_3d_fields%reset_flag(ipt)=ABS(dtdz_total)
-            ELSE
-               kpp_3d_fields%reset_flag(ipt)=0
+               kpp_3d_fields%reset_flag(ipt)=(-1.)*
+     +              kpp_3d_fields%reset_flag(ipt)
             ENDIF
          ELSE
             kpp_3d_fields%reset_flag(ipt)=0

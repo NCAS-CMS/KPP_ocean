@@ -152,6 +152,9 @@ c         U(ipt,:,2)=0.
          write(nuerr,*) 'You have to interpolate'
       ENDIF
       write(6,*) 'read_init interpolated v'
+c     Save initial currents in case they are needed to reinitalise
+c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
+      kpp_3d_fields%U_init=kpp_3d_fields%U
 
       status=NF_INQ_DIMID(ncid,'ztemp',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)

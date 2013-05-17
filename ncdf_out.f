@@ -17,7 +17,7 @@
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER k,ix,iy,ncid
       CHARACTER*11 varname(N_VAROUTS),singname(N_SINGOUTS)
-      CHARACTER*40 longname(N_VAROUTS),singlong(N_SINGOUTS),
+      CHARACTER*50 longname(N_VAROUTS),singlong(N_SINGOUTS),
      &     filename
       CHARACTER*15 units(N_VAROUTS) ,singunits(N_SINGOUTS)
       CHARACTER*6 type
@@ -99,7 +99,7 @@
      &     'PminusE_in',
      &     'cplwght', 
      &     'freeze_flag',
-     &     'reset_flag'/
+     &     'comp_flag'/
 #ifdef COUPLE
 #ifdef OASIS2
       DATA type /'OASIS2'/
@@ -126,7 +126,7 @@
      &     'P minus E from ',
      &     'Coupling weight',
      &     'Fraction of levels below freezing',
-     &     'Binary flag for isothermal reset'/
+     &     'Number of integrations (<0 = isothermal reset)'/
 
       DATA singunits/
      &     'm',
@@ -138,7 +138,7 @@
      &     'mm/s',
      &     'none',
      &     'fraction',
-     &     'binary'/
+     &     'unitless'/
       
       nout=1
       singlong(3:7)=singlong(3:7)//type
@@ -152,7 +152,7 @@
 
       status=NF_CREATE(filename, nf_clobber, ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-c      WRITE(nuout,*) 'Output file ',filename,' created successfully.'
+      WRITE(nuout,*) 'Output file ',filename,' created successfully.'
 
       delta=0.0
       IF (NX .GT. 1 ) delta=alon(2)-alon(1)

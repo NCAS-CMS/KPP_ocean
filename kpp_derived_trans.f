@@ -291,6 +291,9 @@ c     values from the 2D variable.
       i=kpp_fields_2d%new
       kpp_fields_3d%new(point)=i
 
+      i=kpp_fields_2d%reset_flag
+      kpp_fields_3d%reset_flag(point)=i
+
       RETURN
       END
 

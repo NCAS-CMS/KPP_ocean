@@ -55,7 +55,7 @@
 *    10 = isotherm_flag (unitless)  : 1/0 for whether T/S profile was reset to climatology because of isothermal detection routine 
 ************************************************************************
       INTEGER ncid_out,mean_ncid_out,day_out,flen,ndt_per_file
-      CHARACTER*40 output_file,mean_output_file,restart_outfile
+      CHARACTER*50 output_file,mean_output_file,restart_outfile
       
       INTEGER londim,latdim,zdim,ddim,hdim,timdim
       INTEGER lon_id,lat_id,z_id,h_id,d_id,time_id

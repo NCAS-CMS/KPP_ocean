@@ -91,7 +91,15 @@ c More Local Variables (to make implicit none)
 c
       real deltaz,rhonot
       integer k,l,n
-
+c Number of iterations for computational instability
+      integer comp_iter_max
+      real rmsd(4),rmsd_threshold(4)
+      data comp_iter_max /10/
+c Critical depth-integrated RMS difference between old and new profiles
+c for repeating integration, for (/U,V,T,S/). Typical (stable) 
+c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
+c NPK 17/5/13
+      data rmsd_threshold /1,1,1,1/
 
       data lambda /0.5/
 
@@ -106,125 +114,175 @@ c         ENDDO
 c      ENDDO
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
+      kpp_2d_fields%comp_flag=.TRUE.
+      kpp_2d_fields%reset_flag=0
+
+      DO WHILE (kpp_2d_fields%comp_flag)
 c     Estimate new profiles by  extrapolation
-      do 20 k=1,NZP1
-         do 22 l=1,NVEL
-            kpp_2d_fields%U(k,l)=2.*
-     +           kpp_2d_fields%Us(k,l,kpp_2d_fields%new)-
-     +           kpp_2d_fields%Us(k,l,kpp_2d_fields%old)
-            Ux(k,l)=kpp_2d_fields%U(k,l)
- 22      continue
-         do 24 l=1,NSCLR
-            kpp_2d_fields%X(k,l)=2.*
-     +           kpp_2d_fields%Xs(k,l,kpp_2d_fields%new)-
-     +           kpp_2d_fields%Xs(k,l,kpp_2d_fields%old)
-            Xx(k,l)=kpp_2d_fields%X(k,l)
- 24      continue
- 20   continue      
-      
+         do 20 k=1,NZP1
+            do 22 l=1,NVEL
+               kpp_2d_fields%U(k,l)=2.*
+     +              kpp_2d_fields%Us(k,l,kpp_2d_fields%new)-
+     +              kpp_2d_fields%Us(k,l,kpp_2d_fields%old)
+               Ux(k,l)=kpp_2d_fields%U(k,l)
+ 22         continue
+            do 24 l=1,NSCLR
+               kpp_2d_fields%X(k,l)=2.*
+     +              kpp_2d_fields%Xs(k,l,kpp_2d_fields%new)-
+     +              kpp_2d_fields%Xs(k,l,kpp_2d_fields%old)
+               Xx(k,l)=kpp_2d_fields%X(k,l)
+ 24         continue
+ 20      continue      
       
 c     Iteration loop for semi-implicit integration
 c     Reset iteration counter
-      iter=0
-      iconv=0
+         iter=0
+         iconv=0
 c     This loop controls the number of compulsory iterations
 c     The original value was 2, using (the upper value of the loop +2)
 c     added by SJW (17 Jan 03) to try an alleviate some non-convergences
-      DO iter=0,2
-         DO k=1,NZP1
-            DO l=1,NVEL
-               kpp_2d_fields%U(k,l)=lambda*Ux(k,l)+(1-lambda)*
-     +              kpp_2d_fields%U(k,l)
-               Ux(k,l)=kpp_2d_fields%U(k,l)
+         DO iter=0,2
+            DO k=1,NZP1
+               DO l=1,NVEL
+                  kpp_2d_fields%U(k,l)=lambda*Ux(k,l)+(1-lambda)*
+     +                 kpp_2d_fields%U(k,l)
+                  Ux(k,l)=kpp_2d_fields%U(k,l)
+               ENDDO
+               DO l=1,NSCLR
+                  kpp_2d_fields%X(k,l)=lambda*Xx(k,l)+(1-lambda)*
+     +                 kpp_2d_fields%X(k,l)
+                  Xx(k,l)=kpp_2d_fields%X(k,l)
+               ENDDO
             ENDDO
-            DO l=1,NSCLR
-               kpp_2d_fields%X(k,l)=lambda*Xx(k,l)+(1-lambda)*
-     +              kpp_2d_fields%X(k,l)
-               Xx(k,l)=kpp_2d_fields%X(k,l)
-            ENDDO
+c            WRITE(6,*) 'Before vmix, U = ',kpp_2d_fields%U(:,1)
+            call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
+c            WRITE(6,*) 'After vmix, U = ',kpp_2d_fields%U(:,1)
+            call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
+c            WRITE(6,*) 'After ocnint, U = ',kpp_2d_fields%U(:,1)
          ENDDO
-c         kpp_2d_fields%U=Un
-c         kpp_2d_fields%X=Xn
-c         WRITE(6,*) 'Before vmix, sst = ',kpp_2d_fields%X(1,1)
-         call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
-c         call ocnint(NZ,zm,hm,dm,1,kmixe(ipt),Uo,Xo,Un,Xn)
-c         WRITE(6,*) 'After vmix, sst = ',kpp_2d_fields%X(1,1)
-         call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
-c         WRITE(6,*) 'After ocnint, sst = ',kpp_2d_fields%X(1,1)
-c     write(40+ntime,*) iter+1,0,hmixe,0.0000
-      ENDDO
 c     The original code can be restored by reseting iter=1 and removing the  
 c     above loop  
 c     iter=1
-      
-      IF (kpp_const_fields%LKPP) THEN
- 45      continue
-         DO k=1,NZP1
-            DO l=1,NVEL
-               kpp_2d_fields%U(k,l)=lambda*Ux(k,l)+(1-lambda)*
-     +              kpp_2d_fields%U(k,l)
-               Ux(k,l)=kpp_2d_fields%U(k,l)
+         
+         IF (kpp_const_fields%LKPP) THEN
+ 45         continue
+            DO k=1,NZP1
+               DO l=1,NVEL
+                  kpp_2d_fields%U(k,l)=lambda*Ux(k,l)+(1-lambda)*
+     +                 kpp_2d_fields%U(k,l)
+                  Ux(k,l)=kpp_2d_fields%U(k,l)
+               ENDDO
+               DO l=1,NSCLR
+                  kpp_2d_fields%X(k,l)=lambda*Xx(k,l)+(1-lambda)*
+     +                 kpp_2d_fields%X(k,l)
+                  Xx(k,l)=kpp_2d_fields%X(k,l)
+               ENDDO
             ENDDO
-            DO l=1,NSCLR
-               kpp_2d_fields%X(k,l)=lambda*Xx(k,l)+(1-lambda)*
-     +              kpp_2d_fields%X(k,l)
-               Xx(k,l)=kpp_2d_fields%X(k,l)
-            ENDDO
-         ENDDO
-c         kpp_2d_fields%U=Un
-c         kpp_2d_fields%X=Xn
-c         WRITE(6,*) 'Before vmix, sst = ',kpp_2d_fields%X(1,1)
-         call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)
-c         call ocnint(NZ,zm,hm,dm,1,kmixn(ipt),Uo,Xo,Un,Xn)
-c         WRITE(6,*) 'After vmix, sst = ',kpp_2d_fields%X(1,1)
-         call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
-c         WRITE(6,*) 'After ocnint, sst = ',kpp_2d_fields%X(1,1)
-         iter = iter + 1
+c            WRITE(6,*) 'Before vmix, U = ',kpp_2d_fields%U(:,1)
+            call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)       
+c            WRITE(6,*) 'After vmix, U = ',kpp_2d_fields%U(:,1)
+            call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
+c            WRITE(6,*) 'After ocnint, U = ',kpp_2d_fields%U(:,1)
+            iter = iter + 1
          
 c     check iteration for convergence
-         tol = hmixtolfrac*kpp_const_fields%hm(kmixn)
-         if(kmixn.eq.NZP1) tol = hmixtolfrac*kpp_const_fields%hm(NZ)
+            tol = hmixtolfrac*kpp_const_fields%hm(kmixn)
+            if(kmixn.eq.NZP1) tol = hmixtolfrac*kpp_const_fields%hm(NZ)
 c     write(40,*) abs(hmixn(ipt)-hmixe(ipt))/tol
-         if(abs(hmixn-hmixe).gt.tol)  then
+            if(abs(hmixn-hmixe).gt.tol)  then
 c     Uncommeting the following the lines iconv=0 to IF (iconv ...)
 c     will make the model do two consecutive tests for convergence of the 
 c     hmix (added by SJW 17 Jan 03). This did not work well in testing for
 c     long timestep, high resolution (the model generally failed to satisfy the 
 c     convergence test on two consecutive iterations.
-            iconv=0
-         ELSE
-            iconv=iconv+1
-         ENDIF
-c         write(40,*) iconv
-c         write(40,*) ntime,iter,iconv,hmixe,hmixn,
+               iconv=0
+            ELSE
+               iconv=iconv+1
+            ENDIF
+c     write(40,*) iconv
+c     write(40,*) ntime,iter,iconv,hmixe,hmixn,
 c     &        abs(hmixn(ipt)-hmixe(ipt))/tol
 c     write(40+ntime,*) iter,iconv,hmixn,abs(hmixn(ipt)-hmixe(ipt))/tol
-         IF (iconv .lt. 3) THEN
-            if (iter.lt.itermax) then
-               hmixe = hmixn
-               kmixe = kmixn
-               goto 45
-            else
+            IF (iconv .lt. 3) THEN
+               if (iter.lt.itermax) then
+                  hmixe = hmixn
+                  kmixe = kmixn
+                  goto 45
+               else
 c     use shallower hmix
-               if(hmixn.gt.hmixe) then
-                  hmixe = hmixn ! comment out for hmix data
-                  kmixe = kmixn ! ..      ..  ..  hmix data
-                  goto 45       ! ..      ..  ..  hmix data 
-               endif  
+                  if(hmixn.gt.hmixe) then
+                     hmixe = hmixn ! comment out for hmix data
+                     kmixe = kmixn ! ..      ..  ..  hmix data
+                     goto 45    ! ..      ..  ..  hmix data 
+                  endif  
+               endif
             endif
-         endif
-         if( iter.gt.(itermax+1) ) then 
-            write(nuout,1009) kpp_const_fields%ntime, ! comment out for hmix data
-     +           kpp_2d_fields%dlon,kpp_2d_fields%dlat,
-     +           hmixe,hmixn,
-     +           hmixn-hmixe,kmixn,iter
- 1009       format('  long iteration at',i6,' steps',/,
-     +           ' location=(',f7.2,',',f6.2,')',/,
-     +           '  hmixest=',f7.2,' hmixnew=',f7.2,' diff=',f6.1,
-     +           ' kmixn=',i3,' iteration=',i3)
-         endif       
-      ENDIF
-      
+            if( iter.gt.(itermax+1) ) then 
+               write(nuout,1009) kpp_const_fields%ntime, ! comment out for hmix data
+     +              kpp_2d_fields%dlon,kpp_2d_fields%dlat,
+     +              hmixe,hmixn,
+     +              hmixn-hmixe,kmixn,iter
+ 1009          format('  long iteration at',i6,' steps',/,
+     +              ' location=(',f7.2,',',f6.2,')',/,
+     +              '  hmixest=',f7.2,' hmixnew=',f7.2,' diff=',f6.1,
+     +              ' kmixn=',i3,' iteration=',i3)
+            endif       
+         ENDIF
+c     Trap for profiles that are very different from original profile
+c     or clearly erroneous, to detect rare instances of instability
+c     in the semi-implicit integration.  Reset to original profile,
+c     add some noise via changing Coriolis term slightly, and try
+c     integration again.
+c     NPK 16/5/2013
+         kpp_2d_fields%comp_flag=.FALSE.
+         DO k=1,NZ
+            IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or. 
+     +           ABS(kpp_2d_fields%U(k,2)).ge.10 .or. 
+     +           ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
+     +           .ge. 10) THEN 
+               kpp_2d_fields%comp_flag=.TRUE.
+               kpp_2d_fields%f=kpp_2d_fields%f*1.01
+            ENDIF
+         END DO
+         IF (.NOT. kpp_2d_fields%comp_flag) THEN
+            rmsd(:)=0.
+            DO k=1,NZP1
+               rmsd(1)=rmsd(1)+(kpp_2d_fields%U(k,1)-Uo(k,1))*
+     +              (kpp_2d_fields%U(k,1)-Uo(k,1))*
+     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+               rmsd(2)=rmsd(2)+(kpp_2d_fields%U(k,2)-Uo(k,2))*
+     +              (kpp_2d_fields%U(k,2)-Uo(k,2))*
+     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+               rmsd(3)=rmsd(3)+(kpp_2d_fields%X(k,1)-Xo(k,1))*
+     +              (kpp_2d_fields%X(k,1)-Xo(k,1))*
+     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+               rmsd(4)=rmsd(4)+(kpp_2d_fields%X(k,2)-Xo(k,2))*
+     +              (kpp_2d_fields%X(k,2)-Xo(k,2))*
+     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+            ENDDO
+            DO k=1,4
+               rmsd(k)=SQRT(rmsd(k))
+               IF (rmsd(k).ge.rmsd_threshold(k)) THEN
+                  kpp_2d_fields%comp_flag=.TRUE.
+                  kpp_2d_fields%f=kpp_2d_fields%f*1.01
+               ENDIF
+            ENDDO
+         ENDIF
+         kpp_2d_fields%reset_flag=kpp_2d_fields%reset_flag+1
+         IF (kpp_2d_fields%reset_flag .gt. comp_iter_max) THEN
+            WRITE(6,*) 'Failed to find a reasonable solution '//
+     +           'in the semi-implicit integration after ',
+     +           comp_iter_max,' iterations.'
+            WRITE(6,*) 'Final profiles at point lat = ',
+     +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
+            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)            
+         ENDIF
+      ENDDO
+c     End of trapping code.
+         
 c     Output  Results from permanent grid iterations to common.inc
 c     Compute diagnostic fluxes for writing to dat file
       do k=1,NZ
@@ -246,8 +304,7 @@ c     Compute diagnostic fluxes for writing to dat file
             kpp_2d_fields%wU(k,n)= -kpp_2d_fields%difm(k)*
      +           (kpp_2d_fields%U(k,n)-kpp_2d_fields%U(k+1,n))/deltaz
          enddo
-      enddo
-            
+      enddo      
             
 c     Compute energetics
       rhonot = 1026.
@@ -425,31 +482,43 @@ c                               set coefficients of tridiagonal matrix
 c                               U right hand side and solution
       rhs(1)= Uo(1,1) + kpp_const_fields%dto*
      +     ( ftemp*.5*(Uo(1,2)+kpp_2d_fields%U(1,2)) - 
-     +     kpp_2d_fields%wU(0,1)/
-     +     kpp_const_fields%hm(1)) 
+     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1)) 
+c      rhs(1)=Uo(1,1)+kpp_const_fields%dto*(ftemp*Uo(1,2) -
+c     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
      +        kpp_2d_fields%U(i,2)) 
+c         rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)
       enddo
       i=NZ                      ! bottom
       rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
      +     kpp_2d_fields%U(i,2)) + kpp_const_fields%tri(i,1,intri)*
      +     kpp_2d_fields%difm(i)*Uo(i+1,1)
+c      rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)+ 
+c     +     kpp_const_fields%tri(i,1,intri)*
+c     +     kpp_2d_fields%difm(i)*Uo(i+1,1)
 
       call tridmat(cu,cc,cl,rhs,Uo(:,1),NZ,kpp_2d_fields%U(:,1))
 c     V rhs and solution
       rhs(1)= Uo(1,2) - kpp_const_fields%dto*
      +     ( ftemp*.5*(Uo(1,1)+kpp_2d_fields%U(1,1)) + 
      +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
+c      rhs(1)=Uo(1,2)-kpp_const_fields%dto*
+c     +     ( ftemp*Uo(1,1)+
+c     +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,2) - kpp_const_fields%dto*ftemp*.5*(Uo(i,1)+
      +        kpp_2d_fields%U(i,1)) 
+c         rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)
       enddo
       i=NZ
       rhs(i)= Uo(i,2) - kpp_const_fields%dto*ftemp*.5*(Uo(i,1)+
      +     kpp_2d_fields%U(i,1)) + kpp_const_fields%tri(i,1,intri)*
      +     kpp_2d_fields%difm(i)*Uo(i+1,2)
-
+c      rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)+
+c     +     kpp_const_fields%tri(i,1,intri)*
+c     +     kpp_2d_fields%difm(i)*Uo(i+1,2)
+      
       npd = 1
       call tridmat(cu,cc,cl,rhs,Uo(:,2),NZ,kpp_2d_fields%U(:,2))
 c      f(ipt)= ftemp
@@ -546,16 +615,10 @@ c     flux corrections at depth (NPK 12/02/08).
      +     kpp_const_fields%L_RELAX_SST .AND. .NOT. 
      +     kpp_const_fields%L_RELAX_OCNT) THEN
          DO k=1,NZP1
-c     Do not relax below the bathymetry (NPK 9/4/13)
-            IF (kpp_2d_fields%ocdepth .le. kpp_const_fields%zm(k)) THEN 
-c            WRITE(6,*) 'ipt =',ipt,'k=',k,'fcorr=',fcorr_withz(ipt,k)
-               kpp_2d_fields%tinc_fcorr(k) = kpp_const_fields%dto*
-     +              kpp_2d_fields%fcorr_withz(k)/
-     +              (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
-               rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
-            ELSE
-               kpp_2d_fields%tinc_fcorr(k)=0.
-            ENDIF
+            kpp_2d_fields%tinc_fcorr(k) = kpp_const_fields%dto*
+     +           kpp_2d_fields%fcorr_withz(k)/
+     +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
+            rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
          ENDDO
       ENDIF
       
@@ -568,26 +631,20 @@ c     read_ocean_temperatures.
      +     kpp_const_fields%L_RELAX_SST .AND. .NOT.
      +     kpp_const_fields%L_FCORR_WITHZ) THEN
          DO k=1,NZP1
-c     Do not relax below the bathymetry (NPK 9/4/13)
-            IF (kpp_2d_fields%ocdepth .le. kpp_const_fields%zm(k)) THEN 
 c     Store the relaxation term as tinc_fcorr so that, on output,
 c     that field contains the actual correction applied in K/timestep.
-               kpp_2d_fields%tinc_fcorr(k)=kpp_const_fields%dto*
-     +              kpp_2d_fields%relax_ocnT*
-     +              (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))
-               rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
+            kpp_2d_fields%tinc_fcorr(k)=kpp_const_fields%dto*
+     +           kpp_2d_fields%relax_ocnT*
+     +           (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))
+            rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
 c     Modify the correction field so that, when output, it is in
 c     the correct units to be input as a flux correction via
 c     L_FCORR_WITHZ (see above).         
-               kpp_2d_fields%ocnTcorr(k)=kpp_2d_fields%tinc_fcorr(k)*
-     +              kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k)/
-     +              kpp_const_fields%dto
-            ELSE
-               kpp_2d_fields%tinc_fcorr(k)=0.
-               kpp_2d_fields%ocnTcorr(k)=0.
-            ENDIF
+            kpp_2d_fields%ocnTcorr(k)=kpp_2d_fields%tinc_fcorr(k)*
+     +           kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k)/
+     +           kpp_const_fields%dto
          ENDDO
-c         WRITE(6,*) kpp_2d_fields%tinc_fcorr
+c     WRITE(6,*) kpp_2d_fields%tinc_fcorr
       ENDIF
 
 c      WRITE(6,*) 'Before tridmat on temp, sst = ',kpp_2d_fields%X(1,1)
@@ -624,28 +681,17 @@ c                                       modify rhs for advections
          IF (n .eq. 2 .and. kpp_const_fields%L_RELAX_SAL) THEN
             IF (kpp_2d_fields%relax_sal .GT. 1.e-10) THEN
                DO k=1,NZP1
-c     Do not relax below bathymetry (NPK 9/4/13)
-                  IF (kpp_2d_fields%ocdepth .le. kpp_const_fields%zm(k))
-     +                 THEN
-                      kpp_2d_fields%scorr(k)=kpp_2d_fields%relax_sal*
-     +                    (kpp_2d_fields%sal_clim(k)-Xo(k,2))
-                      rhs(k)=rhs(k)+
-     +                     kpp_const_fields%dto*kpp_2d_fields%scorr(k)
-                   ELSE
-                      kpp_2d_fields%scorr(k)=0.
-                   ENDIF
-                ENDDO
-c     WRITE(6,*) kpp_2d_fields%scorr
-c     WRITE(nuout,*) 'At ipt=',ipt,' scorr=',scorr(ipt,1),
-c     +              relax_sal(ipt),sal_clim(ipt,1),Xo(1,2)     
-             ELSE
-                kpp_2d_fields%scorr(:)=0.0
-             ENDIF
-          ENDIF
-          
-          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
+                  kpp_2d_fields%scorr(k)=kpp_2d_fields%relax_sal*
+     +                 (kpp_2d_fields%sal_clim(k)-Xo(k,2))
+                  rhs(k)=rhs(k)+
+     +                 kpp_const_fields%dto*kpp_2d_fields%scorr(k)
+               ENDDO
+            ELSE
+               kpp_2d_fields%scorr(:)=0.0
+            ENDIF
+         ENDIF         
+         call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
  200   continue
-c     WRITE(6,*) 'After tridmat on sal, sst = ',kpp_2d_fields%X(1,1)
        return
        end
       
@@ -996,8 +1042,8 @@ c Input
      +     cc (nzi),            ! central ...      (k  ) ..
      +     cl (nzi),            ! lower .....      (k-1) ..
      +     rhs(nzi),            ! right hand side
-     +     yo(nzi+1)            ! old field
-c     +     diff(0:nzi)
+     +     yo(nzi+1),yni            ! old field
+c     +     diff(0:nzi)     
 c Output
       real yn(nzi+1)    ! new field
 c Local 
@@ -1013,19 +1059,20 @@ c     yn(1) = (rhs(1) + tri(0,1,ind)*surflux) / bet    ! surface
          gam(i)= cl(i-1)/bet
          bet   = cc(i) - cu(i)*gam(i)
          if(bet.eq.0.) then
-          write(nuerr,*)'* algorithm for solving tridiag matrix fails'
-          write(nuerr,*)'* bet=',bet
-          write(nuerr,*)'*i-1=',i-1,' cc=',cc(i-1),'cl=',cl(i-1)
-          write(nuerr,*)'*i=',i,' cc=',cc(i),' cu=',cu(i),' gam=',gam(i)
-          bet=1.E-12
-c          Pause 3
+            write(nuerr,*)'* algorithm for solving tridiag matrix fails'
+            write(nuerr,*)'* bet=',bet
+            write(nuerr,*)'*i-1=',i-1,' cc=',cc(i-1),'cl=',cl(i-1)
+            write(nuerr,*)'*i=',i,' cc=',cc(i),' cu=',cu(i),
+     +           ' gam=',gam(i)
+            bet=1.E-12
+c     Pause 3
          endif
-c        to avoid "Underflow" at single precision on the sun
+c     to avoid "Underflow" at single precision on the sun
          yn(i) =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet
-c        yni   =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet 
-c        yn(i) = max( (rhs(i)  - cu(i)  *yn(i-1)  )/bet , 1.E-12 )
-c        if(yni.lt.0.) 
-c    +   yn(i) = min( (rhs(i)  - cu(i)  *yn(i-1)  )/bet ,-1.E-12 )
+c     yni   =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet 
+c     yn(i) = max( (rhs(i)  - cu(i)  *yn(i-1)  )/bet , 1.E-12 )
+c     if(yni.lt.0.) 
+c     +        yn(i) = min( (rhs(i)  - cu(i)  *yn(i-1)  )/bet ,-1.E-12 )
  21   continue
 
 c     yn(nzi)  = (rhs(nzi)- cu(nzi)*yn(nzi-1) 
@@ -1138,6 +1185,7 @@ c                     X0(k,i)=kpp_3d_fields%X(ipt,k,i)
 c                  ENDDO
 c               ENDDO
                kpp_2d_fields%L_INITFLAG=.TRUE.
+               WRITE(6,*) 'Initial call to vmix'
                CALL vmix(kpp_2d_fields,kpp_const_fields,hmix0,kmix0)
                kpp_2d_fields%L_INITFLAG=.FALSE.
                kpp_2d_fields%hmix = hmix0

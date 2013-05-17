@@ -36,7 +36,8 @@
      +     Sref(npts),SSref(npts),
      +     sflux(npts,NSFLXS,5,0:NJDT),
      +     dlat(npts),dlon(npts),
-     +     freeze_flag(npts),reset_flag(npts)
+     +     freeze_flag(npts),reset_flag(npts),
+     +     U_init(NPTS,NZP1,NVEL)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
@@ -79,10 +80,11 @@
      +     Sref,SSref,
      +     sflux(NSFLXS,5,0:NJDT),
      +     dlat,dlon,
-     +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax) ! Not needed outside physics
+     +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
+     +     reset_flag
       integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
-      logical :: l_ocean,l_initflag
+      logical :: l_ocean,l_initflag,comp_flag
       ENDTYPE kpp_2D_type
 
       TYPE kpp_const_type
