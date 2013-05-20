@@ -117,7 +117,8 @@ c      ENDDO
       kpp_2d_fields%comp_flag=.TRUE.
       kpp_2d_fields%reset_flag=0
 
-      DO WHILE (kpp_2d_fields%comp_flag)
+      DO WHILE (kpp_2d_fields%comp_flag .and. 
+     + kpp_2d_fields%reset_flag .le. comp_iter_max)
 c     Estimate new profiles by  extrapolation
          do 20 k=1,NZP1
             do 22 l=1,NVEL
@@ -1064,6 +1065,7 @@ c     yn(1) = (rhs(1) + tri(0,1,ind)*surflux) / bet    ! surface
             write(nuerr,*)'*i-1=',i-1,' cc=',cc(i-1),'cl=',cl(i-1)
             write(nuerr,*)'*i=',i,' cc=',cc(i),' cu=',cu(i),
      +           ' gam=',gam(i)
+            CALL MIXED_ABORT
             bet=1.E-12
 c     Pause 3
          endif

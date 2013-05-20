@@ -317,12 +317,13 @@ c     NPK 17/5/13.
                IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne. 'none'
      +              .and. sal_file .ne. 'none') THEN
                   WRITE(6,*) 'Resetting point to climatology ...'
-                  CALL read_ocean_temperatures(kpp_3d_fields,
-     +                 kpp_const_fields)
-                  CALL read_salinity(kpp_3d_fields,kpp_const_fields)
                   kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
+                  WRITE(6,*) 'T = ',kpp_2d_fields%ocnT_clim(:)
                   kpp_2d_fields%X(:,2)=kpp_2d_fields%sal_clim(:)
+                  WRITE(6,*) 'S = ',kpp_2d_fields%sal_clim(:)
                   kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
+	          WRITE(6,*) 'U = ',kpp_3d_fields%U_init(ipt,:,1)
+                  WRITE(6,*) 'V = ',kpp_3d_fields%U_init(ipt,:,2)
                   kpp_2d_fields%reset_flag=999
                ELSE IF (kpp_2d_fields%comp_flag) THEN
                   WRITE(6,*) 'Cannot reset point to T,S climatology '//
@@ -1165,6 +1166,11 @@ c     +     old,new,Us,Xs,hmixd
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
+
+c Close output files so we are not left with
+c un-readable netCDF output. NPK 18/5/13
+      CALL output_close
+      CALL mean_output_close
 
 #ifdef COUPLE
 #ifdef OASIS2
