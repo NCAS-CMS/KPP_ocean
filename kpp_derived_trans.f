@@ -39,10 +39,12 @@ c     at a specified point.
          kpp_fields_2d%swfrac(i)=temp
          temp=kpp_fields_3d%tinc_fcorr(point,i)
          kpp_fields_2d%tinc_fcorr(i)=temp
+         temp=kpp_fields_3d%sinc_fcorr(point,i)
+         kpp_fields_2d%sinc_fcorr(i)=temp
          temp=kpp_fields_3d%fcorr_withz(point,i)
          kpp_fields_2d%fcorr_withz(i)=temp
-         temp=kpp_fields_3d%scorr(point,i)
-         kpp_fields_2d%scorr(i)=temp
+         temp=kpp_fields_3d%sfcorr_withz(point,i)
+         kpp_fields_2d%sfcorr_withz(i)=temp
          temp=kpp_fields_3d%sal_clim(point,i) !Not updated within physics
          kpp_fields_2d%sal_clim(i)=temp
          temp=kpp_fields_3d%ocnT_clim(point,i) !Not updated within physics
@@ -211,10 +213,12 @@ c     values from the 2D variable.
          kpp_fields_3d%swfrac(point,i)=temp
          temp=kpp_fields_2d%tinc_fcorr(i)
          kpp_fields_3d%tinc_fcorr(point,i)=temp
+         temp=kpp_fields_2d%sinc_fcorr(i)
+         kpp_fields_3d%sinc_fcorr(point,i)=temp
          temp=kpp_fields_2d%fcorr_withz(i)
          kpp_fields_3d%fcorr_withz(point,i)=temp
-         temp=kpp_fields_2d%scorr(i)
-         kpp_fields_3d%scorr(point,i)=temp
+         temp=kpp_fields_2d%sfcorr_withz(i)
+         kpp_fields_3d%sfcorr_withz(point,i)=temp
          temp=kpp_fields_2d%ocnTcorr(i)
          kpp_fields_3d%ocnTcorr(point,i)=temp
          IF (i.le.NZ) THEN 
@@ -322,6 +326,7 @@ c     values from the 2D variable.
 #include <vert_pgrid.com>
 #include <timocn.com>
 #include <fcorr_in.com>
+#include <sfcorr_in.com>
 #include <initialcon.com>
 #include <ocn_advec.com>
 #include <relax_3d.com>
@@ -356,7 +361,9 @@ c     values from the 2D variable.
       kpp_const_fields%L_RELAX_SST=L_RELAX_SST
       kpp_const_fields%L_RELAX_CALCONLY=L_RELAX_CALCONLY
       kpp_const_fields%L_FCORR=L_FCORR
+      kpp_const_fields%L_SFCORR=L_SFCORR
       kpp_const_fields%L_FCORR_WITHZ=L_FCORR_WITHZ
+      kpp_const_fields%L_SFCORR_WITHZ=L_SFCORR_WITHZ
       kpp_const_fields%L_RESTART=L_RESTART
       kpp_const_fields%L_RELAX_SAL=L_RELAX_SAL
       kpp_const_fields%L_RELAX_OCNT=L_RELAX_OCNT

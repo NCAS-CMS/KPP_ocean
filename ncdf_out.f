@@ -37,12 +37,13 @@
      &     'wTnt',
      &     'difm','dift','difs',
      &     'rho','cp','scorr','Rig','dbloc','Shsq','tinc_fcorr',
-     &     'fcorr_z'/
+     &     'fcorr_z','sinc_fcorr'/
       DATA zflag/1,1,1,1,1,
      &     0,0,0,0,0,
      &     0,
      &     0,0,0,
-     &     1,1,1,1,1,1,1,1/
+     &     1,1,1,1,1,1,1,
+     &     1,1/
       DATA longname/
      &     'Zonal velocity',
      &     'Meridional velocity',
@@ -65,7 +66,8 @@
      &     'Local delta buoyancy in kpp.f',
      &     'Local shear-squared term in kpp.f',
      &     'Temperature increment flux correction',
-     &     'Heat correction as flux (dT/dt*rho*cp)'/
+     &     'Heat correction as flux (dT/dt*rho*cp)',
+     &     'Salinity increment flux correction'/
       DATA units/
      &     'm/s',
      &     'm/s',
@@ -88,7 +90,8 @@
      &     'm/s^2',
      &     'm^2/s^2',
      &     'K/timestep',
-     &     'W/m^3'/
+     &     'W/m^3',
+     &     'o/oo/timestep'/
       DATA singname/
      &     'hmix',
      &     'fcorr',
@@ -276,6 +279,7 @@ c      call output_close
       include 'flx_sfc.com'
       include 'couple.com'
 #include <fcorr_in.com>
+#include <sfcorr_in.com>
 
 c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
 c      REAL Rig(npts,nz),dbloc(npts,nz),shsq(npts,nz)
@@ -556,6 +560,18 @@ c     +        ' Time=',TOUT
                      IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
                         DO k=1,NZP1
                            VAROUT(ix,iy,k)=kpp_3d_fields%ocnTcorr(ipt,k)
+                        ENDDO
+                     ENDIF
+                  ENDDO
+               ENDDO
+            ELSEIF (ivar .EQ. 23) THEN
+               DO ix=1,nx
+                  DO iy=1,ny
+                     ipt=(iy-1)*nx+ix
+                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+                        DO k=1,NZP1
+                           VAROUT(ix,iy,k)=
+     +                          kpp_3d_fields%Sinc_fcorr(ipt,k)
                         ENDDO
                      ENDIF
                   ENDDO
@@ -988,6 +1004,17 @@ c     Potentially k-1?
                      ENDIF
                   ENDDO
                ENDDO
+            ELSEIF (ivar .EQ. 23) THEN
+               DO ix=1,nx
+                  DO iy=1,ny
+                     ipt=(iy-1)*nx+ix
+                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+                        DO k=1,NZP1
+                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
+                        ENDDO
+                     ENDIF
+                  ENDDO
+               ENDDO
             ELSE
                write(nuerr,*) 'You need to extend the outputs in'//
      &              'write_means'
@@ -1050,6 +1077,7 @@ c     Increment counter for time dimension of NetCDF file
       include 'ocn_advec.com'
       include 'flx_sfc.com'
 #include <fcorr_in.com>
+#include <sfcorr_in.com>
 
 c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
       REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),
@@ -1451,6 +1479,24 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
                   IF (kpp_3d_fields%L_OCEAN(j)) THEN
                      DO k=1,NZP1
                         VEC_mean(j,k,i)=kpp_3d_fields%ocnTcorr(j,k) / 
+     +                       ndtout_mean + VEC_mean(j,k,i)
+                     ENDDO
+                  ENDIF
+               ENDDO
+#ifdef OPENMP
+!$OMP END DO
+!$OMP END PARALLEL
+#endif
+            ELSEIF (ivar.EQ.23) THEN
+#ifdef OPENMP
+!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
+!$OMP& SHARED(VEC_mean,i)
+!$OMP DO SCHEDULE(static)
+#endif
+               DO j=1,NPTS
+                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
+                     DO k=1,NZP1
+                        VEC_mean(j,k,i)=kpp_3d_fields%Sinc_fcorr(j,k) / 
      +                       ndtout_mean + VEC_mean(j,k,i)
                      ENDDO
                   ENDIF

@@ -1,32 +1,56 @@
  &NAME_CONSTANTS &END
  &NAME_PROCSWIT &END
  &NAME_DOMAIN
- lstretchgrid=.T.,dmax=200.,dscale=4.0,
- alat=30.00,alon=20.00,delta_lat=-0.83333,delta_lon=1.125
+ L_STRETCHGRID=.T.,dmax=1000.,dscale=4.0,L_REGGRID=.T.,
+ alat=-50.000,alon=0,delta_lat=1.25,delta_lon=1.875,
+ L_VGRID_FILE=.T.,vgrid_file='kpp_vgrid.nc'
  &END
- &NAME_LANDSEA	
- L_LANDSEA=.T., landsea_file='lsm_ocndepth_for_kpp.nc'
+ &NAME_LANDSEA
+ L_LANDSEA=.T.,landsea_file='lsm_ocndepth.nc'
  &END
  &NAME_START
- L_INITDATA=T,initdata_file='may1_initial_conditions_degC.nc',L_RESTART=T
+ L_INITDATA=.T.,initdata_file='initcond.nc',L_RESTART=.F.,
+ restart_infile='KPP.restart.0000'
  &END
  &NAME_TIMES
- dtsec=10800.,startt=135.0,finalt=150.0,ndtocn=3
+ dtsec=10800.,startt=0000.0,finalt=0300.0,ndtocn=3
  &END
  &NAME_COUPLE
- L_COUPLE=.F.,L_UPD_CLIMSST=.T.,L_UPD_CLIMICE=.F.,sstin_file='ghrsst_for_kpp_mmean.nc',
- ndtupdsst=24
+ L_COUPLE=.T.,sstin_file='sst_clim.nc',
+ L_CPLWGHT=.T.,ndtupdsst=24,cplwght_file='cplwght.nc',
+ ifirst=1,ilast=192,jfirst=33,jlast=116,L_CLIMSST=.T.,
+ L_CLIMICE=.T.,L_CLIM_ICE_DEPTH=.F.,L_CLIM_SNOW_ON_ICE=.F.,
+ icein_file='ice_clim.nc',L_OUTKELVIN=.T.,ndtupdice=24,
+ L_UPD_CLIMSST=.T.,L_UPD_CLIMICE=.T.,L_COUPLE_CURRENTS=.F.,
+ L_CLIMCURR=.F.,currin_file='currents_clim.nc',ndtupdcurr=24,
+ L_UPD_CLIMCURR=.F.,L_PERIODIC_CLIMSST=.T.,L_PERIODIC_CLIMICE=.T.,
+ climsst_period=360,climice_period=360
  &END
  &NAME_ADVEC
- L_ADVECT=.F.,advect_file='um_advec_n144.nc',L_RELAX=T,relax_in=73*50
+ L_ADVECT=.F.,advect_file='advec.nc',L_RELAX_SST=.F.,L_RELAX_SAL=.F.,
+ RELAX_SAL_IN=84*15,L_RELAX_OCNT=.F.,RELAX_OCNT_IN=84*15
  &END
  &NAME_PARAS
- paras_file='um_aqua_paras_n144.nc',
- L_JERLOV=F
+ paras_file='aqua_paras.nc',L_JERLOV=T
  &END
  &NAME_FORCING
- L_FLUXDATA=.T., forcing_file='xccbh.fluxes_for_kpp.september.n144.nc'
+ L_FLUXDATA=.F.,forcing_file='fluxes.nc',
+ L_FCORR_WITHZ=.T.,L_UPD_FCORR=.T.,fcorrin_file='fcorr_withz.nc',ndtupdfcorr=24,
+ L_PERIODIC_FCORR=.T.,fcorr_period=360,
+ L_SFCORR_WITHZ=.T.,L_UPD_SFCORR=.T.,sfcorrin_file='sfcorr_withz.nc',ndtupdsfcorr=24,
+ L_PERIODIC_SFCORR=.T.,sfcorr_period=360,
+ L_VARY_BOTTOM_TEMP=.T.,bottomin_file='1000m_temps.nc',ndtupdbottom=24,
+ L_UPD_BOTTOM_TEMP=.T.,L_PERIODIC_BOTTOM_TEMP=.T.,bottom_temp_period=360,
+ L_UPD_SAL=.F.,L_PERIODIC_SAL=.F.,sal_period=360,sal_file='sal_clim.nc',
+ ndtupdsal=24,L_UPD_OCNT=.F.,ndtupdocnt=24,L_PERIODIC_OCNT=.F.,
+ ocnT_period=360,ocnT_file='ocnT_clim.nc',L_NO_FREEZE=.T.,L_NO_ISOTHERM=.T.,
+ isotherm_bottom=90,isotherm_threshold=0.002
  &END
  &NAME_OUTPUT
- ndtout=3,L_RESTARTW=T
+ ndtout=1,L_RESTARTW=T,restart_outfile='restart_fields.out'
+ ndtout_mean=24,L_OUTPUT_MEAN=.T.,
+ L_MEAN_VAROUT=T,T,T,T,T,F,F,F,F,F,F,F,F,F,T,T,T,F,F,F,T,T
+ L_MEAN_SINGOUT=T,T,T,T,T,T,T,T,T,T,L_OUTPUT_INST=.T.,
+ L_VAROUT=T,T,T,T,F,F,F,F,F,F,F,F,F,F,T,T,F,F,F,F,T,F
+ L_SINGOUT=T,F,F,F,F,F,F,F,T,T,ndt_per_file=240,ndt_per_restart=240
  &END

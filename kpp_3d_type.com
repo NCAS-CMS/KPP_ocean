@@ -25,8 +25,11 @@
      +     ghat(npts,NZTmax),
      +     relax_sst(npts),fcorr(npts),
      +     SST0(npts),fcorr_twod(npts),
+     +     sfcorr_twod(npts),
      +     tinc_fcorr(npts,NZP1),
-     +     fcorr_withz(npts,NZP1),
+     +     sinc_fcorr(npts,NZP1),
+     +     fcorr_withz(npts,NZP1),sfcorr(npts),
+     +     sfcorr_withz(npts,NZP1),
      +     advection(npts,maxmodeadv,2),
      +     relax_sal(npts),scorr(npts,NZP1),
      +     relax_ocnT(npts),ocnTcorr(npts,NZP1),
@@ -70,8 +73,11 @@
      +     ghat(NZTmax),
      +     relax_sst,fcorr,SST0,
      +     fcorr_twod,
+     +     sfcorr_twod,sfcorr,
      +     tinc_fcorr(NZP1),
+     +     sinc_fcorr(NZP1),
      +     fcorr_withz(NZP1),
+     +     sfcorr_withz(NZP1),
      +     advection(maxmodeadv,2),
      +     relax_sal,scorr(NZP1),relax_ocnT,ocnTcorr(NZP1),
      +     sal_clim(NZP1),ocnT_clim(NZP1),
@@ -104,6 +110,7 @@
      +     L_RELAX_SST,
      +     L_RELAX_CALCONLY,L_FCORR,
      +     L_FCORR_WITHZ,L_RESTART,
+     +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT
       ENDTYPE kpp_const_type
 

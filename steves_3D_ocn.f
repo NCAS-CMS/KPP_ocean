@@ -36,6 +36,7 @@
 c#include <constants.com>
 #include <couple.com>
 #include <fcorr_in.com>
+#include <sfcorr_in.com>
 #include <relax_3d.com>
 #include <times.com>
 #include <timocn.com>
@@ -249,6 +250,26 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                WRITE(nuout,*) 'KPP: Called read_fcorr, ntime =',
+     +              kpp_const_fields%ntime
+            ENDIF
+         ENDIF
+!added SFCORR LH 24/05/2013
+         IF (L_UPD_SFCORR .AND. MOD(ntime-1,ndtupdsfcorr) .EQ. 0) THEN
+            IF (L_SFCORR_WITHZ) THEN
+               CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+               CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+               CALL read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
+               CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+               CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+               WRITE(nuout,*) 'KPP: Called read_sfcorrwithz, ntime =',
+     +              kpp_const_fields%ntime
+            ELSEIF (L_SFCORR) THEN
+               CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+               CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+               CALL read_sfcorr(kpp_3d_fields,kpp_const_fields)
+               CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+               CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+               WRITE(nuout,*) 'KPP: Called read_sfcorr, ntime =',
      +              kpp_const_fields%ntime
             ENDIF
          ENDIF
@@ -624,6 +645,7 @@ c     For MPI, should do STOP 0 to return an exit code of 0
 #include <couple.com>
 #include <sstclim.com>
 #include <fcorr_in.com>
+#include <sfcorr_in.com>
 #include <relax_3d.com>
 #include <bottomclim.com>
 #include <currclim.com>
@@ -671,6 +693,8 @@ c      INTEGER old(npts),new(npts)
      &     fcorrin_file,ndtupdfcorr,L_VARY_BOTTOM_TEMP,ndtupdbottom,
      &     bottomin_file,L_FCORR,L_UPD_FCORR,L_UPD_BOTTOM_TEMP,L_REST,
      &     L_PERIODIC_FCORR,L_PERIODIC_BOTTOM_TEMP,fcorr_period,
+     &     L_SFCORR_WITHZ,sfcorrin_file,ndtupdsfcorr,L_SFCORR,
+     &     L_UPD_SFCORR,L_PERIODIC_SFCORR,sfcorr_period,
      &     bottom_temp_period,sal_file,L_UPD_SAL,L_PERIODIC_SAL,
      &     sal_period,ndtupdsal,ocnt_file,L_UPD_OCNT,L_PERIODIC_OCNT,
      &     ocnt_period,ndtupdocnt,L_NO_FREEZE,L_NO_ISOTHERM,
@@ -901,6 +925,9 @@ c     Initialize and read the forcing namelist
       L_FCORR_WITHZ=.FALSE.
       L_FCORR=.FALSE.
       L_UPD_FCORR=.FALSE.
+      L_SFCORR_WITHZ=.FALSE.
+      L_SFCORR=.FALSE.
+      L_UPD_SFCORR=.FALSE.
       L_UPD_SAL=.FALSE.
       L_VARY_BOTTOM_TEMP=.FALSE.
       L_UPD_BOTTOM_TEMP=.FALSE.
@@ -917,8 +944,18 @@ c     Initialize and read the forcing namelist
      &        //'mutually exclusive.  Choose one or neither.'
          CALL MIXED_ABORT
       ENDIF
+      IF (L_SFCORR_WITHZ .AND. L_SFCORR) THEN
+         WRITE(nuerr,*) 'KPP : L_SFCORR and L_SFCORR_WITHZ are '
+     &        //'mutually exclusive.  Choose one or neither.'
+         CALL MIXED_ABORT
+      ENDIF
       IF (L_FCORR_WITHZ .AND. L_RELAX_SST) THEN
          WRITE(nuerr,*) 'KPP : L_FCORR_WITHZ and L_RELAX_SST are '
+     &        //'mutually exclusive.  Choose one or neither.'
+         CALL MIXED_ABORT
+      ENDIF
+      IF (L_SFCORR_WITHZ .AND. L_RELAX_SAL) THEN
+         WRITE(nuerr,*) 'KPP : L_SFCORR_WITHZ and L_RELAX_SAL are '
      &        //'mutually exclusive.  Choose one or neither.'
          CALL MIXED_ABORT
       ENDIF
@@ -941,6 +978,9 @@ c     Initialize and read the forcing namelist
       IF (L_FCORR_WITHZ) 
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR) CALL read_fcorr(kpp_3d_fields)
+      IF (L_SFCORR_WITHZ) 
+     +     CALL read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
+      IF (L_SFCORR) CALL read_sfcorr(kpp_3d_fields)
       IF (L_VARY_BOTTOM_TEMP) 
      +     CALL read_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +     bottom_temp)

@@ -1,6 +1,6 @@
       INTEGER N_VAROUTS
       INTEGER N_SINGOUTS
-      PARAMETER (N_VAROUTS=22,N_SINGOUTS=10)
+      PARAMETER (N_VAROUTS=23,N_SINGOUTS=10)
       LOGICAL L_VAROUT(N_VAROUTS),L_SINGOUT(N_SINGOUTS)
       LOGICAL L_MEAN_VAROUT(N_VAROUTS),L_MEAN_SINGOUT(N_SINGOUTS)
       LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST
@@ -42,6 +42,7 @@
 *     20   =    shsq        (local shear-squared term used to calculate Rig - NPK diagnostic)
 *     21   =    tinc_fcorr  (temperature increment from flux corrections with depth, K)
 *     22   =    ocnTcorr    (K/s)
+*     23   =    sinc_fcorr  (salinity increment from flux corrections with depth,o/oo)
 *
 *     SINGOUTS
 *     1 = hmix     (m)  : single level field.
