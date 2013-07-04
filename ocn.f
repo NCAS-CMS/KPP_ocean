@@ -611,15 +611,13 @@ c     Added by NPK (12/2/08)
 c     
 c     Surface relaxation is incompatible with
 c     flux corrections at depth (NPK 12/02/08).
+      kpp_2d_fields%tinc_fcorr(:)=0.
       IF (kpp_const_fields%L_FCORR_WITHZ .AND. .NOT. 
-     +     kpp_const_fields%L_FCORR .AND. .NOT. 
-     +     kpp_const_fields%L_RELAX_SST .AND. .NOT. 
-     +     kpp_const_fields%L_RELAX_OCNT) THEN
+     +     kpp_const_fields%L_FCORR) THEN
          DO k=1,NZP1
             kpp_2d_fields%tinc_fcorr(k) = kpp_const_fields%dto*
      +           kpp_2d_fields%fcorr_withz(k)/
      +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
-            rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
          ENDDO
       ENDIF
       
@@ -627,26 +625,24 @@ c     Relax the temperature at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of ocean temperatures via subroutine
 c     read_ocean_temperatures.
-      IF (kpp_const_fields%L_RELAX_OCNT .AND. .NOT.
-     +     kpp_const_fields%L_FCORR .AND. .NOT. 
-     +     kpp_const_fields%L_RELAX_SST .AND. .NOT.
-     +     kpp_const_fields%L_FCORR_WITHZ) THEN
+      IF (kpp_const_fields%L_RELAX_OCNT) THEN
          DO k=1,NZP1
 c     Store the relaxation term as tinc_fcorr so that, on output,
 c     that field contains the actual correction applied in K/timestep.
-            kpp_2d_fields%tinc_fcorr(k)=kpp_const_fields%dto*
-     +           kpp_2d_fields%relax_ocnT*
-     +           (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))
-            rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
+            kpp_2d_fields%tinc_fcorr(k)=kpp_2d_fields%tinc_fcorr(k)+
+     +           kpp_const_fields%dto*kpp_2d_fields%relax_ocnT*
+     +           (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))            
+         ENDDO
+      ENDIF
+      DO k=1,NZP1
+         rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
 c     Modify the correction field so that, when output, it is in
 c     the correct units to be input as a flux correction via
 c     L_FCORR_WITHZ (see above).         
-            kpp_2d_fields%ocnTcorr(k)=kpp_2d_fields%tinc_fcorr(k)*
-     +           kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k)/
-     +           kpp_const_fields%dto
-         ENDDO
-c     WRITE(6,*) kpp_2d_fields%tinc_fcorr
-      ENDIF
+         kpp_2d_fields%ocnTcorr(k)=kpp_2d_fields%tinc_fcorr(k)*
+     +        kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k)/
+     +        kpp_const_fields%dto
+      ENDDO
 
 c      WRITE(6,*) 'Before tridmat on temp, sst = ',kpp_2d_fields%X(1,1)
 c      WRITE(6,*) 'cu=',cu,'cc=',cc,'cl=',cl,'rhs=',rhs,'Xo=',Xo(:,1),
@@ -668,8 +664,8 @@ c     Salinity and other scalars
          call tridrhs(npd,kpp_const_fields%hm,Xo(:,n),ntflx(:,n),
      >        diff,gcap,sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,
      +        rhs,kpp_const_fields)
-
-c                                       modify rhs for advections
+         
+c     modify rhs for advections
          do imode=1,kpp_2d_fields%nmodeadv(2)
             adv_mode=kpp_2d_fields%modeadv(imode,2)
             adv_mag=kpp_2d_fields%advection(imode,2)
@@ -678,64 +674,63 @@ c                                       modify rhs for advections
      +           kpp_const_fields%dm(kmixe),
      +           NZ,rhs,kpp_2d_fields,kpp_const_fields)
          enddo
-
-c     -----Added by LH (28/05/2013)
-      
-      if (n .eq. 2) then
+         
+c     -----Added by LH (28/05/2013) modified NPK (4/7/13)
+         
+         if (n .eq. 2) then
+            kpp_2d_fields%sinc_fcorr(:)=0.
 c     Surface salinity  relaxation is incompatible with
 c     flux corrections at depth.
-      IF (kpp_const_fields%L_SFCORR_WITHZ .AND. .NOT. 
-     +     kpp_const_fields%L_SFCORR .AND. .NOT. 
-     +     kpp_const_fields%L_RELAX_SAL) THEN 
-         DO k=1,NZP1
-            kpp_2d_fields%sinc_fcorr(k) = kpp_const_fields%dto*
-     +           kpp_2d_fields%sfcorr_withz(k)
-            rhs(k) = rhs(k) + kpp_2d_fields%sinc_fcorr(k)
-         ENDDO
-      ENDIF    
-
+            IF (kpp_const_fields%L_SFCORR_WITHZ .AND. .NOT. 
+     +           kpp_const_fields%L_SFCORR) THEN
+               DO k=1,NZP1
+                  kpp_2d_fields%sinc_fcorr(k) = kpp_const_fields%dto*
+     +                 kpp_2d_fields%sfcorr_withz(k)
+               ENDDO
+            ENDIF          
 c     Relax the salinity at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of salinity via subroutine
 c     read_salinity.
-      IF (kpp_const_fields%L_RELAX_SAL .AND. .NOT.
-     +     kpp_const_fields%L_SFCORR .AND. .NOT. 
-     +     kpp_const_fields%L_SFCORR_WITHZ) THEN
-         DO k=1,NZP1
+            IF (kpp_const_fields%L_RELAX_SAL) THEN
+               DO k=1,NZP1
 c     Store the relaxation term as sinc_fcorr so that, on output,
 c     that field contains the actual correction applied in psu/timestep.
-            kpp_2d_fields%sinc_fcorr(k)=kpp_const_fields%dto*
-     +           kpp_2d_fields%relax_sal*
-     +           (kpp_2d_fields%sal_clim(k)-Xo(k,n))
-            rhs(k) = rhs(k) + kpp_2d_fields%sinc_fcorr(k)
+                  kpp_2d_fields%sinc_fcorr(k)=
+     +                 kpp_2d_fields%sinc_fcorr(k)+
+     +                 kpp_const_fields%dto*kpp_2d_fields%relax_sal*
+     +                 (kpp_2d_fields%sal_clim(k)-Xo(k,n))
+               ENDDO
+            ENDIF
+            DO k=1,NZP1
+               rhs(k)=rhs(k)+kpp_2d_fields%sinc_fcorr(k)
 c     Modify the correction field so that, when output, it is in
 c     the correct units to be input as a flux correction via
-c     L_SFCORR_WITHZ (see above).         
-            kpp_2d_fields%scorr(k)=kpp_2d_fields%sinc_fcorr(k)/
-     +           kpp_const_fields%dto
-         ENDDO
-      ENDIF
-      endif 
+c     L_SFCORR_WITHZ (see above).
+               kpp_2d_fields%scorr(k)=kpp_2d_fields%sinc_fcorr(k)/
+     +              kpp_const_fields%dto
+            ENDDO
+         ENDIF
 c     -----end of Added LH 28/05/2013
-
-
-c    removed LH 28/05/2013
-c         IF (n .eq. 2 .and. kpp_const_fields%L_RELAX_SAL) THEN
-c            IF (kpp_2d_fields%relax_sal .GT. 1.e-10) THEN
-c               DO k=1,NZP1
-c                  kpp_2d_fields%scorr(k)=kpp_2d_fields%relax_sal*
+         
+         
+c     removed LH 28/05/2013
+c     IF (n .eq. 2 .and. kpp_const_fields%L_RELAX_SAL) THEN
+c     IF (kpp_2d_fields%relax_sal .GT. 1.e-10) THEN
+c     DO k=1,NZP1
+c     kpp_2d_fields%scorr(k)=kpp_2d_fields%relax_sal*
 c     +                 (kpp_2d_fields%sal_clim(k)-Xo(k,2))
-c                  rhs(k)=rhs(k)+
+c     rhs(k)=rhs(k)+
 c     +                 kpp_const_fields%dto*kpp_2d_fields%scorr(k)
-c               ENDDO
-c            ELSE
-c               kpp_2d_fields%scorr(:)=0.0
-c            ENDIF
-c         ENDIF         
+c     ENDDO
+c     ELSE
+c     kpp_2d_fields%scorr(:)=0.0
+c     ENDIF
+c     ENDIF         
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
- 200   continue
-       return
-       end
+ 200  continue
+      return
+      end
       
 ************************************************************************
 
