@@ -1183,7 +1183,8 @@ c     NPK 12/02/08
 c      
       status=NF_OPEN(sfcorrin_file,0,sfcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened flux-correction input file ',sfcorr_ncid
+      WRITE(nuout,*) 'Opened salinity-correction input file ',
+     +     sfcorr_ncid
       
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
@@ -1195,19 +1196,19 @@ c
       status=NF_INQ_DIM(sfcorr_ncid,z_dimid,tmp_name,nz_file)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (NZP1.ne.nz_file) THEN
-         WRITE(nuout,*) 'Input file for flux corrections does ',
+         WRITE(nuout,*) 'Input file for salinity corrections does ',
      &        'not have the correct number of vertical levels. ',
      &        'It should have ',NZP1,' but instead has ',nz_file
          CALL MIXED_ABORT
       ELSE
          status=NF_GET_VAR_REAL(sfcorr_ncid,z_varid,z)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Read in depths from the flux-correction ',
+         WRITE(nuout,*) 'Read in depths from the salinity-correction ',
      &        'input file'
       ENDIF
 
-      CALL determine_netcdf_boundaries(sfcorr_ncid,'flux correction',
-     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
+      CALL determine_netcdf_boundaries(sfcorr_ncid,'salinity correction'
+     &     ,'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 
@@ -1235,17 +1236,17 @@ c
             WRITE(nuout,*) 'Time for which to read the flux
      & corrections exceeds the last time in the netCDF file
      & and L_PERIODIC_SFCORR has not been specified.
-     & Attempting to read flux corrections will lead to an error, so
+     & Attempting to read salinity corrections will lead to an error, so
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
       ENDIF               
 
-      write(nuout,*) 'Reading flux correction for time ',sfcorr_time
+      write(nuout,*) 'Reading salinity correction for time ',sfcorr_time
       start(4)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsfcorr))+1
-      write(nuout,*) 'Flux corrections are being read from position',
-     &     start(4)
+      write(nuout,*) 'salinity corrections are being read from position'
+     &     ,start(4)
       status=NF_GET_VAR1_REAL(sfcorr_ncid,time_varid,start(4),time_in)
       
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -1258,8 +1259,9 @@ c
       ENDIF
       status=NF_GET_VARA_REAL(sfcorr_ncid,sfcorr_varid,start,count
      &     ,sfcorr_in)
-      write(nuout,*) 'Flux corrections have been read from position',
-     &     start(4)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      write(nuout,*) 'salinity corrections have been read from position'
+     &     ,start(4)
       
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
@@ -1275,6 +1277,7 @@ c
       ENDDO
 
       status=NF_CLOSE(sfcorr_ncid)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       RETURN
       END
@@ -1990,10 +1993,10 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
                sal_time=sal_time-sal_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux
-     & corrections exceeds the last time in the netCDF file
+            WRITE(nuout,*) 'Time for which to read the salinity
+     & climatology exceeds the last time in the netCDF file
      & and L_PERIODIC_SAL has not been specified.
-     & Attempting to read flux corrections will lead to an error, so
+     & Attempting to read salinity climatology will lead to an error, so
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
@@ -2113,10 +2116,10 @@ c     &     ndtupdocnT*NINT(dto),0.5*dto/spd*ndtupdocnT
                ocnT_time=ocnT_time-ocnT_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux
-     & corrections exceeds the last time in the netCDF file
+            WRITE(nuout,*) 'Time for which to read the ocean
+     & temperatures exceeds the last time in the netCDF file
      & and L_PERIODIC_OCNT has not been specified.
-     & Attempting to read flux corrections will lead to an error, so
+     & Attempting to read ocean temperatures will lead to an error, so
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
