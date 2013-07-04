@@ -42,7 +42,7 @@ c     at a specified point.
          temp=kpp_fields_3d%sinc_fcorr(point,i)
          kpp_fields_2d%sinc_fcorr(i)=temp
          temp=kpp_fields_3d%fcorr_withz(point,i)
-         kpp_fields_2d%fcorr_withz(i)=temp
+         kpp_fields_2d%fcorr_withz(i)=temp      
          temp=kpp_fields_3d%sfcorr_withz(point,i)
          kpp_fields_2d%sfcorr_withz(i)=temp
          temp=kpp_fields_3d%sal_clim(point,i) !Not updated within physics
@@ -217,6 +217,8 @@ c     values from the 2D variable.
          kpp_fields_3d%sinc_fcorr(point,i)=temp
          temp=kpp_fields_2d%fcorr_withz(i)
          kpp_fields_3d%fcorr_withz(point,i)=temp
+         temp=kpp_fields_2d%scorr(i)
+         kpp_fields_3d%scorr(point,i)=temp
          temp=kpp_fields_2d%sfcorr_withz(i)
          kpp_fields_3d%sfcorr_withz(point,i)=temp
          temp=kpp_fields_2d%ocnTcorr(i)
