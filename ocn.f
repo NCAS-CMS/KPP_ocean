@@ -1223,7 +1223,6 @@ c                     X0(k,i)=kpp_3d_fields%X(ipt,k,i)
 c                  ENDDO
 c               ENDDO
                kpp_2d_fields%L_INITFLAG=.TRUE.
-               WRITE(6,*) 'Initial call to vmix'
                CALL vmix(kpp_2d_fields,kpp_const_fields,hmix0,kmix0)
                kpp_2d_fields%L_INITFLAG=.FALSE.
                kpp_2d_fields%hmix = hmix0

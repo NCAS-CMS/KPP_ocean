@@ -954,11 +954,11 @@ c     Initialize and read the forcing namelist
      &        //'mutually exclusive.  Choose one or neither.'
          CALL MIXED_ABORT
       ENDIF
-      IF (L_SFCORR_WITHZ .AND. L_RELAX_SAL) THEN
-         WRITE(nuerr,*) 'KPP : L_SFCORR_WITHZ and L_RELAX_SAL are '
-     &        //'mutually exclusive.  Choose one or neither.'
-         CALL MIXED_ABORT
-      ENDIF
+c      IF (L_SFCORR_WITHZ .AND. L_RELAX_SAL) THEN
+c         WRITE(nuerr,*) 'KPP : L_SFCORR_WITHZ and L_RELAX_SAL are '
+c     &        //'mutually exclusive.  Choose one or neither.'
+c         CALL MIXED_ABORT
+c      ENDIF
       IF (L_NO_ISOTHERM .AND. (ocnT_file .eq. 'none' .or.
      &     sal_file .eq. 'none')) THEN
          WRITE(nuerr,*) 'KPP : If you specify L_NO_ISOTHERM for '
@@ -1209,8 +1209,8 @@ c     +     old,new,Us,Xs,hmixd
 
 c Close output files so we are not left with
 c un-readable netCDF output. NPK 18/5/13
-      CALL output_close
-      CALL mean_output_close
+c      CALL output_close
+c      CALL mean_output_close
 
 #ifdef COUPLE
 #ifdef OASIS2

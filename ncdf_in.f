@@ -745,7 +745,7 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       INTEGER ncid,npars,nt
       INTEGER par_out(npts,npars,nt)
       INTEGER par_in(nx,ny,npars,nt)
-      REAL*4 x_in(288),y_in(217)
+      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
 
       INTEGER start(4),count(4),ix,iy,ipt,ipar
       INTEGER status,dimid,varid
