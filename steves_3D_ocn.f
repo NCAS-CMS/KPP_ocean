@@ -14,12 +14,13 @@
 *  Steve Woolnough
 **************************************************************************
 
+c      USE kpp_type_mod
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com> 
+#include <kpp_3d_type.com>
 #include <landsea.com>
 
 #ifdef COUPLE
@@ -33,19 +34,14 @@
 
 #include <bottomclim.com>
 #include <currclim.com>
-c#include <constants.com>
 #include <couple.com>
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
 #include <relax_3d.com>
 #include <times.com>
 #include <timocn.com>
-#include <flx_sfc.com>
-#include <flx_profs.com>
 #include <vert_pgrid.com>
-#include <ocn_paras.com>
-#include <kprof_out.com>
-#include <dble_diff.com>
+c#include <ocn_paras.com>
 #include <local_pt.com>
 #include <output.com>
 #include <initialcon.com>
@@ -53,18 +49,24 @@ c#include <constants.com>
 #include <ocn_advec.com>
       
 * Local variables
-      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_3d_type),allocatable :: kpp_3d_fields
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_timer_type) :: kpp_timer
-c      REAL X(NPTS,NZP1,NSCLR),U(NPTS,NZP1,NVEL) ! Scalar and wind fields
-      REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),SCLR_mean(NPTS,NSCLR_MEAN)
-      REAL bottom_temp(NPTS)
+      REAL,allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),bottom_temp(:)
       
-c      REAL Rig(npts,nzp1),dbloc(npts,nz),shsq(npts,nzp1),hmixd(npts,2),
-c     &     old(npts),new(npts),Us(npts,nzp1,nvel),Xs(npts,nzp1,nvel)
-
       INTEGER k,nflx,nstep
+
+c      INTERFACE
+c         SUBROUTINE Initialize(kpp_3d_fields,kpp_const_fields,
+c     +        bottom_temp,VEC_mean,SCLR_mean)
+c         USE kpp_type_mod
+c         TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
+c         TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
+c         REAL,allocatable,intent(out) :: bottom_temp(:),VEC_mean(:,:,:),
+c     +        SCLR_mean(:,:)
+c         END SUBROUTINE Initialize
+c      END INTERFACE
 
 c Initialize the 3D KPP model 
 c Setup the constants, read the namelists, setup the initial conditions
@@ -76,7 +78,7 @@ c into the main program.  NPK 17/08/10 - R3
       INTEGER nthreads,tid,omp_get_num_threads,omp_get_thread_num
       CHARACTER(LEN=21) phys_timer_name
       CHARACTER(LEN=19) trans_timer_name
-
+      
       CALL KPP_TIMER_INIT(kpp_timer)
 #ifdef OPENMP
 !$OMP PARALLEL PRIVATE(nthreads)
@@ -98,6 +100,21 @@ c into the main program.  NPK 17/08/10 - R3
         CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
       ENDDO
 #endif
+      allocate(VEC_mean(NPTS,NZP1,NVEC_MEAN))
+      allocate(SCLR_mean(NPTS,NSCLR_MEAN))
+      allocate(bottom_temp(NPTS))
+      allocate(kpp_const_fields%wmt(0:891,0:49))
+      allocate(kpp_const_fields%wst(0:891,0:49))
+      allocate(kpp_const_fields%tri(0:NZtmax,0:1,NGRID))
+      allocate(kpp_3d_fields)
+c      allocate(kpp_3d_fields%U(NPTS,NZP1,NVEL))
+c      allocate(kpp_3d_fields%X(NPTS,NZP1,NSCLR))
+c      allocate(kpp_3d_fields%Xs(NPTS,NZP1,NSCLR,0:1))
+c      allocate(kpp_3d_fields%Us(NPTS,NZP1,NSCLR,0:1))
+c      allocate(kpp_3d_fields%Rig(NPTS,NZP1))
+c      allocate(kpp_3d_fields%Shsq(NPTS,NZP1))
+c      allocate(kpp_3d_fields%dbloc(NPTS,NZ))
+
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
      +     VEC_mean,SCLR_mean)
@@ -148,9 +165,7 @@ c     the time-stepping loop below.     NPK 2/10/09
 c
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
       CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 output',1)
-      CALL mpi1_oasis3_output(kpp_3d_fields%X(:,1,1),
-     +     kpp_3d_fields%U(:,1,1),kpp_3d_fields%U(:,1,2),
-     +     kpp_const_fields)
+      CALL mpi1_oasis3_output(kpp_3d_fields,kpp_const_fields)
       CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 output',0)
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #endif /*OASIS3*/
@@ -514,15 +529,13 @@ c
      +        .AND. ntime .NE. nend*ndtocn) THEN
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 output',1)
-         CALL mpi1_oasis3_output(kpp_3d_fields%X(:,1,1),
-     +        kpp_3d_fields%U(:,1,1),kpp_3d_fields%U(:,1,2),
-     +        kpp_const_fields)
+         CALL mpi1_oasis3_output(kpp_3d_fields,kpp_const_fields)
          CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 output',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #else
 #ifdef CFS
      +        ) THEN
-            CALL CFS_WRITE_GRIB_SSTS(X(:,1,1))
+            CALL CFS_WRITE_GRIB_SSTS(kpp_3d_fields)
 #endif /*CFS*/
 #endif /*OASIS3*/
 #endif /*OASIS2*/
@@ -620,9 +633,10 @@ c     For MPI, should do STOP 0 to return an exit code of 0
 *     Subroutine to initialize the model, some of the output is passed
 *     through the common blocks
 ************************************************************************
+c      USE kpp_type_mod
       IMPLICIT NONE
       INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
+      PARAMETER (nuout=6,nuerr=0)      
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
@@ -651,22 +665,16 @@ c     For MPI, should do STOP 0 to return an exit code of 0
 #include <currclim.com>
 
 *     Input/output
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      TYPE(kpp_const_type) :: kpp_const_fields
+      TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
+      TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
 
 *     Outputs
-c      REAL U(NPTS,NZP1,NVEL),   ! On output contains
-c     $     X(NPTS,NZP1,NSCLR),  ! initial U,X fields.
-      REAL VEC_mean(NPTS,NZP1,NVEC_mean),
-     &     SCLR_mean(NPTS,NSCLR_mean),
-     &     bottom_temp(NPTS)
-
-c      REAL Rig(npts,nz),dbloc(npts,nz),shsq(npts,nz),
-c     &     Us(npts,nz,nvel),Xs(npts,nz,nsclr),hmixd(npts,2)
-c      INTEGER old(npts),new(npts)
-      
+c      REAL,intent(out),allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),
+c     +     bottom_temp(:)
+      REAL,intent(out) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
+     +     SCLR_mean(NPTS,NSCLR_MEAN),bottom_temp(NPTS)
+    
 * Local Variablies, including some read in from name lists
-      REAL Ubot(NVEL),Xbot(NSCLR) ! U,X at the bottom of the domain
       REAL dscale ! (neg)lambda parameter for defining the stretch
       REAL alat,alon,delta_lat,delta_lon
       INTEGER k,l,ipt,ix,iy
@@ -887,9 +895,9 @@ c     NPK 10/9/07 - R1
 c     NPK 2/11/09 - Added #ifdef - R3
 c     
 #ifdef COUPLE
-      CALL init_cplwght
+      CALL init_cplwght(kpp_3d_fields)
 #else
-      IF (L_CPLWGHT) CALL init_cplwght
+      IF (L_CPLWGHT) CALL init_cplwght(kpp_3d_fields)
 #endif
 c     Initialize and read the advection namelist
       L_ADVECT=.FALSE.
@@ -1119,7 +1127,6 @@ c      STOP
 c#include <times.com>
 c#include <ocn_paras.com>
 c#include <ocn_state.com>
-c#include <kprof_out.com>
 c#include <output.com>
 c#include <flx_in.com>
 c
@@ -1128,18 +1135,8 @@ c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       CHARACTER(LEN=50) :: restart_outfile
-c
-c     Local variables and common blocks
-c     
-c      real hmixd(NPTS,0:1),     ! storage arrays for extrapolations
-c     +     Us(NPTS,NZP1,NVEL ,0:1), ! ..      ..     ..  ..
-c     +     Xs(NPTS,NZP1,NSCLR,0:1) ! ..      ..     ..  ..
-c      integer old(NPTS),new(NPTS) ! extrapolation index for Us,Xs,hmixd
-c      common/ saveUXh /
-c     +     old,new,Us,Xs,hmixd
-c      
+
       OPEN(31,FILE=restart_outfile,status='unknown',form='unformatted')
-c      IF (L_REST) time=0
       WRITE(31) kpp_const_fields%time,kpp_3d_fields%U,kpp_3d_fields%X,
      +     kpp_3d_fields%CP,
      +     kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
@@ -1160,28 +1157,12 @@ c      IF (L_REST) time=0
       PARAMETER (nuout=6,nuerr=0)
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c#include <times.com>
-c#include <ocn_paras.com>
-c#include <ocn_state.com>
-c#include <kprof_out.com>
-c#include <initialcon.com>
 c
 c     Inputs
 c     
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       CHARACTER(LEN=40) :: restart_infile
-c      REAL U(NPTS,NZP1,NVEL),   ! On output contains
-c     $     X(NPTS,NZP1,NSCLR)   ! initial U,X fields.               
-c
-c     Local variables and common blocks
-c
-c      real hmixd(NPTS,0:1),     ! storage arrays for extrapolations
-c     +     Us(NPTS,NZP1,NVEL ,0:1), ! ..      ..     ..  ..
-c     +     Xs(NPTS,NZP1,NSCLR,0:1)  ! ..      ..     ..  ..
-c      integer old(NPTS),new(NPTS) ! extrapolation index for Us,Xs,hmixd
-c      common/ saveUXh /
-c     +     old,new,Us,Xs,hmixd
       
       OPEN(30,FILE=restart_infile,status='unknown',form='unformatted')
       READ(30) kpp_const_fields%time,kpp_3d_fields%U,kpp_3d_fields%X,
@@ -1307,15 +1288,6 @@ c
             ENDDO
          ENDIF
       ENDDO
-      
-c      write(nuout,*) 'first longitude in init_relax=',1+ifirst_sst-1
-c      write(nuout,*) 'first latitude in init_relax=',1+jfirst_sst-1
-
-c      DO iy=1,ny
-c         DO ix=1,nx
-c            ipoint=(iy-1)*nx+ix
-c            SST0(ipoint)=SST_in(ix+ifirst_sst-1,iy+jfirst_sst-1,1)
-c            kpp_3d_fields%SST0(ipoint)=SST_in(ix+ifirst-1,iy+jfirst-1,1)
       CALL upd_sst0(kpp_3d_fields)
       DO iy=1,ny
          DO ix=1,nx
@@ -1375,8 +1347,6 @@ c     Written by NPK 10/4/08
 #include <landsea.com>
 
       INTEGER ipt,z
-c      REAL X(NPTS,NZP1,NSCLR)
-c      REAL U(NPTS,NZP1,NSCLR)
       REAL bottom_temp(NPTS)
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields

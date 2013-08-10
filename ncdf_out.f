@@ -8,10 +8,10 @@
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-#include <landsea.com>
+c#include <landsea.com>
       include 'vert_pgrid.com'
       include 'output.com'
-      include 'location.com'
+c      include 'location.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -28,7 +28,6 @@
 
       INTEGER status
 
-      REAL*4 VAROUT(NX,NY,NZP1),SINGOUT(NX,NY)
       REAL*4 ZOUT(NZP1),ALON(NX),ALAT(NY)
       REAL*4 delta
       
@@ -268,31 +267,26 @@ c      call output_close
       include 'output.com'
 
       include 'times.com'
-      include 'ocn_paras.com'
-      include 'flx_profs.com'
-      include 'kprof_in.com'
-      include 'kprof_out.com'
-      include 'dble_diff.com'
       include 'ocn_advec.com'
 #include <landsea.com>
 #include <relax_3d.com>
-      include 'flx_sfc.com'
       include 'couple.com'
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
 
-c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
-c      REAL Rig(npts,nz),dbloc(npts,nz),shsq(npts,nz)
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      
-      REAL*4 VAROUT(NX,NY,NZP1),SINGOUT(NX,NY)
+
+      REAL*4, allocatable :: varout(:,:,:), singout(:,:)
       REAL*4 TOUT
       
       INTEGER start(4),count(4),status
       INTEGER k,ivar
       INTEGER ix,iy,ipt
  
+      allocate(varout(NX,NY,NZP1))
+      allocate(singout(NX,NY))
+
       count(1)=NX
       count(2)=NY
       count(3)=NZP1
@@ -653,7 +647,8 @@ c            WRITE(nuout,*) 'In output_inst for varout, ivar=',ivar
                   DO iy=jfirst,jlast
 !                     WRITE(nuout,*) ix,iy,ifirst,ilast,jfirst,jlast
                      ipt=(iy-1)*NX_GLOBE+ix
-                     SINGOUT(ix-ifirst+1,iy-jfirst+1)=cplwght(ipt)
+                     SINGOUT(ix-ifirst+1,iy-jfirst+1)=
+     +                    kpp_3d_fields%cplwght(ipt)
                   ENDDO 
                ENDDO
             ELSEIF (ivar .EQ. 9) THEN
@@ -708,27 +703,22 @@ c      call output_close
 #include <landsea.com>
       include 'times.com'
       include 'timocn.com'
-      include 'ocn_paras.com'
-      include 'flx_profs.com'
-      include 'kprof_in.com'
-      include 'kprof_out.com'
-      include 'dble_diff.com'
       include 'ocn_advec.com'
-      include 'flx_sfc.com'
       include 'couple.com'
       include 'constants.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      
-      REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),
-     &     SCLR_mean(NPTS,NSCLR_MEAN)
 
-      REAL*4 VAROUT(NX,NY,NZP1),SINGOUT(NX,NY)
+      REAL :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
+     + SCLR_mean(NPTS,NSCLR_MEAN)
+      REAL*4,allocatable :: VAROUT(:,:,:), SINGOUT(:,:)
       REAL*4 TOUT
 
       INTEGER i,ivar,ipt,ix,iy,start(4),count(4),k,status
 
+      allocate(VAROUT(NX,NY,NZP1))
+      allocate(SINGOUT(NX,NY))
       TOUT=kpp_const_fields%time-(ndtout_mean*kpp_const_fields%dtsec/
      +     (ndtocn*kpp_const_fields%spd))*0.5
       status=NF_PUT_VAR1_REAL(mean_ncid_out,time_id,nout_mean,TOUT)
@@ -1066,23 +1056,20 @@ c     Increment counter for time dimension of NetCDF file
 #include <kpp_3d_type.com>
       include 'output.com'
       include 'times.com'
-      include 'ocn_paras.com'
+c      include 'ocn_paras.com'
 #include <landsea.com>
 #include <relax_3d.com>
       include 'couple.com'
-      include 'flx_profs.com'
-      include 'kprof_in.com'
-      include 'kprof_out.com'
-      include 'dble_diff.com'
+c      include 'kprof_in.com'
       include 'ocn_advec.com'
-      include 'flx_sfc.com'
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
 
-c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
-      REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),
-     &     SCLR_mean(NPTS,NSCLR_MEAN)
-          
+c      REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),
+c     &     SCLR_mean(NPTS,NSCLR_MEAN)
+      REAL,intent(inout) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
+     +  SCLR_mean(NPTS,NSCLR_MEAN)
+         
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe
       
@@ -1563,7 +1550,7 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
                      ipt_globe=(iy-1)*NX_GLOBE+ix
                      ipt=(iy-jfirst)*nx+(ix-ifirst+1)
                      SCLR_mean(ipt,i)=SCLR_mean(ipt,i) + 
-     &                    cplwght(ipt_globe) / ndtout_mean
+     &                    kpp_3d_fields%cplwght(ipt_globe) / ndtout_mean
                   ENDDO 
                ENDDO
             ELSEIF (ivar.EQ.9) THEN
@@ -1586,57 +1573,57 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
       RETURN
       END
 
-      SUBROUTINE mean_vec(kpp_3d_fields,VEC,VEC_mean)
-      
-      IMPLICIT NONE
+c$$$      SUBROUTINE mean_vec(kpp_3d_fields,VEC,VEC_mean)
+c$$$      
+c$$$      IMPLICIT NONE
+c$$$
+c$$$! Automatically includes parameter.inc!      
+c$$$#include <kpp_3d_type.com>
+c$$$      include 'output.com'
+c$$$#include <landsea.com>
+c$$$
+c$$$      TYPE(kpp_3d_type) :: kpp_3d_fields
+c$$$      REAL,intent(in) :: VEC(:,:)
+c$$$      REAL,intent(inout) :: VEC_mean(:,:)
+c$$$      INTEGER i,len_vec,len_vec_mean
+c$$$      
+c$$$      WRITE(6,*) 'Mean vec is computing sizes'
+c$$$      len_vec=SIZE(VEC(1,:))
+c$$$      len_vec_mean=SIZE(VEC_mean(1,:))      
+c$$$
+c$$$      IF (len_vec.ne.len_vec_mean) WRITE(6,*) 'Error: VEC and VEC_mean',
+c$$$     &     'do not have the same number of vertical levels.'
+c$$$      WRITE(6,*) 'len_vec=',len_vec,', len_vec_mean=',len_vec_mean
+c$$$      
+c$$$      DO i=1,NPTS
+c$$$         IF (kpp_3d_fields%L_OCEAN(i))
+c$$$     &        VEC_mean(i,:) = VEC_mean(i,:) + VEC(i,:) / ndtout_mean
+c$$$      ENDDO
+c$$$
+c$$$      RETURN
+c$$$      END
 
-! Automatically includes parameter.inc!      
-#include <kpp_3d_type.com>
-      include 'output.com'
-#include <landsea.com>
-
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      REAL,intent(in) :: VEC(:,:)
-      REAL,intent(inout) :: VEC_mean(:,:)
-      INTEGER i,len_vec,len_vec_mean
-      
-      WRITE(6,*) 'Mean vec is computing sizes'
-      len_vec=SIZE(VEC(1,:))
-      len_vec_mean=SIZE(VEC_mean(1,:))      
-
-      IF (len_vec.ne.len_vec_mean) WRITE(6,*) 'Error: VEC and VEC_mean',
-     &     'do not have the same number of vertical levels.'
-      WRITE(6,*) 'len_vec=',len_vec,', len_vec_mean=',len_vec_mean
-      
-      DO i=1,NPTS
-         IF (kpp_3d_fields%L_OCEAN(i))
-     &        VEC_mean(i,:) = VEC_mean(i,:) + VEC(i,:) / ndtout_mean
-      ENDDO
-
-      RETURN
-      END
-
-      SUBROUTINE mean_sclr(kpp_3d_fields,SCLR,SCLR_mean)
-      
-      IMPLICIT NONE
-
-! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
-      include 'output.com'
-#include <landsea.com>
-
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      REAL SCLR(NPTS),SCLR_mean(NPTS)
-      INTEGER i
-      
-      DO i=1,NPTS
-         IF (kpp_3d_fields%L_OCEAN(i))
-     &        SCLR_mean(i) = SCLR_mean(i) + SCLR(i) / ndtout_mean
-
-      ENDDO
-         
-      RETURN
-      END
+c$$$      SUBROUTINE mean_sclr(kpp_3d_fields,SCLR,SCLR_mean)
+c$$$      
+c$$$      IMPLICIT NONE
+c$$$
+c$$$! Automatically includes parameter.inc
+c$$$#include <kpp_3d_type.com>
+c$$$      include 'output.com'
+c$$$#include <landsea.com>
+c$$$
+c$$$      TYPE(kpp_3d_type) :: kpp_3d_fields
+c$$$      REAL SCLR(NPTS),SCLR_mean(NPTS)
+c$$$      INTEGER i
+c$$$      
+c$$$      DO i=1,NPTS
+c$$$         IF (kpp_3d_fields%L_OCEAN(i))
+c$$$     &        SCLR_mean(i) = SCLR_mean(i) + SCLR(i) / ndtout_mean
+c$$$
+c$$$      ENDDO
+c$$$         
+c$$$      RETURN
+c$$$      END
 
       SUBROUTINE output_close
       
@@ -1710,7 +1697,6 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR),
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 #include <kpp_3d_type.com>
-      include 'netcdf.inc'
       include 'output.com'
       INTEGER status
       

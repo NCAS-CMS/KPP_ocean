@@ -141,7 +141,7 @@ c     Get sensible heat flux (positive upward) <- Note sign convention as above
       RETURN
       END
 
-      SUBROUTINE CFS_WRITE_GRIB_SSTS(kpp_sst)
+      SUBROUTINE CFS_WRITE_GRIB_SSTS(kpp_3d_fields)
 c 
 c     SUBROUTINE write_grib_ssts supports coupling to the NCEP GFS. 
 c     This subroutine blends the KPP SSTs with the climatological
@@ -161,26 +161,14 @@ c
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
       
-#ifdef COUPLE
-#ifdef CFS
-      include 'parameter.cfs_coupled.inc'
-#else
-      include 'parameter.oasis2.inc'
-#endif
-#else
-#ifdef CFS
-      include 'parameter.cfs_forced.inc'
-#else
-      include 'parameter.forced.inc'
-#endif
-#endif
+      include 'kpp_3d_type.com'
       include 'location.com'
       include 'couple.com'
       include 'constants.com'
       include 'landsea.cfs_coupled.com'
 
 c     kpp_sst is a one-dimensional array of the model SST on the model grid.
-      REAL kpp_sst(NPTS), SST_in(NX_GLOBE,NY_GLOBE,1)
+      REAL SST_in(NX_GLOBE,NY_GLOBE,1)
 c     Local variables
 c     1X1 degree grids (output)
       INTEGER NX_GLOBE_1X1, NY_GLOBE_1X1
@@ -237,14 +225,15 @@ c     Set up 1X1 grids
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
             ipoint_globe = (jy-1)*NX_GLOBE+ix
-            IF (cplwght(ipoint_globe) .LT. -1e-10) THEN              
+            IF (kpp_3d_fields%cplwght(ipoint_globe) .LT. -1e-10) THEN              
 c     Point is outside the coupling domain; set to SST climatology
                SST_out(ix,jy) = SST_in(ix,jy,1)
             ELSE
 c     Point is inside the coupling domain; set to weighted value
                ipoint=(jy-jfirst)*NX+(ix-ifirst)+1
-               SST_out(ix,jy) = kpp_sst(ipoint)*cplwght(ipoint_globe) +
-     &              SST_in(ix,jy,1)*(1-cplwght(ipoint_globe))
+               SST_out(ix,jy) = kpp_3d_fields(ipoint,1,1)*
+     &              kpp_3d_fields%cplwght(ipoint_globe)+SST_in(ix,jy,1)
+     &              *(1-kpp_3d_fields%cplwght(ipoint_globe))
             ENDIF            
          ENDDO
       ENDDO

@@ -1,7 +1,15 @@
 #include <parameter.inc>
 #include <kpp_timer.com>
-      TYPE kpp_3D_type
-      real :: U(NPTS,NZP1,NVEL),
+	TYPE kpp_3D_type
+
+c	real, allocatable :: U(:,:,:),
+c     +     X(:,:,:),
+c     +     Rig(:,:),
+c     +     dbloc(:,:),
+c     +     Shsq(:,:),
+c     +     Us(:,:,:,:),
+c     +     Xs(:,:,:,:)
+	real :: U(NPTS,NZP1,NVEL),
      +     X(NPTS,NZP1,NSCLR),
      +     Rig(NPTS,NZP1),
      +     dbloc(NPTS,NZ),
@@ -24,6 +32,7 @@
      +     wXNT(npts,0:NZTmax,NSCLR),
      +     ghat(npts,NZTmax),
      +     relax_sst(npts),fcorr(npts),
+     +     cplwght(npts_globe),
      +     SST0(npts),fcorr_twod(npts),
      +     sfcorr_twod(npts),
      +     tinc_fcorr(npts,NZP1),
@@ -100,10 +109,11 @@
      +     spd,dpy,twopi,onepi,
      +     grav,vonk,TK0,sbc,epsw,
      +     albocn,sice,EL,SL,FL,FLSN,dto,time,
-     +     tri(0:NZtmax,0:1,NGRID),startt,finalt,dtsec,
+     +     startt,finalt,dtsec,
      +     iso_thresh
-      real wmt(0:891,0:49)      ! lookup table for wm
-      real wst(0:891,0:49)      ! lookup table for ws
+c      real wmt(0:891,0:49)      ! lookup table for wm
+c      real wst(0:891,0:49)      ! lookup table for ws
+	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
       integer :: ntime,iso_bot
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,

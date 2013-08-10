@@ -8,64 +8,21 @@ c  Interface between 1-d model and vertical mixing
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c     #include <constants.com>
-c     #include <times.com>
-c     #include <vert_pgrid.com>
-c     #include <location.com>
-c     #include <proc_swit.com>
-c     #include <proc_pars.com>
-c     #include <ocn_state.com>
-c     #include <ocn_paras.com>
-c     #include <ice_paras.com>
-c     #include <flx_sfc.com>
-c     #include <flx_profs.com>
-c     #include <kprof_in.com>
-c     #include <kprof_out.com>
-c     #include <dble_diff.com>
-c     #include <local_pt.com>
-c     #include <common.inc'
 
 c inputs including those from common.inc and parameter.inc
-c      real U(nzp1,nvel),X(nzp1,nsclr)
       type(kpp_2d_type) :: kpp_2d_fields
       type(kpp_const_type) :: kpp_const_fields
       real B0,B0sol,ustar
 
-c     real zm(nzp1) ! vertical layer grid                  (m)
-c     real hm(nzp1) ! layer thicknesses                    (m)
-c     real sflux(NSFLXS,5,0:NJDT)  !  surface flux array
-c     real f        ! local inertial frequecy
-c     real time     !  ocean time in days
-c     integer jerlov ! water type; =0 for seasonal cycle
-c     integer nz,nzp1  ! number of vertical levels
-c     logical LRI   ! Ri_iw interior mixing switch
-c     logical LDD   ! double diffusion switch
-
 c outputs including those to common.inc
-c     real difm(npts,0:kmp1)  ! vertical viscosity coefficient  (m^2/s)
-c     real difs(npts,0:kmp1)  ! vertical scalar diffusivity     (m^2/s)
-c     real dift(npts,0:kmp1)  ! vertical temperature diffusivity(m^2/s)
-c     real ghat(npts,km)     ! nonlocal transport              (s/m^2)
       real hmixn                ! boundary layer depth (m)
       integer kmixn       
-c     real talpha(0:nzp1)   ! alpha 
-c     real sbeta(0:nzp1)    ! beta 
-c     real wU(0,1),wU(0,2)  ! kinematic surface momintum fluxes
-c     real wX(0,1),wX(0,2)  ! kinematic surface heat and salt fluxes
-c     real CP(0:nzp1)       ! specific heat             (j  / kg / deg)
-c     real rho(0:nzp1)      ! density                   (kg / m^3)
-c     real rhoh2o, rhob     ! density of freshwater and of brine (kg/m^3)
-c      real Rig_oned(nzp1)   ! local Richardson number (NPK diagnostic)
-c      real dbloc_oned(nz)   ! local delta Buoyancy
-c      real Shsq_oned(nzp1)  ! local vertical shear^2
       real rhob
 
 c local
-c      real Shsq(npts,nzp1)    ! (local velocity shear)^2       (m/s)^2
       real dVsq(nzp1)    ! (velocity shear re sfc)^2      (m/s)^2
-c      real dbloc(npts,nz)     ! local delta buoyancy            (m/s^2)
       real Ritop(nz)     ! numerator of bulk Richardson Number (m/s)^2
-c          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
+c     Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
       real alphaDT(nz)   ! alpha * DT across interfaces
       real betaDS(nz)    ! beta  * DS across interfaces
       real epsilon,epsln
@@ -77,8 +34,6 @@ c          Ritop = (-z - -zref)* delta buoyancy w/ respect to sfc(m/s^2)
       integer k,n,kl
       real del
       real dlimit,vlimit
-c     logical LKPP       ! kpp boundary layer mixing switch
-c      integer jwtype
       integer jerl(12)
 c          month  1   2   3   4   5   6   7   8   9   10  11  12
       data jerl / 2 , 2 , 2 , 3 , 3 , 3 , 4 , 4 , 4 , 4 , 3 , 2 /

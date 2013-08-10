@@ -12,7 +12,6 @@
 #include <kpp_oasis3.inc>
 #endif /*OASIS3*/
 #endif /*COUPLE*/
-      include 'flx_sfc.com'
       include 'ocn_paras.com'
       include 'flx_paras.com'
       include 'flx_in.com'
@@ -185,12 +184,6 @@ c      WRITE(6,*) 'L_REST=',L_REST
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c      include 'times.com'
-c      include 'flx_sfc.com'
-c      include 'flx_profs.com'
-c      include 'vert_pgrid.com'
-c      include 'ocn_paras.com'
-c      include 'local_pt.com'
 
       INTEGER k
       REAL SWDK

@@ -36,21 +36,8 @@ c              16 Nov 1994 - wgl : new KPP codes no temporary grid
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c#include <constants.com>
-c#include <times.com>
-c#include <timocn.com>
-c#include <vert_pgrid.com>
-c#include <proc_swit.com>
-c#include <ocn_state.com>
-c#include <ocn_paras.com>
 #include <ocn_energy.com>
-c#include <flx_sfc.com>
-c#include <flx_profs.com>
-c#include <kprof_out.com>
-c#include <dble_diff.com>
-c#include <location.com>
-c#include <local_pt.com>
-c#include <kpp_timer.com>
+
 c Input/Output
 c      real U(NPTS,NZP1,NVEL), X(NPTS,NZP1,NSCLR), Rig(npts,nz), 
 c     +     dbloc(npts,nz), shsq(npts,nz)
@@ -335,7 +322,7 @@ c     use "amax1" to prevent "underflow" in single precision
  130        continue
             
 c     check heat and salt budgets
-c     call budget(Xo,Xn)
+c     call budget(Xo,kpp_2d_fields,kpp_const_fields)
             
 c     Set new profiles
 c            do k=1,NZP1         ! values at NZP1 only change for slab ocean
@@ -412,19 +399,6 @@ c     Written  19 March 1991 - jan
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c#include <constants.com>
-c#include <times.com>
-c#include <timocn.com>
-c#include <vert_pgrid.com>
-c#include <location.com>
-c#include <ocn_advec.com>
-c#include <ocn_paras.com>
-c#include <flx_profs.com>
-c#include <kprof_out.com>
-c#include <dble_diff.com>
-c#include <local_pt.com>
-c#include <fcorr_in.com>
-c#include <salinity.com>
 c Input
       integer intri             ! index for tri.diag. coeff
 c     +     nzi
@@ -1139,18 +1113,6 @@ c
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-c#include <constants.com>
-c#include <timocn.com>
-c#include <vert_pgrid.com>
-c#include <proc_swit.com>
-c#include <ocn_state.com>
-c#include <ocn_paras.com>
-c#include <flx_profs.com>
-c#include <kprof_out.com>
-c#include <dble_diff.com>
-c#include <local_pt.com>
-c#include <initialcon.com>
-c#include <landsea.com>
 
 c     Input
 c      real  U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
@@ -1344,24 +1306,18 @@ c  100 continue
       return
       end
 
-      subroutine budget (X1,X2)
+      subroutine budget (X1,kpp_2d_fields,kpp_const_fields)
 
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <parameter.inc>
-#include <times.com>
-#include <timocn.com>
-#include <vert_pgrid.com>
-#include <ocn_paras.com>
-#include <ocn_state.com>
-#include <flx_profs.com>
-#include <flx_sfc.com>
-#include <local_pt.com>
+#include <kpp_3d_type.com>
       
+      type(kpp_2d_type) :: kpp_2d_fields
+      type(kpp_const_type) :: kpp_const_fields
       real X1,X2
-      dimension X1(nzp1,nsclr), X2(nzp1,nsclr)
+      dimension X1(nzp1,nsclr)
       
       real T1,T2,S1,S2
       real fltn
@@ -1376,32 +1332,38 @@ c  100 continue
       fltn = 1. / float(nz)
       write(nuout,*)
       do 5 k=1,nz
-      T1  =  T1 + X1(k,1)  * hm(k)
-      T2  =  T2 + X2(k,1)  * hm(k)
-      S1  =  S1 + X1(k,2)  * hm(k)
-      S2  =  S2 + X2(k,2)  * hm(k)
-      write(nuout,*) ipt,k,X1(k,1),X2(k,1),X1(k,2),X2(k,2)
+      T1  =  T1 + X1(k,1)  * kpp_const_fields%hm(k)
+      T2  =  T2 + kpp_2d_fields%X(k,1)  * kpp_const_fields%hm(k)
+      S1  =  S1 + X1(k,2)  * kpp_const_fields%hm(k)
+      S2  =  S2 + kpp_2d_fields%X(k,2)  * kpp_const_fields%hm(k)
+      write(nuout,*) k,X1(k,1),kpp_2d_fields%X(k,1),X1(k,2),
+     +     kpp_2d_fields%X(k,2)
   5   continue
-      dhdt = (T2 - T1) * rho(ipt,0) * CP(ipt,0) / dto
-      dfdt = (S1 - S2) * rho(ipt,0) / Ssurf(ipt)  / dto
-      Qtop = sflux(ipt,3,5,0) + sflux(ipt,4,5,0)
-      Ftop = sflux(ipt,6,5,0)
-      Qbot = -rho(ipt,0) * CP(ipt,0) * (wX(ipt,nz,1) + wXNT(ipt,nz,1) )
-      Fbot =  rhoh2o(ipt) / Ssurf(ipt)  *  wX(ipt,nz,2)
+      dhdt = (T2 - T1) * kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) / 
+     +     kpp_const_fields%dto
+      dfdt = (S1 - S2) * kpp_2d_fields%rho(0) / kpp_2d_fields%Ssurf / 
+     +     kpp_const_fields%dto
+      Qtop = kpp_2d_fields%sflux(3,5,0) + kpp_2d_fields%sflux(4,5,0)
+      Ftop = kpp_2d_fields%sflux(6,5,0)
+      Qbot = -kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) * 
+     +     (kpp_2d_fields%wX(nz,1) + kpp_2d_fields%wXNT(nz,1) )
+      Fbot =  kpp_2d_fields%rhoh2o / kpp_2d_fields%Ssurf  *  
+     +     kpp_2d_fields%wX(nz,2)
       
       write(nuout,*) 'heat ',Qtop,dhdt,Qbot
       write(nuout,*) 'salt ',Ftop,dfdt,Fbot
-      write(nuout,*) dto,rho(ipt,0),CP(ipt,0),Ssurf,
-     +     sflux(ipt,3,5,0),sflux(ipt,4,5,0)
-
+      write(nuout,*) kpp_const_fields%dto,kpp_2d_fields%rho(0),
+     +     kpp_2d_fields%CP(0),kpp_2d_fields%Ssurf,
+     +     kpp_2d_fields%sflux(3,5,0),kpp_2d_fields%sflux(4,5,0)
+      
       do 15 k=1,nz
-      delt = (X2(k,1)-X1(k,1)) 
-      fact = dto / hm(k) 
-      rhs  = fact * (wX(ipt,k,1)-wX(ipt,k-1,1) + 
-     +     wXNT(ipt,k,1)-wXNT(ipt,k-1,1) )
+         delt = (kpp_2d_fields%X(k,1)-X1(k,1)) 
+         fact = kpp_const_fields%dto / kpp_const_fields%hm(k)
+      rhs  = fact * (kpp_2d_fields%wX(k,1)-kpp_2d_fields%wX(k-1,1) + 
+     +     kpp_2d_fields%wXNT(k,1)-kpp_2d_fields%wXNT(k-1,1) )
       diff = delt - rhs
-      write(nuout,*) wX(ipt,k-1,1),wXNT(ipt,k-1,1),
-     +     wX(ipt,k,1),wXNT(ipt,k,1)
+      write(nuout,*) kpp_2d_fields%wX(k-1,1),kpp_2d_fields%wXNT(k-1,1),
+     +     kpp_2d_fields%wX(k,1),kpp_2d_fields%wXNT(k,1)
       write(nuout,*) fact,delt,rhs,diff
  15   continue
 

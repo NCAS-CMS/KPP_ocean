@@ -16,8 +16,8 @@ c
 #include <netcdf.inc>
       include 'constants.com'
       include 'vert_pgrid.com'
-      include 'location.com'
-      include 'ocn_state.com'
+c      include 'location.com'
+c      include 'ocn_state.com'
 c     Inputs
       LOGICAL lstretchgrid
       REAL dscale
@@ -86,11 +86,8 @@ c     write(nuout,*) 'h=',hm(i),' dm=',dm(i),' z=',zm(i),' i=',i
       ENDIF
       kpp_const_fields%hm(nzp1) = 1.e-10 
       kpp_const_fields%zm(nzp1) = -DMAX
-c     
-c     set fraction of land, and initial open water fraction
-c     
-         DO ipt=1,NPTS
-            focn (ipt) = 1.
+
+      DO ipt=1,npts
 c     
 c     compute geographic location
 c     
@@ -99,9 +96,9 @@ c     rlon(ipt)=dlon(ipt)*twopi/360.
 c     
 c     Coriolis Parameter ! check the necessity of this
 c     
-            if(abs(kpp_3d_fields%dlat(ipt)).lt.2.5) then
-               kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 
-     +              sin(2.5*twopi/360.)
+            if(abs(kpp_3d_fields%dlat(ipt)).lt.2.5) then    
+	   kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 
+     +         sin(2.5*twopi/360.)*SIGN(1.,kpp_3d_fields%dlat(ipt))
             else  
                kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 
      +              sin(kpp_3d_fields%dlat(ipt)*twopi/360.)
@@ -124,11 +121,10 @@ c
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'initialcon.com'
+#include <initialcon.com>
       include 'ocn_paras.com'
       include 'ocn_state.com'
 c output
-c      real X(NPTS,NZP1,NSCLR),U(NPTS,NZP1,NVEL)
       real var_in(NZP1)
 c local
       INTEGER n,i,ipt
@@ -186,93 +182,93 @@ c     Initial surface temp
       end
 
 ************************************************************************
-      SUBROUTINE vprofile(y,y0,hmixd,modeprof)
+c      SUBROUTINE vprofile(y,y0,hmixd,modeprof)
 c     =================     
 c     returns a vertical profile of property y via MODE
 c
 c     Written  3  March  1991  - WGL
 c
-      IMPLICIT NONE
-      INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
-
-#include <parameter.inc>
-      include 'constants.com'
-      include 'vert_pgrid.com'
+c      IMPLICIT NONE
+c      INTEGER nuout,nuerr
+c      PARAMETER (nuout=6,nuerr=0)
+c
+c#include <parameter.inc>
+c      include 'constants.com'
+c      include 'vert_pgrid.com'
 c
 c Inputs
-      REAL y0, y(nzp1),hmixd
-      INTEGER modeprof
+c      REAL y0, y(nzp1),hmixd
+c      INTEGER modeprof
 c Local variables
-      INTEGER i
-      REAL dep,alf,a,b
-
-      if(hmixd.ge.DMAX) hmixd =  0. 99 * DMAX  
+c      INTEGER i
+c      REAL dep,alf,a,b
+c
+c      if(hmixd.ge.DMAX) hmixd =  0. 99 * DMAX  
 c
 c STEP PROFILE
 c
-      if (modeprof.eq.1) then
-         do 15 i=1,nz
-            dep = -zm(i)
-            if(dep.le.hmixd) then
-               y(i) = y0
-            else
-               y(i) = y(nzp1)
-            endif
- 15      continue
+c      if (modeprof.eq.1) then
+c         do 15 i=1,nz
+c            dep = -zm(i)
+c            if(dep.le.hmixd) then
+c               y(i) = y0
+c            else
+c               y(i) = y(nzp1)
+c            endif
+c 15      continue
 c     
 c     EXPONENTIAL DECREASE
 c     
-      else if (modeprof.eq.2) then
-         alf = alog( y0 / y(nzp1) ) / ( DMAX -  hmixd )
-         do 25 i=1,nz
-            dep = -zm(i)
-            if(dep.le.hmixd) then
-               y(i) = y0
-            else
-               y(i) = y0 * exp( alf * (hmixd - dep) )
-            endif
- 25      continue
+c      else if (modeprof.eq.2) then
+c         alf = alog( y0 / y(nzp1) ) / ( DMAX -  hmixd )
+c         do 25 i=1,nz
+c            dep = -zm(i)
+c            if(dep.le.hmixd) then
+c               y(i) = y0
+c            else
+c               y(i) = y0 * exp( alf * (hmixd - dep) )
+c            endif
+c 25      continue
 c     
 c     LINEAR DECREASE
 c     
-      else if (modeprof.eq.3) then
-         alf = (y0 - y(nzp1)) / ( hmixd - DMAX )
+c      else if (modeprof.eq.3) then
+c         alf = (y0 - y(nzp1)) / ( hmixd - DMAX )
 c     
-         do 45 i = 1,nz
-            dep = -zm(i)
-            if(dep.le.hmixd) then
-               y(i) = y0 
-            else
-               y(i) = y0 + alf * ( dep - hmixd )
-            endif
- 45      continue
+c         do 45 i = 1,nz
+c            dep = -zm(i)
+c            if(dep.le.hmixd) then
+c               y(i) = y0 
+c            else
+c               y(i) = y0 + alf * ( dep - hmixd )
+c            endif
+c 45      continue
 c     
 c     SINUSOIDAL DECREASE
 c     
-      else if (modeprof.eq.4) then 
-         alf = ONEPI / ( DMAX - hmixd )
-         a   = 0.5 * (y0 - y(nzp1) )
-         b   = 0.5 * (y0 + y(nzp1) )
+c      else if (modeprof.eq.4) then 
+c         alf = ONEPI / ( DMAX - hmixd )
+c         a   = 0.5 * (y0 - y(nzp1) )
+c         b   = 0.5 * (y0 + y(nzp1) )
 c     
-         do 35 i = 1,nz
-            dep = -zm(i)
-            if(dep.le.hmixd) then
-               y(i) = y0
-            else
-               y(i) = b + a * cos( alf * (dep - hmixd) )
-            endif 
- 35      continue
+c         do 35 i = 1,nz
+c            dep = -zm(i)
+c            if(dep.le.hmixd) then
+c               y(i) = y0
+c            else
+c               y(i) = b + a * cos( alf * (dep - hmixd) )
+c            endif 
+c 35      continue
 c     
-      else
-         write(nuerr,*) 'STOP in vprofile (input.f):'
-         write(nuerr,*) '     unable to initialize vprofile, modeprof=',
-     $        modeprof
-         CALL MIXED_ABORT
-      endif
+c      else
+c         write(nuerr,*) 'STOP in vprofile (input.f):'
+c         write(nuerr,*) '     unable to initialize vprofile, modeprof=',
+c     $        modeprof
+c         CALL MIXED_ABORT
+c      endif
 c     
-      RETURN
-      END 
+c      RETURN
+c      END 
       
 ************************************************************************
 
@@ -288,8 +284,6 @@ c     common deltax(NJDT), xbar, denom
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'flx_profs.com'
-      include 'flx_sfc.com'
       TYPE(kpp_3d_type) :: kpp_3d_fields
       integer i,ipt
 c
@@ -361,8 +355,7 @@ c
       include 'ocn_advec.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
-      INTEGER nmode(npts),mode(npts,maxmodeadv)
-      REAL adv(npts,maxmodeadv)
+      INTEGER nmode(npts)
 
       INTEGER ipt,ivar,imode
 
@@ -370,44 +363,48 @@ c
          call init_advectfile
 
          call read_ipar(kpp_3d_fields,
-     &        ncid_advec,'nmode_tadv',1,1,nmode)
-         DO ipt=1,npts
-            kpp_3d_fields%nmodeadv(ipt,1)=nmode(ipt)
-         ENDDO
+     &        ncid_advec,'nmode_tadv',1,1,kpp_3d_fields%nmodeadv(:,1))
+c         DO ipt=1,npts
+c            kpp_3d_fields%nmodeadv(ipt,1)=nmode(ipt)
+c         ENDDO
          call read_ipar(kpp_3d_fields,
-     &        ncid_advec,'mode_tadv',maxmodeadv,1,mode)
-         DO ipt=1,npts
-            DO imode=1,maxmodeadv
-               kpp_3d_fields%modeadv(ipt,imode,1)=mode(ipt,imode)
-            ENDDO
-         ENDDO
+     &        ncid_advec,'mode_tadv',maxmodeadv,1,
+     &        kpp_3d_fields%modeadv(:,:,1))
+c         DO ipt=1,npts
+c            DO imode=1,maxmodeadv
+c               kpp_3d_fields%modeadv(ipt,imode,1)=adv(ipt,imode)
+c            ENDDO
+c         ENDDO
          call read_par(kpp_3d_fields,
-     &        ncid_advec,'tadv',maxmodeadv,1,adv)
-         DO ipt=1,npts
-            DO imode=1,maxmodeadv
-               kpp_3d_fields%advection(ipt,imode,1)=adv(ipt,imode)
-            ENDDO
-         ENDDO
+     &        ncid_advec,'tadv',maxmodeadv,1,
+     &        kpp_3d_fields%advection(:,:,1))
+c         DO ipt=1,npts
+c            DO imode=1,maxmodeadv
+c               kpp_3d_fields%advection(ipt,imode,1)=adv(ipt,imode)
+c            ENDDO
+c         ENDDO
 
          call read_ipar(kpp_3d_fields,
-     &        ncid_advec,'nmode_sadv',1,1,nmode)
-         DO ipt=1,npts
-            kpp_3d_fields%nmodeadv(ipt,2)=nmode(ipt)
-         ENDDO
+     &        ncid_advec,'nmode_sadv',1,1,kpp_3d_fields%nmodeadv(:,2))
+c         DO ipt=1,npts
+c            kpp_3d_fields%nmodeadv(ipt,2)=nmode(ipt)
+c         ENDDO
          call read_ipar(kpp_3d_fields,
-     &        ncid_advec,'mode_sadv',maxmodeadv,1,mode)
-         DO ipt=1,npts
-            DO imode=1,maxmodeadv
-               kpp_3d_fields%modeadv(ipt,imode,2)=mode(ipt,imode)
-            ENDDO
-         ENDDO
+     &        ncid_advec,'mode_sadv',maxmodeadv,1,
+     &        kpp_3d_fields%modeadv(:,:,2))
+c         DO ipt=1,npts
+c            DO imode=1,maxmodeadv
+c               kpp_3d_fields%modeadv(ipt,imode,2)=adv(ipt,imode)
+c            ENDDO
+c         ENDDO
          call read_par(kpp_3d_fields,
-     &        ncid_advec,'sadv',maxmodeadv,1,adv)
-         DO ipt=1,npts
-            DO imode=1,maxmodeadv
-               kpp_3d_fields%advection(ipt,imode,2)=adv(ipt,imode)
-            ENDDO
-         ENDDO
+     &        ncid_advec,'sadv',maxmodeadv,1,
+     &        kpp_3d_fields%advection(:,:,2))
+c         DO ipt=1,npts
+c            DO imode=1,maxmodeadv
+c               kpp_3d_fields%advection(ipt,imode,2)=adv(ipt,imode)
+c            ENDDO
+c         ENDDO
 
          CALL close_advectfile
 
@@ -468,7 +465,7 @@ c
       RETURN
       END
 ************************************************************
-      SUBROUTINE init_cplwght
+      SUBROUTINE init_cplwght(kpp_3d_fields)
       
       IMPLICIT NONE
       INTEGER nuout,nuerr,start(2),count(2)
@@ -476,11 +473,12 @@ c
       INTEGER ipoint_globe
       
       PARAMETER (nuout=6,nuerr=0)
+#include <kpp_3d_type.com>
 #include <netcdf.inc>
-#include <parameter.inc>
-#include <location.com>
+c#include <location.com>
 #include <couple.com>
 
+      TYPE(kpp_3d_type) :: kpp_3d_fields
       REAL*4 ixx, jyy, cplwght_in(NX_GLOBE,NY_GLOBE)
 c      
 c     If L_CPLWGHT has been set, then we will use the
@@ -509,12 +507,12 @@ c      WRITE(6,*) 'L_CPLWGHT =',L_CPLWGHT
          DO ix=1,NX_GLOBE
             DO jy=1,NY_GLOBE
                ipoint_globe=(jy-1)*NX_GLOBE+ix
-               cplwght(ipoint_globe)=cplwght_in(ix,jy)
+               kpp_3d_fields%cplwght(ipoint_globe)=cplwght_in(ix,jy)
             ENDDO
          ENDDO
          CALL close_cplwghtfile
       ELSE
-         cplwght(:) = 2.   
+         kpp_3d_fields%cplwght(:) = 2.   
       ENDIF
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
@@ -525,14 +523,15 @@ c      WRITE(6,*) 'L_CPLWGHT =',L_CPLWGHT
 c     Point is inside coupling domain.  
 c     Set cplwght equal to one (if not already set from NetCDF file) 
 c     to obtain model SSTs.
-               cplwght(ipoint_globe) = MIN(cplwght(ipoint_globe),1.)
+               kpp_3d_fields%cplwght(ipoint_globe) = 
+     +              MIN(kpp_3d_fields%cplwght(ipoint_globe),1.)
 c               WRITE(6,*) 'ix=',ix,'jy=',jy,
-c     +              'cplwght=',cplwght(ipoint_globe)
+c     +              'cplwght=',kpp_3d_fields%cplwght(ipoint_globe)
             ELSE
 c     Point is outside coupling domain.
 c     Set cplwght equal to a negative value to obtain
 c     climatological SSTs (or persisted SSTs, IF (.NOT. L_UPDCLIM))
-               cplwght(ipoint_globe) = -1.
+               kpp_3d_fields%cplwght(ipoint_globe) = -1.
             ENDIF
          ENDDO
       ENDDO

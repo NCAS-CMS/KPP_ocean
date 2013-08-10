@@ -26,7 +26,6 @@ c
 #include <kpp_oasis3.inc>
 #include <times.com>
 #include <constants.com>
-#include <initialcon.com>
       TYPE(kpp_const_type) :: kpp_const_fields
 c
 c     Output variables on the KPP regional grid - returned to
@@ -145,8 +144,7 @@ c
       RETURN      
       END SUBROUTINE mpi1_oasis3_input
       
-      SUBROUTINE mpi1_oasis3_output(SST_KPP,SURF_CURR_X_KPP,
-     +     SURF_CURR_Y_KPP,kpp_const_fields)
+      SUBROUTINE mpi1_oasis3_output(kpp_3d_fields,kpp_const_fields)
 c     
 c     Facilitate the exchange of coupled fields via the OASIS3 coupler.
 c     NPK 18/09/09 for the OASIS3 toy model - completed 28/09/09 - R3
@@ -171,10 +169,10 @@ c
 #include <kpp_oasis3.inc>
 #include <times.com>
 #include <couple.com>
-#include <location.com>
+c#include <location.com>
 #include <constants.com>
 #include <currclim.com>
-#include <initialcon.com>
+c#include <initialcon.com>
 
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -182,9 +180,7 @@ c
 c     Pass in the regional SST from the calling routine
 c     (usually <MAIN>).
 c
-      REAL SST_KPP(NPTS)
-      REAL SURF_CURR_X_KPP(NPTS)
-      REAL SURF_CURR_Y_KPP(NPTS)
+      TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
 c
 c     "SST_in" and "ICE_in" are common-block variables from
@@ -249,7 +245,7 @@ c
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
             ipoint_globe = (jy-1)*NX_GLOBE+ix
-            IF (cplwght(ipoint_globe) .LT. -1e-10) THEN              
+            IF (kpp_3d_fields%cplwght(ipoint_globe) .LT. -1e-10) THEN              
 c     Point is outside the coupling domain; set to SST climatology
                SST(ipoint_globe) = SST_in(ix,jy,1)
                IF (.NOT. L_CLIMCURR) THEN
@@ -262,13 +258,14 @@ c     Point is outside the coupling domain; set to SST climatology
             ELSE
 c     Point is inside the coupling domain; set to weighted value
                ipoint=(jy-jfirst)*nx+(ix-ifirst)+1             
-               SST(ipoint_globe) = SST_KPP(ipoint)*cplwght(ipoint_globe)
-     +              +SST_in(ix,jy,1)*(1-cplwght(ipoint_globe))
+               SST(ipoint_globe) = kpp_3d_fields%X(ipoint,1,1)*
+     +              kpp_3d_fields%cplwght(ipoint_globe)+SST_in(ix,jy,1)*
+     +              (1-kpp_3d_fields%cplwght(ipoint_globe))
                IF (L_COUPLE_CURRENTS .AND. .NOT. L_CLIMCURR) THEN
-                  SURF_CURR_X(ipoint_globe)=SURF_CURR_X_KPP(ipoint)*
-     +                 cplwght(ipoint_globe)
-                  SURF_CURR_Y(ipoint_globe)=SURF_CURR_Y_KPP(ipoint)*
-     +                 cplwght(ipoint_globe)
+                  SURF_CURR_X(ipoint_globe)=kpp_3d_fields%U(ipoint,1,1)*
+     +                 kpp_3d_fields%cplwght(ipoint_globe)
+                  SURF_CURR_Y(ipoint_globe)=kpp_3d_fields%U(ipoint,1,2)*
+     +                 kpp_3d_fields%cplwght(ipoint_globe)
                ELSEIF (L_COUPLE_CURRENTS .AND. L_CLIMCURR) THEN
                   SURF_CURR_X(ipoint_globe)=usf_in(ix,jy)
                   SURF_CURR_Y(ipoint_globe)=vsf_in(ix,jy)

@@ -9,16 +9,14 @@
 #include <kpp_3d_type.com>
       include 'vert_pgrid.com'
       include 'initialcon.com'
-      include 'location.com'
+c      include 'location.com'
       include 'constants.com'
       
-c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
 
       INTEGER status,ncid
-      REAL*4 var_in(NX,NY,200),z_in(200)
-      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
+      REAL*4, allocatable :: var_in(:,:,:),z_in(:),x_in(:),y_in(:)
 
       INTEGER varid,dimid
       INTEGER nz_in,nx_in,ny_in
@@ -27,9 +25,13 @@ c      REAL U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
       INTEGER kin,k
       REAL deltaz,deltavar,offset_sst
       
+      allocate(var_in(NX,NY,200))
+      allocate(z_in(200))
+      allocate(x_in(NX_GLOBE))
+      allocate(y_in(NY_GLOBE))
+
       status=NF_OPEN(initdata_file,0,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-
 
       status=NF_INQ_DIMID(ncid,'longitude',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -316,23 +318,25 @@ c
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
 #include <flx_in.com>
-c#include <constants.com>
-c#include <times.com>
-c#include <timocn.com>
-c#include <location.com>
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       REAL taux(NPTS),tauy(NPTS),swf(NPTS),lwf(NPTS),
      $     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS)
-      REAL*4 var_in(NX,NY),time_in,time
-
+c      REAL*4 var_in(NX,NY),time_in,time
+      REAL*4 time_in,time
+      
       INTEGER dimid,varid
       INTEGER ipt,ix,iy,nx_in,ny_in
 
-      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
-
+c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
+      REAL*4, allocatable :: x_in(:),y_in(:),var_in(:,:)
+      
       INTEGER status,start(3),count(3)
+
+      allocate(x_in(NX_GLOBE))
+      allocate(y_in(NY_GLOBE))
+      allocate(var_in(NX,NY))
 
       start(1)=1
       start(2)=1
@@ -650,19 +654,24 @@ c      time=dummy_time
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
 
       CHARACTER(LEN=*) vname
       INTEGER ncid,npars,nt
       REAL par_out(npts,npars,nt)
-      REAL*4 par_in(nx,ny,npars,nt)
-      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
+c      REAL*4 par_in(nx,ny,npars,nt)
+c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
+      REAL*4,allocatable :: par_in(:,:,:,:),x_in(:),y_in(:)
 
       INTEGER start(4),count(4),ix,iy,ipt,ipar,ixx,iyy
       INTEGER status,dimid,varid
       
+      allocate(par_in(nx,ny,npars,nt))
+      allocate(x_in(NX_GLOBE))
+      allocate(y_in(NY_GLOBE))
+
       status=NF_INQ_DIMID(ncid,'longitude',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'longitude',varid)
@@ -737,7 +746,7 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       include 'netcdf.inc'
 !Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
 
@@ -811,7 +820,7 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
       include 'fcorr_in.com'
       include 'times.com'
       include 'timocn.com'
@@ -822,7 +831,6 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       REAL*4 ixx,jyy,fcorr_twod_in(NX,NY,1),latitudes(NY),
      +     longitudes(NX),z(NZP1),first_timein,time_in,fcorr_time,
      +     ndays_upd_fcorr,last_timein
-c      COMMON /save_fcorr_twod/ fcorr_twod
       CHARACTER(LEN=30) tmp_name
 
 c     Read in a NetCDF file containing a time-varying flux correction
@@ -919,7 +927,7 @@ c
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
       include 'fcorr_in.com'
       include 'times.com'
       include 'timocn.com'
@@ -927,10 +935,11 @@ c
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      REAL*4 ixx,jyy,fcorr_in(NX,NY,NZP1,1),latitudes(NY_GLOBE),
-     +     longitudes(NX_GLOBE),z(NZP1),first_timein,time_in,
+      REAL*4 ixx,jyy,first_timein,time_in,
      +     fcorr_time,ndays_upd_fcorr,last_timein
       CHARACTER(LEN=30) tmp_name
+      REAL*4, allocatable :: fcorr_in(:,:,:,:),
+     +     longitudes(:),latitudes(:),z(:)
 c      COMMON /save_fcorr_withz/ fcorr_withz, Tinc_fcorr
 c
 c     Read in a NetCDF file containing a 
@@ -939,6 +948,10 @@ c     Frequency of read is controlled by ndtupdfcorr in the namelist
 c
 c     NPK 12/02/08
 c      
+      allocate(fcorr_in(NX,NY,NZP1,1))
+      allocate(longitudes(NX_GLOBE))
+      allocate(latitudes(NY_GLOBE))
+      allocate(z(NZP1))
       status=NF_OPEN(fcorrin_file,0,fcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened flux-correction input file ',fcorr_ncid
@@ -1017,8 +1030,7 @@ c
       status=NF_GET_VARA_REAL(fcorr_ncid,fcorr_varid,start,count
      &     ,fcorr_in)
       write(nuout,*) 'Flux corrections have been read from position',
-     &     start(4)
-      
+     &     start(4)      
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
@@ -1033,6 +1045,10 @@ c
       ENDDO
 
       status=NF_CLOSE(fcorr_ncid)
+      deallocate(fcorr_in)
+      deallocate(longitudes)
+      deallocate(latitudes)
+      deallocate(z)
 
       RETURN
       END
@@ -1051,7 +1067,7 @@ c
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
       include 'sfcorr_in.com'
       include 'times.com'
       include 'timocn.com'
@@ -1161,7 +1177,7 @@ c
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-      include 'location.com'
+c      include 'location.com'
       include 'sfcorr_in.com'
       include 'times.com'
       include 'timocn.com'
@@ -1169,9 +1185,10 @@ c
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      REAL*4 ixx,jyy,sfcorr_in(NX,NY,NZP1,1),latitudes(NY_GLOBE),
-     +     longitudes(NX_GLOBE),z(NZP1),first_timein,time_in,
+      REAL*4 ixx,jyy,first_timein,time_in,
      +     sfcorr_time,ndays_upd_sfcorr,last_timein
+      REAL*4,allocatable :: sfcorr_in(:,:,:,:),latitudes(:),
+     +     longitudes(:),z(:)
       CHARACTER(LEN=30) tmp_name
 c      COMMON /save_sfcorr_withz/ sfcorr_withz
 c
@@ -1181,6 +1198,10 @@ c     Frequency of read is controlled by ndtupdsfcorr in the namelist
 c
 c     NPK 12/02/08
 c      
+      allocate(sfcorr_in(NX,NY,NZP1,1))
+      allocate(latitudes(NX_GLOBE))
+      allocate(longitudes(NY_GLOBE))
+      allocate(z(NZP1))
       status=NF_OPEN(sfcorrin_file,0,sfcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened salinity-correction input file ',
@@ -1277,8 +1298,12 @@ c
       ENDDO
 
       status=NF_CLOSE(sfcorr_ncid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+      deallocate(sfcorr_in)
+      deallocate(longitudes)
+      deallocate(latitudes)
+      deallocate(z)
+      
       RETURN
       END
 
@@ -1294,7 +1319,7 @@ c
 #include <parameter.inc>
 #include <landsea.com>
       include 'constants.com'
-      include 'location.com'
+c      include 'location.com'
       
       INTEGER status,varid,latid,lonid
       REAL*4 var_in(NX_GLOBE,NY_GLOBE),latitudes_in(NY_GLOBE),
@@ -1353,7 +1378,7 @@ c
       include 'times.com'
       include 'timocn.com'
       include 'sstclim.com'
-      include 'location.com'
+c      include 'location.com'
 #include <currclim.com>
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
@@ -1512,7 +1537,7 @@ c     Written by Nick Klingaman, 11/01/08.
       include 'times.com'
       include 'timocn.com'
       include 'sstclim.com'      
-      include 'location.com'
+c      include 'location.com'
       
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1678,7 +1703,7 @@ c     longitude and time.
 #include <couple.com>
 #include <times.com>
 #include <timocn.com>
-#include <location.com>
+c#include <location.com>
 #include <sstclim.com>
 #include <currclim.com>
 
@@ -1803,7 +1828,7 @@ c     Open the netCDF file and find the correct time.
 #include <times.com>
 #include <timocn.com>
 #include <bottomclim.com>
-#include <location.com>
+c#include <location.com>
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1921,7 +1946,7 @@ c
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
-#include <location.com>
+c#include <location.com>
 #include <relax_3d.com>
 #include <times.com>
 #include <timocn.com>
@@ -1930,10 +1955,11 @@ c
       
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      REAL*4 ixx,jyy,sal_in(NX,NY,NZP1,1),latitudes(NY_GLOBE),
-     +     longitudes(NX_GLOBE),z(NZP1),first_timein,time_in,
+      REAL*4 ixx,jyy,first_timein,time_in,
      +     sal_time,ndays_upd_sal,last_timein
       CHARACTER(LEN=30) tmp_name
+      REAL*4, allocatable :: sal_in(:,:,:,:),latitudes(:),longitudes(:),
+     +     z(:)
 c      COMMON /save_sal/ sal_clim
 c
 c     Read in a NetCDF file containing a 
@@ -1942,6 +1968,11 @@ c     Frequency of read is controlled by ndtupdsal in the namelist
 c
 c     NPK 12/02/08
 c      
+      allocate(sal_in(NX,NY,NZP1,1))
+      allocate(longitudes(NX_GLOBE))
+      allocate(latitudes(NY_GLOBE))
+      allocate(z(NZP1))
+
       WRITE(nuout,*) 'Trying to open salinity input file ',sal_file
       status=NF_OPEN(sal_file,0,sal_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
@@ -2041,6 +2072,10 @@ c
       ENDDO
 
       status=NF_CLOSE(sal_ncid)
+      deallocate(sal_in)
+      deallocate(longitudes)
+      deallocate(latitudes)
+      deallocate(z)
 
       RETURN
       END
@@ -2059,10 +2094,16 @@ c
      +     time_dimid,nlon_file,nlat_file,ntime_file,nz_file
 
       PARAMETER (nuout=6,nuerr=0)
-      REAL*4 ixx,jyy,ocnT_in(NX,NY,NZP1,1),latitudes(NY_GLOBE),
-     +     longitudes(NX_GLOBE),z(NZP1),first_timein,time_in,
+      REAL*4, allocatable :: ocnT_in(:,:,:,:),latitudes(:),
+     +     longitudes(:),z(:)
+      REAL*4 ixx,jyy,first_timein,time_in,
      +     ocnT_time,ndays_upd_ocnT,last_timein
       CHARACTER(LEN=30) tmp_name
+
+      allocate(ocnT_in(NX,NY,NZP1,1))
+      allocate(longitudes(NX_GLOBE))
+      allocate(latitudes(NY_GLOBE))
+      allocate(z(NZP1))
 
       WRITE(nuout,*) 'Trying to open ocean temperature input file ',
      +     ocnT_file
@@ -2159,7 +2200,11 @@ c
       ENDDO
 
       status=NF_CLOSE(ocnT_ncid)
-
+      deallocate(ocnT_in)
+      deallocate(longitudes)
+      deallocate(latitudes)
+      deallocate(z)
+      
       RETURN
       END
 

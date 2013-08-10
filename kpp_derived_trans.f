@@ -325,7 +325,7 @@ c     values from the 2D variable.
 #include <ocn_paras.com>
 #include <ice_paras.com>
 #include <proc_swit.com>
-#include <vert_pgrid.com>
+c#include <vert_pgrid.com>
 #include <timocn.com>
 #include <fcorr_in.com>
 #include <sfcorr_in.com>

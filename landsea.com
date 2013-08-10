@@ -1,4 +1,4 @@
-      LOGICAL L_LANDSEA,L_OCEAN(NPTS)
+      LOGICAL L_LANDSEA
       INTEGER ncid_landsea
       CHARACTER*40 landsea_file
       REAL ocdepth(NPTS)
@@ -9,10 +9,10 @@
       COMMON /landsea/ ocdepth,L_LANDSEA,L_OCEAN,landsea_file,
      +     ncid_landsea,global_longitudes,global_latitudes,global_lsm
 #else
-      COMMON /landsea/ ocdepth,L_LANDSEA,L_OCEAN,landsea_file,
+      COMMON /landsea/ ocdepth,L_LANDSEA,landsea_file,
      +     ncid_landsea        
 #endif /*CFS*/
 #else
-      COMMON /landsea/ ocdepth,L_LANDSEA,L_OCEAN,landsea_file,
+      COMMON /landsea/ ocdepth,L_LANDSEA,landsea_file,
      +     ncid_landsea
 #endif /*COUPLE*/
