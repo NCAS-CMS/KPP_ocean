@@ -1,5 +1,5 @@
       SUBROUTINE init_output(filename,ncid,kpp_3d_fields,
-     +     kpp_const_fields)
+     +     kpp_const_fields, L_VAR, L_SING)
       
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -21,6 +21,7 @@ c      include 'location.com'
      &     filename
       CHARACTER*15 units(N_VAROUTS) ,singunits(N_SINGOUTS)
       CHARACTER*6 type
+      LOGICAL L_VAR(N_VAROUTS), L_SING(N_SINGOUTS)
 
       integer vert_dimid(N_VAROUTS)
       integer dims(4)
@@ -160,26 +161,20 @@ c      include 'location.com'
       IF (NX .GT. 1 ) delta=alon(2)-alon(1)
       CALL MY_NCDF_DEF_DIM (
      &     ncid,londim,nx,lon_id,'longitude','deg',delta,' ')
-c      WRITE(nuout,*) 'X dimension created successfully for ',filename
       delta=0.0
       IF (NY .GT. 1) delta=alat(2)-alat(1)
       CALL MY_NCDF_DEF_DIM (
      &     ncid,latdim,ny,lat_id,'latitude','deg',delta,' ')
-c      WRITE(nuout,*) 'Y dimension created successfully for ',filename
       CALL MY_NCDF_DEF_DIM (
      &     ncid,zdim,NZP1,z_id,'z','m',0.0,' ')
-c      WRITE(nuout,*) 'Z dimension created successfully for ',filename
       CALL MY_NCDF_DEF_DIM (
      &     ncid,hdim,NZP1,h_id,'h','m',0.0,'Layer Thickness')
-c      WRITE(nuout,*) 'H dimension created successfully for ',filename
       CALL MY_NCDF_DEF_DIM (
      &     ncid,ddim,NZP1,d_id,'d','m',0.0,'Depth of Interfaces')
-c      WRITE(nuout,*) 'D dimension created successfully for ',filename
       delta=dtout
       CALL MY_NCDF_DEF_DIM (
      &     ncid,timdim,NF_UNLIMITED,time_id,'time',
      &     'days',delta,' ')
-c      WRITE(nuout,*) 'T dimension created successfully for ',filename
       
       DO k=1,N_VAROUTS
          IF (zflag(k) .EQ. 1) THEN 
@@ -198,7 +193,7 @@ c      WRITE(nuout,*) 'T dimension created successfully for ',filename
       dims(4)=timdim
       DO k=1,N_VAROUTS
          dims(3)=vert_dimid(k)
-         IF (L_VAROUT(k)) THEN
+         IF (L_VAR(k)) THEN
             CALL MY_NCDF_DEF_VAR (
      &           ncid,varid(k),4,dims,varname(k),units(k),
      &           longname(k))
@@ -209,7 +204,7 @@ c     &           filename,'with varid=',varid(k)
       
       dims(3)=timdim
       DO k=1,N_SINGOUTS
-         IF (L_SINGOUT(k)) THEN
+         IF (L_SING(k)) THEN
             CALL MY_NCDF_DEF_VAR (
      &           ncid,singid(k),3,dims,singname(k),singunits(k),
      &           singlong(k))
@@ -248,7 +243,6 @@ c     &           filename,'with varid=',singid(k)
       write(nuout,*) 'NCDF output file initialized with name ',
      +      output_file
       
-c      call output_close
       status=NF_CLOSE(ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -277,7 +271,8 @@ c      call output_close
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
 
-      REAL*4, allocatable :: varout(:,:,:), singout(:,:)
+      REAL*4, allocatable :: varout(:,:,:), singout(:,:), 
+     +     temp_2d(:,:),temp_1d(:)
       REAL*4 TOUT
       
       INTEGER start(4),count(4),status
@@ -286,6 +281,8 @@ c      call output_close
  
       allocate(varout(NX,NY,NZP1))
       allocate(singout(NX,NY))
+      allocate(temp_2d(NPTS,NZP1))
+      allocate(temp_1d(NPTS))
 
       count(1)=NX
       count(2)=NY
@@ -309,272 +306,67 @@ c     +        ' Time=',TOUT
 
       DO ivar=1,N_VAROUTS
          IF (L_VAROUT(ivar)) THEN
-            VAROUT(:,:,:)=missval
-            IF (ivar .EQ. 1) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%U(ipt,k,1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
+            SELECT CASE (ivar)
+            CASE (1)
+               temp_2d(:,:)=kpp_3d_fields%U(:,:,1)
+            CASE (2)
+               temp_2d(:,:)=kpp_3d_fields%U(:,:,2)
+            CASE (3)
+               temp_2d(:,:)=kpp_3d_fields%X(:,:,1)
+            CASE (4)
+               DO k=1,NZP1
+                  temp_2d(:,k)=kpp_3d_fields%X(:,k,2)+
+     +                 kpp_3d_fields%Sref(:)
                ENDDO
-            ELSEIF (ivar. EQ. 2) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%U(ipt,k,2)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 3) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%X(ipt,k,1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 4) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%X(ipt,k,2)+
-     +                          kpp_3d_fields%Sref(ipt)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 5) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%buoy(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 6) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF(kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%wU(ipt,k-1,1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 7) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF(kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%wU(ipt,k-1,2)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 8) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%wX(ipt,k-1,1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 9) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%wX(ipt,k-1,2)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 10) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=
-     +                          kpp_3d_fields%wX(ipt,k-1,NSP1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 11) THEN               
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%wXNT(ipt,k-1,1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 12) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%difm(ipt,k-1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 13) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%dift(ipt,k-1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 14) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%difs(ipt,k-1)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 15) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%rho(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 16) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%cp(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 17) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%scorr(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 18) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN 
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=kpp_3d_fields%Rig(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 19) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=kpp_3d_fields%dbloc(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 20) THEN 
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=kpp_3d_fields%shsq(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 21) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=
-     +                          kpp_3d_fields%Tinc_fcorr(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO       
-            ELSEIF (ivar .EQ. 22) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=kpp_3d_fields%ocnTcorr(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 23) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=
-     +                          kpp_3d_fields%Sinc_fcorr(ipt,k)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSE
-               write(nuerr,*) 'You need to extend the outputs in'//
-     &              'output_inst'
-            ENDIF
-c            WRITE(nuout,*) 'In output_inst for varout, ivar=',ivar
+            CASE (5)
+               temp_2d(:,:)=kpp_3d_fields%buoy(:,1:NZP1)
+            CASE(6)
+               temp_2d(:,:)=kpp_3d_fields%wU(:,0:NZ,1)
+            CASE(7)
+               temp_2d(:,:)=kpp_3d_fields%wU(:,0:NZ,2)
+            CASE(8)
+               temp_2d(:,:)=kpp_3d_fields%wX(:,0:NZ,1)
+            CASE(9)
+               temp_2d(:,:)=kpp_3d_fields%wX(:,0:NZ,2)
+            CASE(10)
+               temp_2d(:,:)=kpp_3d_fields%wX(:,0:NZ,NSP1)
+            CASE(11)
+               temp_2d(:,:)=kpp_3d_fields%wXNT(:,0:NZ,1)
+            CASE(12)
+               temp_2d(:,1)=0.0
+               temp_2d(:,2:NZP1)=kpp_3d_fields%difm(:,1:NZ)
+            CASE(13)
+               temp_2d(:,1)=0.0
+               temp_2d(:,2:NZP1)=kpp_3d_fields%dift(:,1:NZ)
+            CASE(14)
+               temp_2d(:,1)=0.0
+               temp_2d(:,2:NZP1)=kpp_3d_fields%difs(:,1:NZ)
+            CASE(15)
+               temp_2d(:,:)=kpp_3d_fields%rho(:,1:NZP1)
+            CASE(16)
+               temp_2d(:,:)=kpp_3d_fields%cp(:,1:NZP1)
+            CASE(17)
+               temp_2d(:,:)=kpp_3d_fields%scorr(:,:)
+            CASE(18)
+               temp_2d(:,:)=kpp_3d_fields%Rig(:,:)
+            CASE(19)
+               temp_2d(:,1:NZ)=kpp_3d_fields%dbloc(:,1:NZ)
+               temp_2d(:,NZP1)=0.0
+            CASE(20)
+               temp_2d(:,:)=kpp_3d_fields%Shsq(:,:)
+            CASE(21)
+               temp_2d(:,:)=kpp_3d_fields%Tinc_fcorr(:,:)
+            CASE(22)
+               temp_2d(:,:)=kpp_3d_fields%ocnTcorr(:,:)
+            CASE(23)
+               temp_2d(:,:)=kpp_3d_fields%Sinc_fcorr(:,:)
+            CASE DEFAULT
+               WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
+            END SELECT
+            
+            CALL REFORMAT_MASK_OUTPUT_2D(temp_2d,kpp_3d_fields%L_OCEAN,
+     +           missval,varout)
+
             status=NF_PUT_VARA_REAL(
      &           ncid_out,varid(ivar),start,count,VAROUT)
             IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -585,100 +377,48 @@ c            WRITE(nuout,*) 'In output_inst for varout, ivar=',ivar
       count(3)=1
       DO ivar=1,N_SINGOUTS
          IF (L_SINGOUT(ivar)) THEN
-            SINGOUT(:,:)=missval
-            IF (ivar .EQ. 1) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) 
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%hmix(ipt)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 2) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%fcorr(ipt)                  
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 3) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%sflux(ipt,1,5,0)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 4) THEN 
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%sflux(ipt,2,5,0)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 5) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%sflux(ipt,3,5,0)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 6) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%sflux(ipt,4,5,0)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 7) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%sflux(ipt,6,5,0)
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 8) THEN
+            SELECT CASE (ivar)
+            CASE (1)
+               temp_1d(:)=kpp_3d_fields%hmix(:)
+            CASE (2)
+               temp_1d(:)=kpp_3d_fields%fcorr(:)
+            CASE (3)
+               temp_1d(:)=kpp_3d_fields%sflux(:,1,5,0)
+            CASE (4)
+               temp_1d(:)=kpp_3d_fields%sflux(:,2,5,0)
+            CASE (5)
+               temp_1d(:)=kpp_3d_fields%sflux(:,3,5,0)
+            CASE (6)
+               temp_1d(:)=kpp_3d_fields%sflux(:,4,5,0)
+            CASE (7)
+               temp_1d(:)=kpp_3d_fields%sflux(:,6,5,0)
+            CASE (8)
                DO ix=ifirst,ilast
                   DO iy=jfirst,jlast
-!                     WRITE(nuout,*) ix,iy,ifirst,ilast,jfirst,jlast
                      ipt=(iy-1)*NX_GLOBE+ix
-                     SINGOUT(ix-ifirst+1,iy-jfirst+1)=
-     +                    kpp_3d_fields%cplwght(ipt)
-                  ENDDO 
-               ENDDO
-            ELSEIF (ivar .EQ. 9) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*NX+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%freeze_flag(ipt)
+                     temp_1d((ix-ifirst)*NY+iy-jfirst+1)=
+     +                    kpp_3d_fields%cplwght(ipt)                     
                   ENDDO
                ENDDO
-            ELSEIF (ivar .EQ. 10) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*NX+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt))
-     &                    SINGOUT(ix,iy)=kpp_3d_fields%reset_flag(ipt)
-                  ENDDO
-               ENDDO
-            ELSE
-               write(nuerr,*) 'You need to extend the outputs in'//
-     &              'output_inst'
-            ENDIF
-c            WRITE(nuout,*) 'In output_inst for singout, ivar=',ivar
+            CASE (9)
+               temp_1d(:)=kpp_3d_fields%freeze_flag(:)
+            CASE (10)
+               temp_1d(:)=kpp_3d_fields%reset_flag(:)
+            CASE DEFAULT
+               WRITE(6,*) 'You need to add more outputs in '//
+     +              'OUTPUT_INST'
+            END SELECT
+            
+            CALL REFORMAT_MASK_OUTPUT_1D(temp_1d,kpp_3d_fields%L_OCEAN,
+     +           missval,singout)
+
             status=NF_PUT_VARA_REAL(
      &           ncid_out,singid(ivar),start,count,SINGOUT)
             IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          ENDIF
       ENDDO
       start(3)=1
-
+      
       nout=nout+1
 c     NPK 25/2/08
 c     Stop opening and closing output files with each flush of output.
@@ -687,6 +427,55 @@ c      call output_close
       WRITE(nuout,*) ' Output successfully written'
       RETURN
       END
+
+      SUBROUTINE reformat_mask_output_1d(oned_in,mask,missval,
+     +     twod_out)
+      IMPLICIT NONE
+#include <parameter.inc>
+
+      REAL,intent(in) :: oned_in(NPTS),missval
+      REAL,intent(out) :: twod_out(NX,NY)
+      LOGICAL,intent(in) :: mask(NPTS)
+      INTEGER :: i,j,ipt
+
+      DO i=1,NX
+         DO j=1,NY
+            ipt=i*(NY-1)+j
+            IF (mask(ipt)) THEN
+               twod_out(i,j)=oned_in(ipt)
+            ELSE
+               twod_out(i,j)=missval
+            ENDIF
+         ENDDO
+      ENDDO
+      RETURN
+      END SUBROUTINE reformat_mask_output_1d
+
+      SUBROUTINE reformat_mask_output_2d(twod_in,mask,missval,
+     +     threed_out)
+
+      IMPLICIT NONE
+#include <parameter.inc>
+
+      REAL,intent(in) :: twod_in(NPTS,NZP1),missval
+      REAL,intent(out) :: threed_out(NX,NY,NZP1)
+      LOGICAL,intent(in) :: mask(NPTS)
+      INTEGER :: i,j,ipt
+
+      DO i=1,NX
+         DO j=1,NY
+            ipt=i*(NY-1)+j
+            IF (mask(ipt)) THEN
+               threed_out(i,j,:)=twod_in(ipt,:)
+            ELSE
+               threed_out(i,j,:)=missval
+            ENDIF
+         ENDDO
+      ENDDO
+                  
+      RETURN
+      END SUBROUTINE reformat_mask_output_2d
+
 
       SUBROUTINE write_means(kpp_3d_fields,kpp_const_fields,
      +     VEC_mean,SCLR_mean)
@@ -739,40 +528,8 @@ c     +     ' Time=',TOUT
       DO ivar=1,N_VAROUTS
          IF (L_MEAN_VAROUT(ivar)) THEN
             VAROUT(:,:,:)=missval
-            IF (ivar.EQ.1) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar.EQ.2) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 3) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO                     
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 4) THEN
+            SELECT CASE (ivar)
+            CASE (4) 
                DO ix=1,nx
                   DO iy=1,ny
                      ipt=(iy-1)*nx+ix
@@ -784,173 +541,19 @@ c     +     ' Time=',TOUT
                      ENDIF
                   ENDDO
                ENDDO
-            ELSEIF (ivar. EQ. 5) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 6) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF(kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO                    
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 7) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF(kpp_3d_fields%L_OCEAN(ipt)) THEN
-c     Potentially k-1?
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO                   
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 8) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 9) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 10) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 11) THEN               
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 12) THEN
+            CASE (12,13,14)
                DO ix=1,nx
                   DO iy=1,ny
                      ipt=(iy-1)*nx+ix
                      IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
                         VAROUT(ix,iy,1)=0.0
                         DO k=2,NZP1
-c     Potentially k-1?
                            VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
                         ENDDO
                      ENDIF
                   ENDDO
                ENDDO
-            ELSEIF (ivar. EQ. 13) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 14) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN     
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-c     Potentially k-1?
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar. EQ. 15) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 16) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO                                       
-            ELSEIF (ivar .EQ. 17) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 18) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN 
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 19) THEN
+            CASE (18,19)
                DO ix=1,nx
                   DO iy=1,ny
                      ipt=(iy-1)*nx+ix
@@ -960,19 +563,8 @@ c     Potentially k-1?
                         ENDDO
                      ENDIF
                   ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 20) THEN 
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 21) THEN
+               ENDDO      
+            CASE DEFAULT
                DO ix=1,nx
                   DO iy=1,ny
                      ipt=(iy-1)*nx+ix
@@ -983,35 +575,8 @@ c     Potentially k-1?
                      ENDIF
                   ENDDO
                ENDDO
-            ELSEIF (ivar .EQ. 22) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSEIF (ivar .EQ. 23) THEN
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
-            ELSE
-               write(nuerr,*) 'You need to extend the outputs in'//
-     &              'write_means'
-            ENDIF
-c            WRITE(nuout,*) 'In output_inst for varout, ivar=',ivar
-c            WRITE(nuout,*) 'Attempting to write to ncid=',mean_ncid_out,
-c     &           'and varid=',mean_varid(ivar)
+            END SELECT
+         
             status=NF_PUT_VARA_REAL(
      &           mean_ncid_out,mean_varid(ivar),start,count,VAROUT)
             IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -1056,17 +621,13 @@ c     Increment counter for time dimension of NetCDF file
 #include <kpp_3d_type.com>
       include 'output.com'
       include 'times.com'
-c      include 'ocn_paras.com'
 #include <landsea.com>
 #include <relax_3d.com>
       include 'couple.com'
-c      include 'kprof_in.com'
       include 'ocn_advec.com'
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
 
-c      REAL VEC_mean(NPTS,NZP1,NVEC_MEAN),
-c     &     SCLR_mean(NPTS,NSCLR_MEAN)
       REAL,intent(inout) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
      +  SCLR_mean(NPTS,NSCLR_MEAN)
          
@@ -1625,7 +1186,7 @@ c$$$
 c$$$      RETURN
 c$$$      END
 
-      SUBROUTINE output_close
+      SUBROUTINE output_close(ncid)
       
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -1635,14 +1196,15 @@ c$$$      END
       include 'output.com'
 
       INTEGER status
+      INTEGER, intent(in) :: ncid
 
-      status=NF_CLOSE(ncid_out)
+      status=NF_CLOSE(ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       RETURN
       END
 
-      SUBROUTINE output_open
+      SUBROUTINE output_open(file,ncid)
       
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -1652,81 +1214,12 @@ c$$$      END
       include 'output.com'
 
       INTEGER status
+      INTEGER,intent(out) :: ncid
+      CHARACTER*40,intent(in) :: file      
 
-      status=NF_OPEN(output_file,NF_WRITE,ncid_out)
+      status=NF_OPEN(file,NF_WRITE,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       RETURN
       END
-
-      SUBROUTINE mean_output_open
-
-      IMPLICIT NONE
-      INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
-      include 'output.com'
-      INTEGER status
-
-      status=NF_OPEN(mean_output_file,NF_WRITE,mean_ncid_out)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(6,*) 'Mean output file opened with ncid=',mean_ncid_out
-      
-      RETURN
-      END
-
-      SUBROUTINE mean_output_close
-
-      IMPLICIT NONE
-      INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
-      include 'output.com'
-      INTEGER status
-
-      status=NF_CLOSE(mean_ncid_out)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
-      RETURN
-      END
-
-      SUBROUTINE mean_init_output(kpp_3d_fields,kpp_const_fields)
-
-      IMPLICIT NONE
-      
-      INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
-#include <kpp_3d_type.com>
-      include 'output.com'
-      INTEGER status
-      
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      TYPE(kpp_const_type) :: kpp_const_fields
-
-      INTEGER temp_varid(N_VAROUTS),temp_singid(N_SINGOUTS)
-      LOGICAL temp_varout(N_VAROUTS),temp_singout(N_SINGOUTS)
-
-      nout_mean=1
-
-      temp_varout=L_VAROUT
-      L_VAROUT=L_MEAN_VAROUT
-      temp_singout=L_SINGOUT
-      L_SINGOUT=L_MEAN_SINGOUT
-      temp_varid=varid
-      temp_singid=singid
-
-      CALL init_output(mean_output_file,mean_ncid_out,kpp_3d_fields,
-     +     kpp_const_fields)
-
-      mean_varid = varid
-      mean_singid = singid
-      varid = temp_varid
-      singid = temp_singid
-      L_VAROUT = temp_varout
-      L_SINGOUT = temp_singout
-            
-
-      RETURN
-      END
-
       

@@ -41,7 +41,6 @@ c      USE kpp_type_mod
 #include <times.com>
 #include <timocn.com>
 #include <vert_pgrid.com>
-c#include <ocn_paras.com>
 #include <local_pt.com>
 #include <output.com>
 #include <initialcon.com>
@@ -56,17 +55,6 @@ c#include <ocn_paras.com>
       REAL,allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),bottom_temp(:)
       
       INTEGER k,nflx,nstep
-
-c      INTERFACE
-c         SUBROUTINE Initialize(kpp_3d_fields,kpp_const_fields,
-c     +        bottom_temp,VEC_mean,SCLR_mean)
-c         USE kpp_type_mod
-c         TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
-c         TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
-c         REAL,allocatable,intent(out) :: bottom_temp(:),VEC_mean(:,:,:),
-c     +        SCLR_mean(:,:)
-c         END SUBROUTINE Initialize
-c      END INTERFACE
 
 c Initialize the 3D KPP model 
 c Setup the constants, read the namelists, setup the initial conditions
@@ -107,13 +95,6 @@ c into the main program.  NPK 17/08/10 - R3
       allocate(kpp_const_fields%wst(0:891,0:49))
       allocate(kpp_const_fields%tri(0:NZtmax,0:1,NGRID))
       allocate(kpp_3d_fields)
-c      allocate(kpp_3d_fields%U(NPTS,NZP1,NVEL))
-c      allocate(kpp_3d_fields%X(NPTS,NZP1,NSCLR))
-c      allocate(kpp_3d_fields%Xs(NPTS,NZP1,NSCLR,0:1))
-c      allocate(kpp_3d_fields%Us(NPTS,NZP1,NSCLR,0:1))
-c      allocate(kpp_3d_fields%Rig(NPTS,NZP1))
-c      allocate(kpp_3d_fields%Shsq(NPTS,NZP1))
-c      allocate(kpp_3d_fields%dbloc(NPTS,NZ))
 
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
@@ -488,10 +469,11 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   write(output_file(flen+2:flen+5),'(i4.4)') day_out
-                  CALL output_close
+                  CALL output_close(ncid_out)
                   CALL init_output(output_file,ncid_out,
-     +                 kpp_3d_fields,kpp_const_fields)
-                  CALL output_open
+     +                 kpp_3d_fields,kpp_const_fields,L_VAROUT,
+     +                 L_SINGOUT)
+                  CALL output_open(output_file,ncid_out)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -500,9 +482,11 @@ c
      &                 day_out
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
-                  CALL mean_output_close
-                  CALL mean_init_output(kpp_3d_fields,kpp_const_fields)
-                  CALL mean_output_open
+                  CALL output_close(mean_ncid_out)
+                  CALL init_output(mean_output_file,mean_ncid_out,
+     +                 kpp_3d_fields,kpp_const_fields,L_MEAN_VAROUT,
+     +                 L_MEAN_SINGOUT)
+                  CALL output_open(mean_output_file,mean_ncid_out)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -575,14 +559,14 @@ c     NPK 25/2/08 - R1
       IF (L_OUTPUT_INST) THEN          
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
-         CALL output_close
+         CALL output_close(ncid_out)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
       IF (L_OUTPUT_MEAN) THEN          
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
-         CALL mean_output_close
+         CALL output_close(mean_ncid_out)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
@@ -1075,8 +1059,8 @@ c
       dtout=ndtout*kpp_const_fields%dto/kpp_const_fields%spd
       IF (L_OUTPUT_INST) THEN
          CALL init_output(output_file,ncid_out,kpp_3d_fields,
-     +        kpp_const_fields)
-         CALL output_open
+     +        kpp_const_fields,L_VAROUT,L_SINGOUT)
+         CALL output_open(output_file,ncid_out)
       ENDIF
 c
       IF (L_OUTPUT_MEAN) THEN
@@ -1084,9 +1068,12 @@ c
          write(mean_output_file(flen+1:flen+1),'(a)') '_'
          write(mean_output_file(flen+2:flen+5),'(i4.4)') day_out
          write(mean_output_file(flen+6:flen+14),'(9A)') '_means.nc'         
-         WRITE(nuout,*) 'KPP : Calling mean_init_output'
-         CALL mean_init_output(kpp_3d_fields,kpp_const_fields)
-         CALL mean_output_open
+         WRITE(nuout,*) 'KPP : Calling init_output for '
+     +        //mean_output_file
+         CALL init_output(mean_output_file,mean_ncid_out,
+     +        kpp_3d_fields,kpp_const_fields,L_MEAN_VAROUT,
+     +        L_MEAN_SINGOUT)
+         CALL output_open(mean_output_file,mean_ncid_out)
       ENDIF
 c
 c     Call routine to copy constants and logicals needed for ocean
@@ -1109,9 +1096,6 @@ c     Set the means to zero initially
       CLOSE(75)
       WRITE(6,*) 'Returning from initialise'
       
-c      CALL output_close
-c      STOP
-
       RETURN
       END
       
@@ -1190,8 +1174,8 @@ c
 
 c Close output files so we are not left with
 c un-readable netCDF output. NPK 18/5/13
-c      CALL output_close
-c      CALL mean_output_close
+c      CALL output_close(ncid_out)
+c      CALL mean_output_close(mean_ncid_out)
 
 #ifdef COUPLE
 #ifdef OASIS2

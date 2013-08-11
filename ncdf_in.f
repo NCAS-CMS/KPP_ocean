@@ -1746,7 +1746,8 @@ c     Open the netCDF file and find the correct time.
 
 #ifndef COUPLE
       CALL determine_netcdf_boundaries(ncid,'current climatology',
-     &     'latitude','longitude','time',dlon(1),dlat(1),start(1),
+     &     'latitude','longitude','time',kpp_3d_fields%dlon(1),
+     +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 #else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)

@@ -2,13 +2,6 @@
 #include <kpp_timer.com>
 	TYPE kpp_3D_type
 
-c	real, allocatable :: U(:,:,:),
-c     +     X(:,:,:),
-c     +     Rig(:,:),
-c     +     dbloc(:,:),
-c     +     Shsq(:,:),
-c     +     Us(:,:,:,:),
-c     +     Xs(:,:,:,:)
 	real :: U(NPTS,NZP1,NVEL),
      +     X(NPTS,NZP1,NSCLR),
      +     Rig(NPTS,NZP1),
