@@ -1,5 +1,5 @@
       SUBROUTINE init_output(filename,ncid,kpp_3d_fields,
-     +     kpp_const_fields, L_VAR, L_SING)
+     +     kpp_const_fields,L_VAR,L_SING,vec_varids,sing_varids)
       
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -22,6 +22,8 @@ c      include 'location.com'
       CHARACTER*15 units(N_VAROUTS) ,singunits(N_SINGOUTS)
       CHARACTER*6 type
       LOGICAL L_VAR(N_VAROUTS), L_SING(N_SINGOUTS)
+      INTEGER :: vec_varids(N_VAROUTS),
+     &     sing_varids(N_SINGOUTS)
 
       integer vert_dimid(N_VAROUTS)
       integer dims(4)
@@ -194,11 +196,12 @@ c      include 'location.com'
       DO k=1,N_VAROUTS
          dims(3)=vert_dimid(k)
          IF (L_VAR(k)) THEN
-            CALL MY_NCDF_DEF_VAR (
-     &           ncid,varid(k),4,dims,varname(k),units(k),
+           WRITE(6,*) 'Defining ncid=',ncid,
+     +           ' varname=',varname(k),' dims =',dims
+	   CALL MY_NCDF_DEF_VAR (
+     &           ncid,vec_varids(k),4,dims,varname(k),units(k),
      &           longname(k))
-c            WRITE(nuout,*) 'Vector',k,'created successfully for ',
-c     &           filename,'with varid=',varid(k)
+	   WRITE(6,*) 'Defined variable ',vec_varids(k)
          ENDIF
       ENDDO
       
@@ -206,10 +209,10 @@ c     &           filename,'with varid=',varid(k)
       DO k=1,N_SINGOUTS
          IF (L_SING(k)) THEN
             CALL MY_NCDF_DEF_VAR (
-     &           ncid,singid(k),3,dims,singname(k),singunits(k),
+     &           ncid,sing_varids(k),3,dims,singname(k),singunits(k),
      &           singlong(k))
 c     WRITE(nuout,*) 'Scalar ',k,' created successfully for ',
-c     &           filename,'with varid=',singid(k)
+c     &           filename,'with varid=',sing_varids(k)
          ENDIF
       ENDDO
       
@@ -433,14 +436,14 @@ c      call output_close
       IMPLICIT NONE
 #include <parameter.inc>
 
-      REAL,intent(in) :: oned_in(NPTS),missval
-      REAL,intent(out) :: twod_out(NX,NY)
+      REAL*4,intent(in) :: oned_in(NPTS),missval
+      REAL*4,intent(out) :: twod_out(NX,NY)
       LOGICAL,intent(in) :: mask(NPTS)
       INTEGER :: i,j,ipt
 
       DO i=1,NX
          DO j=1,NY
-            ipt=i*(NY-1)+j
+            ipt=(j-1)*NX+i
             IF (mask(ipt)) THEN
                twod_out(i,j)=oned_in(ipt)
             ELSE
@@ -457,14 +460,14 @@ c      call output_close
       IMPLICIT NONE
 #include <parameter.inc>
 
-      REAL,intent(in) :: twod_in(NPTS,NZP1),missval
-      REAL,intent(out) :: threed_out(NX,NY,NZP1)
+      REAL*4,intent(in) :: twod_in(NPTS,NZP1),missval
+      REAL*4,intent(out) :: threed_out(NX,NY,NZP1)
       LOGICAL,intent(in) :: mask(NPTS)
       INTEGER :: i,j,ipt
 
       DO i=1,NX
          DO j=1,NY
-            ipt=i*(NY-1)+j
+            ipt=(j-1)*NX+i
             IF (mask(ipt)) THEN
                threed_out(i,j,:)=twod_in(ipt,:)
             ELSE
@@ -476,10 +479,8 @@ c      call output_close
       RETURN
       END SUBROUTINE reformat_mask_output_2d
 
-
       SUBROUTINE write_means(kpp_3d_fields,kpp_const_fields,
      +     VEC_mean,SCLR_mean)
-
       IMPLICIT NONE
 
       INTEGER nuout,nuerr
@@ -501,18 +502,21 @@ c      call output_close
 
       REAL :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
      + SCLR_mean(NPTS,NSCLR_MEAN)
-      REAL*4,allocatable :: VAROUT(:,:,:), SINGOUT(:,:)
+      REAL*4,allocatable :: VAROUT(:,:,:), SINGOUT(:,:),
+     +     temp_2d(:,:)
       REAL*4 TOUT
 
       INTEGER i,ivar,ipt,ix,iy,start(4),count(4),k,status
 
       allocate(VAROUT(NX,NY,NZP1))
       allocate(SINGOUT(NX,NY))
+      allocate(temp_2d(NPTS,NZP1))
       TOUT=kpp_const_fields%time-(ndtout_mean*kpp_const_fields%dtsec/
      +     (ndtocn*kpp_const_fields%spd))*0.5
       status=NF_PUT_VAR1_REAL(mean_ncid_out,time_id,nout_mean,TOUT)
-c      write(nuout,*) 'Writing mean output at timestep ',ntime+nstart,
-c     +     ' Time=',TOUT
+      IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
+      write(nuout,*) 'Writing mean output at timestep ',ntime+nstart,
+     +     ' Time=',TOUT,' time_id = ',time_id
       
       count(1)=NX
       count(2)=NY
@@ -527,58 +531,31 @@ c     +     ' Time=',TOUT
       i=1
       DO ivar=1,N_VAROUTS
          IF (L_MEAN_VAROUT(ivar)) THEN
-            VAROUT(:,:,:)=missval
-            SELECT CASE (ivar)
+         temp_2d(:,:)=0.
+         varout(:,:,:)=0.
+         SELECT CASE (ivar)
             CASE (4) 
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)+
-     +                          kpp_3d_fields%Sref(ipt)
-                        ENDDO
-                     ENDIF
-                  ENDDO
+               DO k=1,NZP1
+                  temp_2d(:,k)=VEC_mean(:,k,i)+kpp_3d_fields%Sref(:)
                ENDDO
             CASE (12,13,14)
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        VAROUT(ix,iy,1)=0.0
-                        DO k=2,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
+               temp_2d(:,1)=0.
+               temp_2d(:,2:NZP1)=VEC_mean(:,2:NZP1,i)
             CASE (18,19)
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZ
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO      
+               temp_2d(:,1:NZ)=VEC_mean(:,1:NZ,i)
+               temp_2d(:,NZP1)=0.               
             CASE DEFAULT
-               DO ix=1,nx
-                  DO iy=1,ny
-                     ipt=(iy-1)*nx+ix
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-                        DO k=1,NZP1
-                           VAROUT(ix,iy,k)=VEC_mean(ipt,k,i)
-                        ENDDO
-                     ENDIF
-                  ENDDO
-               ENDDO
+               temp_2d(:,:)=VEC_mean(:,:,i)
             END SELECT
+            WRITE(6,*) 'Calling reformat_mask_output_2d for ivar=',ivar
+            CALL reformat_mask_output_2d(temp_2d,kpp_3d_fields%L_OCEAN,
+     +           missval,varout)
          
+            WRITE(6,*) 'Writing to ncid=',mean_ncid_out,' varid=',
+     +	         mean_varid(ivar),' with start =',start,' and count =',
+     +	         count
             status=NF_PUT_VARA_REAL(
-     &           mean_ncid_out,mean_varid(ivar),start,count,VAROUT)
+     &          mean_ncid_out,mean_varid(ivar),start,count,VAROUT)
             IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
             i=i+1
          ENDIF
@@ -597,7 +574,7 @@ c     +     ' Time=',TOUT
      &                 SINGOUT(ix,iy)=SCLR_mean(ipt,i)
                ENDDO
             ENDDO            
-            WRITE(nuout,*) 'In output_inst for singout, ivar=',ivar
+            WRITE(nuout,*) 'In write_means for singout, ivar=',ivar
             status=NF_PUT_VARA_REAL(
      &           mean_ncid_out,mean_singid(ivar),start,count,SINGOUT)
             IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -630,430 +607,92 @@ c     Increment counter for time dimension of NetCDF file
 
       REAL,intent(inout) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
      +  SCLR_mean(NPTS,NSCLR_MEAN)
-         
+      REAL, allocatable :: field(:,:)
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
-      INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe
+      INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe,upper_limit,lower_limit
       
+      allocate(field(NPTS,NZP1))
+
       i=1
       DO ivar=1,N_VAROUTS
          IF (L_MEAN_VAROUT(ivar)) THEN
-!            WRITE(6,*) 'Doing means for ivar=',ivar,', i=',i
-            IF (ivar.EQ.1) THEN                                
+            SELECT CASE (ivar)
+            CASE(1)
+               field(:,:)=kpp_3d_fields%U(:,:,1)
+               lower_limit=1
+               upper_limit=NZP1
+            CASE(2)
+               field(:,:)=kpp_3d_fields%U(:,:,2)
+               lower_limit=1
+               upper_limit=NZP1
+            CASE(3)
+               field(:,:)=kpp_3d_fields%X(:,:,1)
+               lower_limit=1
+               upper_limit=NZP1
+            CASE(4)
+               field(:,:)=kpp_3d_fields%X(:,:,2)
+               lower_limit=1
+               upper_limit=NZP1
+            CASE(5)
+               field(:,:)=kpp_3d_fields%buoy(:,1:NZP1)
+               lower_limit=1
+               upper_limit=NZP1
+            CASE(6)
+               field(:,:)=kpp_3d_fields%wu(:,0:NZ,1)
+            CASE(7)
+               field(:,:)=kpp_3d_fields%wu(:,0:NZ,2)
+            CASE(8)
+               field(:,:)=kpp_3d_fields%wx(:,0:NZ,1)
+            CASE(9)
+               field(:,:)=kpp_3d_fields%wx(:,0:NZ,2)
+            CASE(10)
+               field(:,:)=kpp_3d_fields%wx(:,0:NZ,NSP1)
+            CASE(11)
+               field(:,:)=kpp_3d_fields%wXNT(:,0:NZ,1)
+            CASE(12)
+               field(:,:)=kpp_3d_fields%difm(:,1:NZP1)
+            CASE(13)
+               field(:,:)=kpp_3d_fields%dift(:,1:NZP1)
+            CASE(14)
+               field(:,:)=kpp_3d_fields%difs(:,1:NZP1)
+            CASE(15)
+               field(:,:)=kpp_3d_fields%rho(:,1:NZP1)
+            CASE(16)
+               field(:,:)=kpp_3d_fields%cp(:,1:NZP1)
+            CASE(17)
+               field(:,:)=kpp_3d_fields%scorr(:,:)
+            CASE(18)
+               field(:,:)=kpp_3d_fields%Rig(:,:)
+            CASE(19)
+               field(:,1:NZ)=kpp_3d_fields%dbloc(:,1:NZ)
+               field(:,NZP1)=0.
+            CASE(20)
+               field(:,:)=kpp_3d_fields%Shsq(:,:)
+            CASE(21)
+               field(:,:)=kpp_3d_fields%Tinc_fcorr(:,:)
+            CASE(22)
+               field(:,:)=kpp_3d_fields%ocnTcorr(:,:)
+            CASE(23)
+               field(:,:)=kpp_3d_fields%sinc_fcorr(:,:)
+            END SELECT
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
+!$OMP& SHARED(VEC_mean,i,field,upper_limit,lower_limit)
 !$OMP DO SCHEDULE(static)
 #endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%U(j,k,1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
+            DO j=1,NPTS
+               IF (kpp_3d_fields%L_OCEAN(j)) THEN
+                  DO k=1,NZP1
+                     VEC_mean(j,k,i)=field(j,k) / ndtout_mean + 
+     +                    VEC_mean(j,k,i)
+                  ENDDO
+               ENDIF
+            ENDDO
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.2) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%U(j,k,2) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.3) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%X(j,k,1) / 
-     +                       ndtout_mean
-     &                       + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.4) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%X(j,k,2) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.5) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%buoy(j,k) /
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO               
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.6) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wu(j,k-1,1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO   
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.7) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wu(j,k-1,2) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO              
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.8) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wX(j,k-1,1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO              
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.9) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wX(j,k-1,2) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.10) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wX(j,k-1,NSP1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.11) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean)
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%wXNT(j,k-1,1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO               
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.12) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=2,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%difm(j,k-1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO               
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.13) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=2,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%dift(j,k-1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO               
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.14) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=2,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%difs(j,k-1) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.15) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%rho(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.16) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%cp(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.17) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i) = kpp_3d_fields%scorr(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.18) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZ
-                        VEC_mean(j,k,i) = kpp_3d_fields%Rig(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.19) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZ
-                        VEC_mean(j,k,i) = kpp_3d_fields%dbloc(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.20) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZ
-                        VEC_mean(j,k,i) = kpp_3d_fields%shsq(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.21) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i)=kpp_3d_fields%Tinc_fcorr(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.22) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i)=kpp_3d_fields%ocnTcorr(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ELSEIF (ivar.EQ.23) THEN
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndtout_mean) 
-!$OMP& SHARED(VEC_mean,i)
-!$OMP DO SCHEDULE(static)
-#endif
-               DO j=1,NPTS
-                  IF (kpp_3d_fields%L_OCEAN(j)) THEN
-                     DO k=1,NZP1
-                        VEC_mean(j,k,i)=kpp_3d_fields%Sinc_fcorr(j,k) / 
-     +                       ndtout_mean + VEC_mean(j,k,i)
-                     ENDDO
-                  ENDIF
-               ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
-            ENDIF                  
+#endif         
             i=i+1
          ENDIF
       ENDDO

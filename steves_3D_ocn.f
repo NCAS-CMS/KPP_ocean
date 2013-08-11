@@ -472,7 +472,7 @@ c
                   CALL output_close(ncid_out)
                   CALL init_output(output_file,ncid_out,
      +                 kpp_3d_fields,kpp_const_fields,L_VAROUT,
-     +                 L_SINGOUT)
+     +                 L_SINGOUT,varid,singid)
                   CALL output_open(output_file,ncid_out)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
@@ -485,9 +485,10 @@ c
                   CALL output_close(mean_ncid_out)
                   CALL init_output(mean_output_file,mean_ncid_out,
      +                 kpp_3d_fields,kpp_const_fields,L_MEAN_VAROUT,
-     +                 L_MEAN_SINGOUT)
+     +                 L_MEAN_SINGOUT,mean_varid,mean_singid)
                   CALL output_open(mean_output_file,mean_ncid_out)
-                  CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
+                  nout_mean=1
+		  CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
             ENDIF
@@ -1059,7 +1060,7 @@ c
       dtout=ndtout*kpp_const_fields%dto/kpp_const_fields%spd
       IF (L_OUTPUT_INST) THEN
          CALL init_output(output_file,ncid_out,kpp_3d_fields,
-     +        kpp_const_fields,L_VAROUT,L_SINGOUT)
+     +        kpp_const_fields,L_VAROUT,L_SINGOUT,varid,singid)
          CALL output_open(output_file,ncid_out)
       ENDIF
 c
@@ -1072,8 +1073,9 @@ c
      +        //mean_output_file
          CALL init_output(mean_output_file,mean_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,L_MEAN_VAROUT,
-     +        L_MEAN_SINGOUT)
+     +        L_MEAN_SINGOUT,mean_varid,mean_singid)
          CALL output_open(mean_output_file,mean_ncid_out)
+         nout_mean=1
       ENDIF
 c
 c     Call routine to copy constants and logicals needed for ocean
