@@ -63,7 +63,8 @@ c Add bottom temperatures to the call to INITIALIZE, in case the bottom temperat
 c are initialized but never updated.  Previously, they never would have made it back
 c into the main program.  NPK 17/08/10 - R3
 
-      INTEGER nthreads,tid,omp_get_num_threads,omp_get_thread_num
+      INTEGER (KIND=2) :: nthreads,tid,omp_get_num_threads,
+     +  omp_get_thread_num
       CHARACTER(LEN=21) phys_timer_name
       CHARACTER(LEN=19) trans_timer_name
       
