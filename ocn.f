@@ -68,6 +68,7 @@ c     +     tol                  ! tolerance in hmix iteration
      +     Xo(NZP1,NSCLR)
       real Ux(NZP1,NVEL),       ! Additional variables to provide
      +     Xx(NZP1,NSCLR)       ! smoothing in the iteration.
+      real Ui(NZP1,NSCLR)       ! Ui used in damping (LH 8/08/2013)
       real lambda               ! Factor to control smoothing
       integer
      +     iter,iconv                ! number of iterations
@@ -359,7 +360,20 @@ c     write(40,*) time,iter, hmixn,hmixe,kmixn,kmixe
                kpp_2d_fields%Ssurf=kpp_2d_fields%X(1,2)+
      +              kpp_2d_fields%Sref
             ENDIF
-           
+
+c     Damping currents, Added LH (06/08/2013)
+
+            do k=1,NZP1
+               do l=1,NVEL
+                Ui(k,l)= MIN (0.99*ABS(kpp_2d_fields%U(k,l)),
+     +      kpp_2d_fields%U(k,l)**2/
+     +      (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto)))
+                kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) - 
+     +      SIGN(Ui(k,l),kpp_2d_fields%U(k,l))
+               enddo
+            enddo               
+c     End of damping 
+         
 c     Save variables for next timestep
             kpp_2d_fields%old = kpp_2d_fields%new
             kpp_2d_fields%new = 1 - kpp_2d_fields%old

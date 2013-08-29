@@ -42,6 +42,7 @@
      +     sflux(npts,NSFLXS,5,0:NJDT),
      +     dlat(npts),dlon(npts),
      +     freeze_flag(npts),reset_flag(npts),
+     +     dampu_flag(npts),dampv_flag(npts),
      +     U_init(NPTS,NZP1,NVEL)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
@@ -107,7 +108,7 @@
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
 	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
-      integer :: ntime,iso_bot
+      integer :: ntime,iso_bot,dt_uvdamp
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,

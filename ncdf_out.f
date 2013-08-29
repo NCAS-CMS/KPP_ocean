@@ -19,7 +19,7 @@ c      include 'location.com'
       CHARACTER*11 varname(N_VAROUTS),singname(N_SINGOUTS)
       CHARACTER*50 longname(N_VAROUTS),singlong(N_SINGOUTS),
      &     filename
-      CHARACTER*15 units(N_VAROUTS) ,singunits(N_SINGOUTS)
+      CHARACTER*15 units(N_VAROUTS),singunits(N_SINGOUTS)
       CHARACTER*6 type
       LOGICAL L_VAR(N_VAROUTS), L_SING(N_SINGOUTS)
       INTEGER :: vec_varids(N_VAROUTS),
@@ -104,7 +104,9 @@ c      include 'location.com'
      &     'PminusE_in',
      &     'cplwght', 
      &     'freeze_flag',
-     &     'comp_flag'/
+     &     'comp_flag',
+     &     'dampu_flag',
+     &     'dampv_flag'/
 #ifdef COUPLE
 #ifdef OASIS2
       DATA type /'OASIS2'/
@@ -131,7 +133,9 @@ c      include 'location.com'
      &     'P minus E from ',
      &     'Coupling weight',
      &     'Fraction of levels below freezing',
-     &     'Number of integrations (<0 = isothermal reset)'/
+     &     'Number of integrations (<0 = isothermal reset)',
+     &     'Fraction of levels with ui~u**2',
+     &     'Fraction of levels with vi~v**2'/
 
       DATA singunits/
      &     'm',
@@ -143,7 +147,9 @@ c      include 'location.com'
      &     'mm/s',
      &     'none',
      &     'fraction',
-     &     'unitless'/
+     &     'unitless',
+     &     'fraction',
+     &     'fraction'/
       
       nout=1
       singlong(3:7)=singlong(3:7)//type

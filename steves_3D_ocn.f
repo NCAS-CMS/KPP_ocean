@@ -390,6 +390,14 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
+         IF (L_DAMP_CURR) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL check_damping(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+         ENDIF
+
          WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
 c
 c     Implement more-frequent checkpointing, upon request
@@ -692,7 +700,7 @@ c     +     bottom_temp(:)
      &     bottom_temp_period,sal_file,L_UPD_SAL,L_PERIODIC_SAL,
      &     sal_period,ndtupdsal,ocnt_file,L_UPD_OCNT,L_PERIODIC_OCNT,
      &     ocnt_period,ndtupdocnt,L_NO_FREEZE,L_NO_ISOTHERM,
-     &     isotherm_bottom,isotherm_threshold
+     &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -928,6 +936,7 @@ c     Initialize and read the forcing namelist
       L_REST=.FALSE.
       L_NO_FREEZE=.FALSE.
       L_NO_ISOTHERM=.FALSE.
+      L_DAMP_CURR=.FALSE.
       forcing_file='1D_ocean_forcing.nc'
       ocnT_file='none'
       READ(75,NAME_FORCING)
@@ -963,6 +972,9 @@ c      ENDIF
       ELSEIF (L_NO_ISOTHERM) THEN
          kpp_const_fields%iso_bot=isotherm_bottom
          kpp_const_fields%iso_thresh=isotherm_threshold
+      ENDIF
+      IF (L_DAMP_CURR) THEN
+         kpp_const_fields%dt_uvdamp=dtuvdamp
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
@@ -1439,5 +1451,45 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 !$OMP END PARALLEL
 #endif 
 
+      RETURN
+      END
+
+c Added LH 28/08/2013
+
+      SUBROUTINE check_damping(kpp_3d_fields)
+c
+c     Check which Ui [MIN(alpha*ABS(U), (U**2)/r)] is chosen in the damping on currents (ocn.f), 
+c     where alpha=0.99, r=tau*(86400./dto), tau=360. 
+c     The flags for u and v can be requested as diagnostics dampu_flag, dampv_flag (singout 11,12).
+c     Note that the value of the flag is equal to the *fraction* of levels
+c     at that point where (U**2)/r .lt. alpha*ABS(U), 1.0=all Ui are (U**2)/r
+c
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+      INTEGER ipt,z
+      
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      
+      DO ipt=1,npts
+         IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+            DO z=1,NZP1
+               IF (kpp_3d_fields%U(ipt,z,1)**2/
+     +       (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
+     +        .lt. 0.99*ABS(kpp_3d_fields%U(ipt,z,1))) THEN
+                  kpp_3d_fields%dampu_flag(ipt)=
+     +                 kpp_3d_fields%dampu_flag(ipt)+1.0/REAL(NZP1)
+               ENDIF
+
+               IF (kpp_3d_fields%U(ipt,z,2)**2/
+     +        (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
+     +        .lt. 0.99*ABS(kpp_3d_fields%U(ipt,z,2))) THEN
+                  kpp_3d_fields%dampv_flag(ipt)=
+     +                 kpp_3d_fields%dampv_flag(ipt)+1.0/REAL(NZP1)
+               ENDIF               
+            ENDDO
+         ENDIF
+      ENDDO
+      
       RETURN
       END

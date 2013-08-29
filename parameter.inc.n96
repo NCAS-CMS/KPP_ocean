@@ -11,8 +11,8 @@
       PARAMETER(NDIM = 1, NX = 192, NY = 84, NPTS = NX*NY)
 c     PARAMETER(NDIM = 1, NX = 81, NY = 52, NPTS = NX*NY)
 #else
-      PARAMETER(NDIM  =  1 , NX = 192, NY = 84, NPTS = NX * NY )
-c      PARAMETER(NDIM = 1, NX = 1, NY = 1, NPTS = NX*NY)
+c      PARAMETER(NDIM  =  1 , NX = 192, NY = 84, NPTS = NX * NY )
+      PARAMETER(NDIM = 1, NX = 10, NY = 10, NPTS = NX*NY)
 #endif /*OASIS3*/
 #endif /*OASIS2*/
 #endif /*CFS*/
