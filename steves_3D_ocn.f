@@ -390,13 +390,14 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
-         IF (L_DAMP_CURR) THEN
-            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
-            CALL check_damping(kpp_3d_fields,kpp_const_fields)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-         ENDIF
+c         IF (L_DAMP_CURR) THEN
+c            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+c            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+c            kpp_3d_fields%dampu_flag(:)=0.
+c            kpp_3d_fields%dampv_flag(:)=0.
+c            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+c            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+c         ENDIF
 
          WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
 c
@@ -1454,42 +1455,3 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       RETURN
       END
 
-c Added LH 28/08/2013
-
-      SUBROUTINE check_damping(kpp_3d_fields)
-c
-c     Check which Ui [MIN(alpha*ABS(U), (U**2)/r)] is chosen in the damping on currents (ocn.f), 
-c     where alpha=0.99, r=tau*(86400./dto), tau=360. 
-c     The flags for u and v can be requested as diagnostics dampu_flag, dampv_flag (singout 11,12).
-c     Note that the value of the flag is equal to the *fraction* of levels
-c     at that point where (U**2)/r .lt. alpha*ABS(U), 1.0=all Ui are (U**2)/r
-c
-      IMPLICIT NONE
-#include <kpp_3d_type.com>
-      INTEGER ipt,z
-      
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      TYPE(kpp_const_type) :: kpp_const_fields
-      
-      DO ipt=1,npts
-         IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-            DO z=1,NZP1
-               IF (kpp_3d_fields%U(ipt,z,1)**2/
-     +       (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
-     +        .lt. 0.99*ABS(kpp_3d_fields%U(ipt,z,1))) THEN
-                  kpp_3d_fields%dampu_flag(ipt)=
-     +                 kpp_3d_fields%dampu_flag(ipt)+1.0/REAL(NZP1)
-               ENDIF
-
-               IF (kpp_3d_fields%U(ipt,z,2)**2/
-     +        (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
-     +        .lt. 0.99*ABS(kpp_3d_fields%U(ipt,z,2))) THEN
-                  kpp_3d_fields%dampv_flag(ipt)=
-     +                 kpp_3d_fields%dampv_flag(ipt)+1.0/REAL(NZP1)
-               ENDIF               
-            ENDDO
-         ENDIF
-      ENDDO
-      
-      RETURN
-      END
