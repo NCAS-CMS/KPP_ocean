@@ -413,6 +413,10 @@ c     +        ' Time=',TOUT
                temp_1d(:)=kpp_3d_fields%freeze_flag(:)
             CASE (10)
                temp_1d(:)=kpp_3d_fields%reset_flag(:)
+            CASE (11)
+               temp_1d(:)=kpp_3d_fields%dampu_flag(:)
+            CASE (12)
+               temp_1d(:)=kpp_3d_fields%dampv_flag(:)
             CASE DEFAULT
                WRITE(6,*) 'You need to add more outputs in '//
      +              'OUTPUT_INST'
@@ -769,6 +773,18 @@ c     Increment counter for time dimension of NetCDF file
                DO j=1,NPTS
                   IF (kpp_3d_fields%L_OCEAN(j))
      &                 SCLR_mean(j,i)=kpp_3d_fields%reset_flag(j) /
+     +                 ndtout_mean + SCLR_mean(j,i)
+               ENDDO
+            ELSEIF (ivar.EQ.11) THEN
+               DO j=1,NPTS
+                  IF (kpp_3d_fields%L_OCEAN(j))
+     &                 SCLR_mean(j,i)=kpp_3d_fields%dampu_flag(j) /
+     +                 ndtout_mean + SCLR_mean(j,i)
+               ENDDO
+            ELSEIF (ivar.EQ.12) THEN
+               DO j=1,NPTS
+                  IF (kpp_3d_fields%L_OCEAN(j))
+     &                 SCLR_mean(j,i)=kpp_3d_fields%dampv_flag(j) /
      +                 ndtout_mean + SCLR_mean(j,i)
                ENDDO
             ENDIF

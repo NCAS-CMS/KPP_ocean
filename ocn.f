@@ -69,7 +69,7 @@ c     +     tol                  ! tolerance in hmix iteration
       real Ux(NZP1,NVEL),       ! Additional variables to provide
      +     Xx(NZP1,NSCLR)       ! smoothing in the iteration.
       real Ui(NZP1,NSCLR)       ! Ui used in damping (LH 8/08/2013)
-      real dampU(NZP1,NSCLR)    ! dampU used to flag which Ui chosen in damping (LH 29/08/2013)
+      real dampU(NSCLR)    ! dampU used to flag which Ui chosen in damping (LH 29/08/2013)
       real lambda               ! Factor to control smoothing
       integer
      +     iter,iconv                ! number of iterations
@@ -78,7 +78,7 @@ c      integer kmixe(npts),kmixn(npts)
 c
 c More Local Variables (to make implicit none)
 c
-      real deltaz,rhonot
+      real deltaz,rhonot,a,b
       integer k,l,n
 c Number of iterations for computational instability
       integer comp_iter_max
@@ -366,27 +366,27 @@ c     Damping currents, Added LH (06/08/2013)
 
             do k=1,NZP1
                do l=1,NVEL
-                Ui(k,l)= MIN (0.99*ABS(kpp_2d_fields%U(k,l)),
-     +      kpp_2d_fields%U(k,l)**2/
-     +      (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto)))
+                 a=0.99*ABS(kpp_2d_fields%U(k,l))
+                 b=kpp_2d_fields%U(k,l)**2/
+     +      (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
+                Ui(k,l)= MIN(a,b)
+c     LH (29/08/2013) Add Flags to check which Ui (a or b) is chosen, 
+c     dtuvdamp=360 (specified in namelist). 
+c     The flags for u and v can be requested as diagnostics dampu_flag, 
+c     dampv_flag (singout 11,12). Note that the value of the flag is equal to 
+c     the *fraction* of levels at that point where (U**2)/r .lt. alpha*ABS(U), 
+c     1.0=all Ui are (U**2)/r
+               IF (b .lt. a) THEN  
+                 dampU(l)=dampU(l)+1.0/REAL(NZP1)
+               ENDIF 
+
+c    Apply damping
                 kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) - 
      +      SIGN(Ui(k,l),kpp_2d_fields%U(k,l))
-
-c     LH (29/08/2013) Add Flags to check which Ui [MIN(alpha*ABS(U), (U**2)/r)] is chosen, where alpha=0.99, r=dtuvdamp*(86400./dto), dtuvdamp=360 (specified in namelist). 
-c     The flags for u and v can be requested as diagnostics dampu_flag, dampv_flag (singout 11,12).
-c     Note that the value of the flag is equal to the *fraction* of levels
-c     at that point where (U**2)/r .lt. alpha*ABS(U), 1.0=all Ui are (U**2)/r
-               IF (kpp_2d_fields%U(k,l)**2/
-     +       (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
-     +        .lt. 0.99*ABS(kpp_2d_fields%U(k,l))) THEN  
-                 dampU(k,l)=dampU(k,l)+1.0
-               ELSE
-                 dampU(k,l)=dampU(k,l) 
-               ENDIF 
                enddo
             enddo
-             kpp_2d_fields%dampu_flag=SUM(dampU(:,1))/REAL(NZP1)
-             kpp_2d_fields%dampv_flag=SUM(dampU(:,2))/REAL(NZP1)
+             kpp_2d_fields%dampu_flag=dampU(1)
+             kpp_2d_fields%dampv_flag=dampU(2)
                
 c     End of damping 
          
