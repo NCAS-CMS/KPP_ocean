@@ -174,6 +174,7 @@ c     at a specified point.
       END
 
       SUBROUTINE kpp_fields_2dto3d(kpp_fields_2d,point,kpp_fields_3d)
+
       IMPLICIT NONE
 
 c     Accepts a 2D and a 3D variable of the KPP derived type.
@@ -300,10 +301,10 @@ c     values from the 2D variable.
       i=kpp_fields_2d%reset_flag
       kpp_fields_3d%reset_flag(point)=i
 
-      i=kpp_fields_2d%dampu_flag
-      kpp_fields_3d%dampu_flag(point)=i
-      i=kpp_fields_2d%dampv_flag
-      kpp_fields_3d%dampv_flag(point)=i
+      temp=kpp_fields_2d%dampu_flag
+      kpp_fields_3d%dampu_flag(point)=temp
+      temp=kpp_fields_2d%dampv_flag
+      kpp_fields_3d%dampv_flag(point)=temp
 
       RETURN
       END
