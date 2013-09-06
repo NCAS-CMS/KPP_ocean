@@ -1,12 +1,13 @@
       INTEGER N_VAROUTS
       INTEGER N_SINGOUTS
       PARAMETER (N_VAROUTS=23,N_SINGOUTS=12)
-      LOGICAL L_VAROUT(N_VAROUTS),L_SINGOUT(N_SINGOUTS)
-      LOGICAL L_MEAN_VAROUT(N_VAROUTS),L_MEAN_SINGOUT(N_SINGOUTS)
-      LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST
+      INTEGER ndt_varout_inst(N_VAROUTS),ndt_singout_inst(N_SINGOUTS),
+     +     ndt_varout_mean(N_VAROUTS),ndt_singout_mean(N_SINGOUTS),
+     +     ndt_varout_range(N_VAROUTS),ndt_singout_range(N_SINGOUTS)
+      LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST, L_OUTPUT_RANGE
       LOGICAL L_RESTARTW
       CHARACTER*4 restart_time
-      INTEGER ndtout,ndtout_mean,nout,nout_mean,ndt_per_restart
+      INTEGER nout,nout_mean,ndt_per_restart
       REAL*4 dtout
       REAL*4 missval
       PARAMETER (missval=1.e20)
@@ -57,22 +58,34 @@
 *    11 = dampu_flag (unitless) : flag for Ui in damping of currents (ocn.f), U**2/r < alpha*U =1, U**2/r > alpha*U =-1. output is total of all levels. If dampu_flag =NZ all levels U**2/r<alpha*U (alpha = 0.99, r=tau*(86400/dto), tau=360). 
 *    12 = dampv_flag (unitless) : as for dampu_flag but for v.
 ************************************************************************
-      INTEGER ncid_out,mean_ncid_out,day_out,flen,ndt_per_file
-      CHARACTER*50 output_file,mean_output_file,restart_outfile
+      INTEGER ncid_out,mean_ncid_out,min_ncid_out,max_ncid_out,
+     +     day_out,flen,ndt_per_file
+      CHARACTER*50 output_file,mean_output_file,restart_outfile,
+     +     min_output_file,max_output_file
       
       INTEGER londim,latdim,zdim,ddim,hdim,timdim
       INTEGER lon_id,lat_id,z_id,h_id,d_id,time_id
 
-      INTEGER varid(N_VAROUTS),singid(N_SINGOUTS),mean_varid(N_VAROUTS),
-     &     mean_singid(N_SINGOUTS)
-      INTEGER NVEC_MEAN,NSCLR_MEAN
-      PARAMETER(NVEC_MEAN=N_VAROUTS,NSCLR_MEAN=N_SINGOUTS)
+      INTEGER varid_vec(N_VAROUTS),varid_sing(N_SINGOUTS),
+     & varid_vec_mean(N_VAROUTS),varid_sing_mean(N_SINGOUTS),
+     & varid_vec_range(N_VAROUTS),varid_sing_range(N_SINGOUTS),
+     & ntout_vec(N_VAROUTS),ntout_sing(N_SINGOUTS),
+     & ntout_vec_mean(N_VAROUTS),ntout_sing_mean(N_SINGOUTS),
+     & ntout_vec_range(N_VAROUTS),ntout_sing_range(N_SINGOUTS)
+      INTEGER NVEC_MEAN,NSCLR_MEAN,NVEC_RANGE,NSCLR_RANGE
+      PARAMETER(NVEC_MEAN=N_VAROUTS,NSCLR_MEAN=N_SINGOUTS,
+     +     NVEC_RANGE=N_VAROUTS,NSCLR_RANGE=N_SINGOUTS)
             
-      common / output / l_varout,l_singout,l_mean_varout,
-     &     l_mean_singout,dtout,nout,nout_mean,restart_outfile,
-     &     ndtout,ndtout_mean,l_restartw,l_output_mean,l_output_inst,
+      common /output/ ndt_varout_inst,ndt_singout_inst,ndt_varout_mean,
+     &     ndt_singout_mean,ndt_varout_range,ndt_singout_range,
+     &     dtout,nout,nout_mean,restart_outfile,
+     &     l_restartw,l_output_mean,l_output_inst,l_output_range,
      &	   ndt_per_restart,restart_time
       common /ncdf_out/ mean_ncid_out,ncid_out,londim,latdim,zdim,ddim,
-     &     hdim,timdim,time_id,varid,singid,day_out,output_file,flen,
-     &     mean_output_file,mean_varid,mean_singid,ndt_per_file
+     &     hdim,timdim,time_id,varid_vec,varid_sing,day_out,
+     &     output_file,flen,mean_output_file,varid_vec_mean,
+     &     varid_sing_mean,ndt_per_file,ntout_vec,ntout_sing,
+     &     ntout_vec_mean,ntout_sing_mean,min_output_file,max_ncid_out,
+     &     max_output_file,ntout_vec_range,ntout_sing_range,
+     &     min_ncid_out,varid_vec_range,varid_sing_range
 
