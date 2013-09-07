@@ -186,6 +186,7 @@ c      include 'location.com'
       
       IF (dt_vec(1).gt.0) THEN
          n_tdims=1
+	 dt_timeids(1)=dt_vec(1)
          CALL MY_NCDF_DEF_DIM(ncid,time_dimids(1),NF_UNLIMITED,
      +        time_varids(1),'time_1','days',delta,' ')
       ELSE
@@ -227,7 +228,6 @@ c      include 'location.com'
             IF (dt_sing(j) .eq. dt_vec(k)) THEN
                tdim_found=.TRUE.
                time_dimids(j+N_VAROUTS)=time_dimids(k)
-               WRITE(6,*) j,k,time_dimids(j+N_VAROUTS)
             ENDIF
          ENDDO
          IF (j .gt. 1 .and. .NOT. tdim_found) THEN
@@ -317,9 +317,9 @@ c      include 'location.com'
       DO k=1,n_tdims         
          allocate(time_out(ndt_per_file/dt_timeids(k)+extra_time))
          DO i=1-extra_time,ndt_per_file/dt_timeids(k)
-c Need to write midpoints for means but output times for instaneous
             time_out(i+extra_time)=i*kpp_const_fields%dto/
-     +           kpp_const_fields%spd*dt_timeids(k)
+     +           kpp_const_fields%spd*dt_timeids(k)+
+     +	         kpp_const_fields%time
             IF (L_MEAN) 
      +           time_out(i+extra_time)=time_out(i+extra_time)-
      +           0.5*kpp_const_fields%dto/kpp_const_fields%spd*
@@ -397,8 +397,8 @@ c      call output_open
 c      TOUT=kpp_const_fields%time
 c      status=NF_PUT_VAR1_REAL(ncid_out,time_id,nout,TOUT)
 
-c      write(nuout,*) 'Writing output at timestep ',ntime+nstart,
-c     +        ' Time=',TOUT
+      write(nuout,*) 'Writing output for diagnostic ',diag_num,
+     + 'to start=',start,'count=',count
 
       IF (diag_num .le. N_VAROUTS) THEN 
          SELECT CASE (diag_num)

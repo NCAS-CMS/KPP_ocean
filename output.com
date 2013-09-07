@@ -69,7 +69,7 @@
       INTEGER varid_vec(N_VAROUTS),varid_sing(N_SINGOUTS),
      & varid_vec_mean(N_VAROUTS),varid_sing_mean(N_SINGOUTS),
      & varid_vec_range(N_VAROUTS),varid_sing_range(N_SINGOUTS),
-     & ntout_vec(N_VAROUTS),ntout_sing(N_SINGOUTS),
+     & ntout_vec_inst(N_VAROUTS),ntout_sing_inst(N_SINGOUTS),
      & ntout_vec_mean(N_VAROUTS),ntout_sing_mean(N_SINGOUTS),
      & ntout_vec_range(N_VAROUTS),ntout_sing_range(N_SINGOUTS)
       INTEGER NVEC_MEAN,NSCLR_MEAN,NVEC_RANGE,NSCLR_RANGE
@@ -84,7 +84,7 @@
       common /ncdf_out/ mean_ncid_out,ncid_out,londim,latdim,zdim,ddim,
      &     hdim,timdim,time_id,varid_vec,varid_sing,day_out,
      &     output_file,flen,mean_output_file,varid_vec_mean,
-     &     varid_sing_mean,ndt_per_file,ntout_vec,ntout_sing,
+     &     varid_sing_mean,ndt_per_file,ntout_vec_inst,ntout_sing_inst,
      &     ntout_vec_mean,ntout_sing_mean,min_output_file,max_ncid_out,
      &     max_output_file,ntout_vec_range,ntout_sing_range,
      &     min_ncid_out,varid_vec_range,varid_sing_range
