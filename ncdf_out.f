@@ -200,57 +200,65 @@ c      include 'location.com'
       ENDIF
 
       DO j=2,N_VAROUTS
-         tdim_found=.FALSE.
-         DO k=1,j-1 
-            IF (dt_vec(j) .eq. dt_vec(k)) THEN
-               tdim_found=.TRUE.
-               time_dimids(j)=time_dimids(k)
+         IF (dt_vec(j) .gt. 0) THEN
+            tdim_found=.FALSE.
+            DO k=1,j-1 
+               IF (dt_vec(j) .eq. dt_vec(k)) THEN
+                  tdim_found=.TRUE.
+                  time_dimids(j)=time_dimids(k)
+               ENDIF
+            ENDDO
+            IF (.NOT.tdim_found) THEN 
+               n_tdims=n_tdims+1
+               dt_timeids(n_tdims)=dt_vec(j)
+               WRITE(time_name,'(A5,I0)') 'time_',n_tdims
+               IF (n_tdims .eq. 1) THEN 
+                  CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j),NF_UNLIMITED,
+     +                 time_varids(1),'time_1','days',delta,' ')
+               ELSE
+                  CALL MY_NCDF_DEF_DIM (ncid,time_dimids(j),
+     +                 ndt_per_file/dt_vec(j)+extra_time,
+     &                 time_varids(n_tdims),time_name,'days',delta,' ')
+               ENDIF
             ENDIF
-         ENDDO
-         IF (.NOT.tdim_found) THEN 
-            n_tdims=n_tdims+1
-            dt_timeids(n_tdims)=dt_vec(j)
-            WRITE(time_name,'(A5,I0)') 'time_',n_tdims
-            IF (n_tdims .eq. 1) THEN 
-               CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j),NF_UNLIMITED,
-     +              time_varids(1),'time_1','days',delta,' ')
-            ELSE
-               CALL MY_NCDF_DEF_DIM (ncid,time_dimids(j),
-     +              ndt_per_file/dt_vec(j)+extra_time,
-     &              time_varids(n_tdims),time_name,'days',delta,' ')
-            ENDIF
+         ELSE
+            time_dimids(j)=0
          ENDIF
       ENDDO
 
       DO j=1,N_SINGOUTS
-         tdim_found=.FALSE.
-         DO k=1,N_VAROUTS
-            IF (dt_sing(j) .eq. dt_vec(k)) THEN
-               tdim_found=.TRUE.
-               time_dimids(j+N_VAROUTS)=time_dimids(k)
-            ENDIF
-         ENDDO
-         IF (j .gt. 1 .and. .NOT. tdim_found) THEN
-            DO k=1,j-1
-               IF (dt_sing(j) .eq. dt_sing(k)) THEN
+         IF (dt_sing(j) .gt. 0) THEN
+            tdim_found=.FALSE.
+            DO k=1,N_VAROUTS
+               IF (dt_sing(j) .eq. dt_vec(k)) THEN
                   tdim_found=.TRUE.
-                  time_dimids(j+N_VAROUTS)=time_dimids(k+N_VAROUTS)
+                  time_dimids(j+N_VAROUTS)=time_dimids(k)
                ENDIF
             ENDDO
-         ENDIF
-         IF (.NOT. tdim_found) THEN 
-            n_tdims=n_tdims+1
-            dt_timeids(n_tdims)=dt_sing(j)
-            WRITE(time_name,'(A5,I0)') 'time_',n_tdims
-            IF (n_tdims .eq. 1) THEN
-               CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),
-     +              NF_UNLIMITED,time_varids(1),'time_1','days',
-     +              delta,' ')
-            ELSE
-               CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),
-     +              ndt_per_file/dt_sing(j)+extra_time,
-     +              time_varids(n_tdims),time_name,'days',delta,' ')
+            IF (j .gt. 1 .and. .NOT. tdim_found) THEN
+               DO k=1,j-1
+                  IF (dt_sing(j) .eq. dt_sing(k)) THEN
+                     tdim_found=.TRUE.
+                     time_dimids(j+N_VAROUTS)=time_dimids(k+N_VAROUTS)
+                  ENDIF
+               ENDDO
             ENDIF
+            IF (.NOT. tdim_found) THEN 
+               n_tdims=n_tdims+1
+               dt_timeids(n_tdims)=dt_sing(j)
+               WRITE(time_name,'(A5,I0)') 'time_',n_tdims
+               IF (n_tdims .eq. 1) THEN
+                  CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),
+     +                 NF_UNLIMITED,time_varids(1),'time_1','days',
+     +                 delta,' ')
+               ELSE
+                  CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),
+     +                 ndt_per_file/dt_sing(j)+extra_time,
+     +                 time_varids(n_tdims),time_name,'days',delta,' ')
+               ENDIF
+            ENDIF
+         ELSE
+            time_dimids(j+N_VAROUTS)=0
          ENDIF
       ENDDO
 
