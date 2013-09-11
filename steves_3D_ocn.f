@@ -464,7 +464,6 @@ c
      +                 ntout_vec_mean(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-                  WRITE(nuout,*) 'Called WRITE_MEANS'
                ENDIF
             ENDIF
             IF (ndt_varout_inst(j) .gt. 0 .and. L_OUTPUT_INST) THEN
@@ -1124,12 +1123,14 @@ c
 #endif
 c     Initialize and read the output name list
       DO l=1,N_VAROUTS
-         ndt_varout_inst(l)=0.
-         ndt_varout_mean(l)=0.
+         ndt_varout_inst(l)=0
+         ndt_varout_mean(l)=0
+         ndt_varout_range(l)=0
       ENDDO
       DO l=1,N_SINGOUTS
-         ndt_singout_inst(l)=0.
-         ndt_singout_mean(l)=0.
+         ndt_singout_inst(l)=0
+         ndt_singout_mean(l)=0
+         ndt_singout_range(l)=0
       ENDDO
       L_OUTPUT_MEAN=.FALSE.
       L_OUTPUT_INST=.TRUE.

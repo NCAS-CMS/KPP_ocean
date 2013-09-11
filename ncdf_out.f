@@ -649,7 +649,8 @@ c     +     ' Time=',TOUT,' time_id = ',time_id
          CASE DEFAULT
             temp_2d(:,:)=VEC_mean(:,:,mean_num)
          END SELECT
-         WRITE(6,*) 'Calling reformat_mask_output_2d for ivar=',ivar
+         WRITE(6,*) 'In WRITE_MEANS for diag_num=',diag_num
+         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
          CALL reformat_mask_output_2d(temp_2d,kpp_3d_fields%L_OCEAN,
      +        missval,varout)
          
@@ -677,7 +678,8 @@ c     +     ' Time=',TOUT,' time_id = ',time_id
      &              SINGOUT(ix,iy)=SCLR_mean(ipt,mean_num)
             ENDDO
          ENDDO            
-         WRITE(nuout,*) 'In write_means for singout, ivar=',ivar
+         WRITE(nuout,*) 'In write_means for singout, i=',mean_num,
+     &        'diag_num=',diag_num
          status=NF_PUT_VARA_REAL(
      &        mean_ncid_out,varid,start,count,SINGOUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -850,6 +852,8 @@ c     Increment counter for time dimension of NetCDF file
       i=1
       DO ivar=1,N_VAROUTS
          IF (ndt_varout_mean(ivar) .gt. 0) THEN
+            WRITE(6,*) 'Computing means for ivar = ',ivar,'i=',i
+            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
             SELECT CASE (ivar)
             CASE(1)
                field(:,:)=kpp_3d_fields%U(:,:,1)
@@ -901,7 +905,7 @@ c     Increment counter for time dimension of NetCDF file
             END SELECT
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndt_varout_mean)
-!$OMP& SHARED(VEC_mean,i,field,upper_limit,lower_limit)
+!$OMP& SHARED(VEC_mean,i,field,ivar)
 !$OMP DO SCHEDULE(static)
 #endif
             DO j=1,NPTS
@@ -911,7 +915,7 @@ c     Increment counter for time dimension of NetCDF file
      +                    + VEC_mean(j,k,i)
                   ENDDO
                ENDIF
-            ENDDO
+            ENDDO            
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
