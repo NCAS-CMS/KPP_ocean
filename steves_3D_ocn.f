@@ -461,7 +461,7 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL write_means(kpp_3d_fields,kpp_const_fields,
      +                 VEC_mean,SCLR_mean,j,varid_vec_mean(j),
-     +                 ntout_vec_mean(j))
+     +                 zprof_varout_mean(j),ntout_vec_mean(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -471,7 +471,8 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_inst(kpp_3d_fields,kpp_const_fields,j,
-     +                 varid_vec(j),ntout_vec_inst(j))
+     +                 varid_vec(j),zprof_varout_inst(j),
+     +                 ntout_vec_inst(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -482,7 +483,8 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_range(kpp_3d_fields,kpp_const_fields,
      +                 VEC_range,SCLR_range,j,
-     +                 varid_vec_range(j),ntout_vec_range(j))
+     +                 varid_vec_range(j),zprof_varout_range(j),
+     +                 ntout_vec_range(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF            
@@ -495,7 +497,7 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL write_means(kpp_3d_fields,kpp_const_fields,
      +                 VEC_mean,SCLR_mean,j+N_VAROUTS,varid_sing_mean(j)
-     +                 ,ntout_sing_mean(j))
+     +                 ,0,ntout_sing_mean(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -505,7 +507,7 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_inst(kpp_3d_fields,kpp_const_fields,
-     +                 j+N_VAROUTS,varid_sing(j),ntout_sing_inst(j))
+     +                 j+N_VAROUTS,varid_sing(j),0,ntout_sing_inst(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -516,7 +518,7 @@ c
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_range(kpp_3d_fields,kpp_const_fields,
      +                 VEC_range,SCLR_range,j+N_VAROUTS,
-     +                 varid_sing_range(j),ntout_sing_range(j))
+     +                 varid_sing_range(j),0,ntout_sing_range(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                ENDIF
@@ -543,7 +545,7 @@ c
                CALL init_output(output_file,ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_inst,
      +              ndt_singout_inst,varid_vec,varid_sing,
-     +              .FALSE.,.TRUE.)
+     +              zprof_varout_inst,.FALSE.,.TRUE.)
                CALL output_open(output_file,ncid_out)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
@@ -559,7 +561,7 @@ c
                CALL init_output(mean_output_file,mean_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_mean,
      +              ndt_singout_mean,varid_vec_mean,varid_sing_mean,
-     +              .TRUE.,.FALSE.)
+     +              zprof_varout_mean,.TRUE.,.FALSE.)
                CALL output_open(mean_output_file,mean_ncid_out)
                nout_mean=1
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
@@ -579,11 +581,11 @@ c
                CALL init_output(min_output_file,min_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +              ndt_singout_range,varid_vec_range,varid_sing_range,
-     +              .FALSE.,.FALSE.)
+     +              zprof_varout_range,.FALSE.,.FALSE.)
                CALL init_output(max_output_file,max_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +              ndt_singout_range,varid_vec_range,varid_sing_range,
-     +              .FALSE.,.FALSE.)
+     +              zprof_varout_range,.FALSE.,.FALSE.)
                CALL output_open(min_output_file,min_ncid_out)
                CALL output_open(max_output_file,max_ncid_out)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
@@ -770,7 +772,7 @@ c     +     bottom_temp(:)
 * Local Variablies, including some read in from name lists
       REAL dscale ! (neg)lambda parameter for defining the stretch
       REAL alat,alon,delta_lat,delta_lon
-      INTEGER k,l,ipt,ix,iy
+      INTEGER i,j,k,l,ipt,ix,iy
       CHARACTER*40 forcing_file
 
       NAMELIST/NAME_CONSTANTS/grav,vonk,sbc,twopi,onepi,TK0,spd,dpy,
@@ -790,7 +792,8 @@ c     +     bottom_temp(:)
      +     output_file,L_RESTARTW,restart_outfile,ndt_varout_mean,
      &     ndt_singout_mean,L_OUTPUT_MEAN,L_OUTPUT_INST,L_OUTPUT_RANGE,
      &     ndt_per_file,ndt_per_restart,ndt_varout_range,
-     &     ndt_singout_range
+     &     ndt_singout_range,zprof_varout_inst,zprof_varout_mean,
+     &     zprof_varout_range,zprofs
       NAMELIST/NAME_FORCING/ L_FLUXDATA,forcing_file,L_FCORR_WITHZ,
      &     fcorrin_file,ndtupdfcorr,L_VARY_BOTTOM_TEMP,ndtupdbottom,
      &     bottomin_file,L_FCORR,L_UPD_FCORR,L_UPD_BOTTOM_TEMP,L_REST,
@@ -1122,22 +1125,21 @@ c
       ENDIF
 #endif
 c     Initialize and read the output name list
-      DO l=1,N_VAROUTS
-         ndt_varout_inst(l)=0
-         ndt_varout_mean(l)=0
-         ndt_varout_range(l)=0
-      ENDDO
-      DO l=1,N_SINGOUTS
-         ndt_singout_inst(l)=0
-         ndt_singout_mean(l)=0
-         ndt_singout_range(l)=0
-      ENDDO
+      ndt_varout_inst(:)=0
+      ndt_varout_mean(:)=0
+      ndt_varout_range(:)=0
+      zprof_varout_inst(:)=0
+      zprof_varout_mean(:)=0
+      zprof_varout_range(:)=0
+      ndt_singout_inst(:)=0
+      ndt_singout_mean(:)=0
+      ndt_singout_range(:)=0     
+      zprofs(:,:)=0
+      
       L_OUTPUT_MEAN=.FALSE.
       L_OUTPUT_INST=.TRUE.
       L_RESTARTW=.TRUE.      
       ndt_per_restart=nend*ndtocn
-c      ndtout=1
-c      ndtout_mean=24
       ntout_vec_inst(:)=1
       ntout_sing_inst(:)=1
       ntout_vec_mean(:)=1
@@ -1169,6 +1171,17 @@ c
 #endif /*COUPLE*/
       READ(75,NAME_OUTPUT)
       write(nuout,*) 'Read Namelist OUTPUT'     
+      zprofs_mask(:,0)=.TRUE.
+      zprofs_Mask(:,1:N_ZPROFS_MAX)=.FALSE.
+      zprofs_nvalid(0)=NZP1
+      DO i=1,N_ZPROFS_MAX
+         j=1
+         DO WHILE (zprofs(j,i) .ne. 0 .and. j .le. NZP1)
+            zprofs_mask(zprofs(j,i),i)=.TRUE.
+            j=j+1
+         END DO
+         zprofs_nvalid(i)=j-1
+      END DO
 c
 c     Set up the first output files for means and instantaneous
 c     fields.
@@ -1184,7 +1197,8 @@ c
       IF (L_OUTPUT_INST) THEN
          CALL init_output(output_file,ncid_out,kpp_3d_fields,
      +        kpp_const_fields,ndt_varout_inst,ndt_singout_inst,
-     +        varid_vec,varid_sing,.FALSE.,.TRUE.)
+     +        varid_vec,varid_sing,zprof_varout_inst,
+     +        .FALSE.,.TRUE.)
          CALL output_open(output_file,ncid_out)
       ENDIF
 c
@@ -1198,7 +1212,7 @@ c
          CALL init_output(mean_output_file,mean_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_mean,
      +        ndt_singout_mean,varid_vec_mean,varid_sing_mean,
-     +        .TRUE.,.FALSE.)
+     +        zprof_varout_mean,.TRUE.,.FALSE.)
          CALL output_open(mean_output_file,mean_ncid_out)
       ENDIF
 
@@ -1212,7 +1226,7 @@ c
          CALL init_output(min_output_file,min_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +        ndt_singout_range,varid_vec_range,varid_sing_range,
-     +        .FALSE.,.FALSE.)
+     +        zprof_varout_range,.FALSE.,.FALSE.)
          write(max_output_file(flen+1:flen+1),'(a)') '_'
          write(max_output_file(flen+2:flen+5),'(i4.4)') day_out
          write(max_output_file(flen+6:flen+14),'(9A)') '_max.nc'    
@@ -1221,11 +1235,10 @@ c
          CALL init_output(max_output_file,max_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +        ndt_singout_range,varid_vec_range,varid_sing_range,
-     +        .FALSE.,.FALSE.)
+     +        zprof_varout_range,.FALSE.,.FALSE.)
          CALL output_open(min_output_file,min_ncid_out)
          CALL output_open(max_output_file,max_ncid_out)
-      ENDIF
-         
+      ENDIF         
 c
 c     Call routine to copy constants and logicals needed for ocean
 c     physics into the kpp_const_fields derived type.  Added for 
@@ -1235,18 +1248,17 @@ c
       kpp_const_fields%ntime=0
       CALL wm_ws_lookup(kpp_const_fields)
       CALL init_ocn(kpp_3d_fields,kpp_const_fields)
-c      WRITE(6,*) 'Temps at ipt=500 ',kpp_3d_fields%X(500,:,1)
 c     Write out the data from the initial condition
       IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
          DO l=1,N_VAROUTS
             IF (ndt_varout_inst(l) .gt. 0) 
      +           CALL output_inst(kpp_3d_fields,kpp_const_fields,
-     +           l,varid_vec(l),ntout_vec_inst(l))            
+     +           l,varid_vec(l),zprof_varout_inst(l),ntout_vec_inst(l))            
          ENDDO
          DO l=1,N_SINGOUTS
             IF (ndt_singout_inst(l) .gt. 0)
      +           CALL output_inst(kpp_3d_fields,kpp_const_fields,
-     +           l+N_VAROUTS,varid_sing(l),ntout_sing_inst(l))
+     +           l+N_VAROUTS,varid_sing(l),0,ntout_sing_inst(l))
          ENDDO
       ENDIF
       
@@ -1532,10 +1544,6 @@ c
          IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
             DO z=1,NZP1
                IF (kpp_3d_fields%X(ipt,z,1) .lt. -1.8) THEN
-c                  WRITE(6,*) 'KPP : CHECK_FREEZING reports ',
-c     +                 'temperature less than -1.8C at point ',ipt,
-c     +                 ' and level ',z
-c                  WRITE(6,*) 'KPP : Temperature will be reset to -1.8C'
                   kpp_3d_fields%tinc_fcorr(ipt,z)=
      +                 kpp_3d_fields%tinc_fcorr(ipt,z)+
      +                 (-1.8-kpp_3d_fields%X(ipt,z,1))

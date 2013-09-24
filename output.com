@@ -1,13 +1,16 @@
-      INTEGER N_VAROUTS
-      INTEGER N_SINGOUTS
-      PARAMETER (N_VAROUTS=23,N_SINGOUTS=12)
+      INTEGER N_VAROUTS,N_SINGOUTS,N_ZPROFS_MAX
+      PARAMETER (N_VAROUTS=23,N_SINGOUTS=12,N_ZPROFS_MAX=5)
       INTEGER ndt_varout_inst(N_VAROUTS),ndt_singout_inst(N_SINGOUTS),
      +     ndt_varout_mean(N_VAROUTS),ndt_singout_mean(N_SINGOUTS),
-     +     ndt_varout_range(N_VAROUTS),ndt_singout_range(N_SINGOUTS)
+     +     ndt_varout_range(N_VAROUTS),ndt_singout_range(N_SINGOUTS),
+     +     zprof_varout_inst(N_VAROUTS),
+     +     zprof_varout_mean(N_VAROUTS),
+     +     zprof_varout_range(N_VAROUTS)
       LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST, L_OUTPUT_RANGE
-      LOGICAL L_RESTARTW
+      LOGICAL L_RESTARTW, zprofs_mask(NZP1,0:N_ZPROFS_MAX)
       CHARACTER*4 restart_time
       INTEGER nout,nout_mean,ndt_per_restart
+      INTEGER zprofs(NZP1,N_ZPROFS_MAX),zprofs_nvalid(0:N_ZPROFS_MAX)
       REAL*4 dtout
       REAL*4 missval
       PARAMETER (missval=1.e20)
@@ -67,20 +70,22 @@
       INTEGER lon_id,lat_id,z_id,h_id,d_id,time_id
 
       INTEGER varid_vec(N_VAROUTS),varid_sing(N_SINGOUTS),
-     & varid_vec_mean(N_VAROUTS),varid_sing_mean(N_SINGOUTS),
-     & varid_vec_range(N_VAROUTS),varid_sing_range(N_SINGOUTS),
-     & ntout_vec_inst(N_VAROUTS),ntout_sing_inst(N_SINGOUTS),
-     & ntout_vec_mean(N_VAROUTS),ntout_sing_mean(N_SINGOUTS),
-     & ntout_vec_range(N_VAROUTS),ntout_sing_range(N_SINGOUTS)
+     &     varid_vec_mean(N_VAROUTS),varid_sing_mean(N_SINGOUTS),
+     &     varid_vec_range(N_VAROUTS),varid_sing_range(N_SINGOUTS),
+     &     ntout_vec_inst(N_VAROUTS),ntout_sing_inst(N_SINGOUTS),
+     &     ntout_vec_mean(N_VAROUTS),ntout_sing_mean(N_SINGOUTS),
+     &     ntout_vec_range(N_VAROUTS),ntout_sing_range(N_SINGOUTS)
       INTEGER NVEC_MEAN,NSCLR_MEAN,NVEC_RANGE,NSCLR_RANGE
       PARAMETER(NVEC_MEAN=N_VAROUTS,NSCLR_MEAN=N_SINGOUTS,
      +     NVEC_RANGE=N_VAROUTS,NSCLR_RANGE=N_SINGOUTS)
             
       common /output/ ndt_varout_inst,ndt_singout_inst,ndt_varout_mean,
      &     ndt_singout_mean,ndt_varout_range,ndt_singout_range,
+     &     zprof_varout_inst,zprof_varout_mean,
+     &     zprof_varout_range,
      &     dtout,nout,nout_mean,restart_outfile,
      &     l_restartw,l_output_mean,l_output_inst,l_output_range,
-     &	   ndt_per_restart,restart_time
+     &	   ndt_per_restart,restart_time,zprofs,zprofs_mask,zprofs_nvalid
       common /ncdf_out/ mean_ncid_out,ncid_out,londim,latdim,zdim,ddim,
      &     hdim,timdim,time_id,varid_vec,varid_sing,day_out,
      &     output_file,flen,mean_output_file,varid_vec_mean,
