@@ -8,7 +8,7 @@
      +     zprof_varout_range(N_VAROUTS)
       LOGICAL L_OUTPUT_MEAN, L_OUTPUT_INST, L_OUTPUT_RANGE
       LOGICAL L_RESTARTW, zprofs_mask(NZP1,0:N_ZPROFS_MAX)
-      CHARACTER*4 restart_time
+      CHARACTER*5 restart_time
       INTEGER nout,nout_mean,ndt_per_restart
       INTEGER zprofs(NZP1,N_ZPROFS_MAX),zprofs_nvalid(0:N_ZPROFS_MAX)
       REAL*4 dtout

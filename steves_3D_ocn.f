@@ -287,7 +287,8 @@ c
 c
 c     Add ability to relax to salinity climatology
 c     NPK 24/08/11 - R3b3
-         IF (L_UPD_SAL .AND. MOD(ntime-1,ndtupdsal) .EQ. 0) THEN
+         IF (L_UPD_SAL .AND. MOD(ntime-1,ndtupdsal) .EQ. 0 .AND. 
+     +        .NOT. L_INTERP_SAL) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL read_salinity(kpp_3d_fields,kpp_const_fields)
@@ -295,14 +296,33 @@ c     NPK 24/08/11 - R3b3
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             WRITE(nuout,*) 'KPP: Called read_salinity, ntime =',
      +           kpp_const_fields%ntime
+         ELSEIF (L_UPD_SAL .AND. L_INTERP_SAL .AND.
+     +           MOD(ntime-1,ndt_interp_sal).EQ.0) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL INTERP_SAL(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+            WRITE(nuout,*) 'KPP: Interpolated ocean salinity,'//
+     +           ' ntime =',kpp_const_fields%ntime
          ENDIF
-         IF (L_UPD_OCNT .AND. MOD(ntime-1,ndtupdocnt) .EQ. 0) THEN
+         IF (L_UPD_OCNT .AND. MOD(ntime-1,ndtupdocnt) .EQ. 0
+     +        .AND. .NOT. L_INTERP_OCNT) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             WRITE(nuout,*) 'KPP: Called read_ocean_temperatures,'//
+     +           ' ntime =',kpp_const_fields%ntime
+         ELSEIF (L_UPD_OCNT .AND. L_INTERP_OCNT .AND. 
+     +           MOD(ntime-1,ndt_interp_ocnt).EQ.0) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL INTERP_OCNT(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+            WRITE(nuout,*) 'KPP: Interpolated ocean temperatures,'//
      +           ' ntime =',kpp_const_fields%ntime
          ENDIF
 c
@@ -412,19 +432,22 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',1)
                IF (kpp_const_fields%time .lt. 10) THEN
-                  WRITE(restart_time,'(A3,I1)') '000',
+                  WRITE(restart_time,'(A4,I1)') '0000',
      +                 FLOOR(kpp_const_fields%time)
                ELSEIF (kpp_const_fields%time .lt. 100) THEN
-                  WRITE(restart_time,'(A2,I2)') '00',
+                  WRITE(restart_time,'(A3,I2)') '000',
      +                 FLOOR(kpp_const_fields%time)
                ELSEIF (kpp_const_fields%time .lt. 1000) THEN
-                  WRITE(restart_time,'(A1,I3)') '0',
+                  WRITE(restart_time,'(A2,I3)') '00',
+     +                 FLOOR(kpp_const_fields%time)
+               ELSEIF (kpp_const_fields%time .lt. 10000) THEN
+                  WRITE(restart_time,'(A1,I4)') '0',
      +                 FLOOR(kpp_const_fields%time)
                ELSE
-                  WRITE(restart_time,'(I4)') 
+                  WRITE(restart_time,'(I5)') 
      +                 FLOOR(kpp_const_fields%time)
                ENDIF
-               WRITE(restart_outfile,'(A12,A4)') 'KPP.restart.',
+               WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
      +              restart_time
                CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +              restart_outfile)
@@ -538,7 +561,7 @@ c
             IF (L_OUTPUT_INST) THEN
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
-               write(output_file(flen+2:flen+5),'(i4.4)') day_out
+               write(output_file(flen+2:flen+6),'(i5.5)') day_out
                CALL output_close(ncid_out)
 	       ntout_vec_inst(:)=1
 	       ntout_sing_inst(:)=1
@@ -551,7 +574,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF
             IF (L_OUTPUT_MEAN) THEN
-               write(mean_output_file(flen+2:flen+5),'(i4.4)') 
+               write(mean_output_file(flen+2:flen+6),'(i5.5)') 
      &              day_out
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
@@ -568,9 +591,9 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF
             IF (L_OUTPUT_RANGE) THEN
-               write(min_output_file(flen+2:flen+5),'(i4.4)') 
+               write(min_output_file(flen+2:flen+6),'(i5.5)') 
      &              day_out
-               write(max_output_file(flen+2:flen+5),'(i4.4)')
+               write(max_output_file(flen+2:flen+6),'(i5.5)')
      &              day_out
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
@@ -635,18 +658,23 @@ c
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing restart file',1)
          IF (kpp_const_fields%time .lt. 10) THEN
-            WRITE(restart_time,'(A3,I1)') '000',
+            WRITE(restart_time,'(A4,I1)') '0000',
      +           FLOOR(kpp_const_fields%time)
          ELSEIF (kpp_const_fields%time .lt. 100) THEN
-            WRITE(restart_time,'(A2,I2)') '00',
+            WRITE(restart_time,'(A3,I2)') '000',
      +           FLOOR(kpp_const_fields%time)
          ELSEIF (kpp_const_fields%time .lt. 1000) THEN
-            WRITE(restart_time,'(A1,I3)') '0',
+            WRITE(restart_time,'(A2,I3)') '00',
+     +           FLOOR(kpp_const_fields%time)
+         ELSEIF (kpp_const_fields%time .lt. 10000) THEN
+            WRITE(restart_time,'(A1,I4)') '0',
      +           FLOOR(kpp_const_fields%time)
          ELSE
-            WRITE(restart_time,'(I4)') FLOOR(kpp_const_fields%time)
+            WRITE(restart_time,'(I5)') 
+     +           FLOOR(kpp_const_fields%time)
          ENDIF
-         WRITE(restart_outfile,'(A12,A4)') 'KPP.restart.',restart_time
+         WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
+     +        restart_time
          CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +        restart_outfile)
          WRITE(nuout,*) 'KPP : Wrote restart file ',restart_outfile
@@ -803,7 +831,8 @@ c     +     bottom_temp(:)
      &     bottom_temp_period,sal_file,L_UPD_SAL,L_PERIODIC_SAL,
      &     sal_period,ndtupdsal,ocnt_file,L_UPD_OCNT,L_PERIODIC_OCNT,
      &     ocnt_period,ndtupdocnt,L_NO_FREEZE,L_NO_ISOTHERM,
-     &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp
+     &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp,
+     &     L_INTERP_OCNT,ndt_interp_ocnt,L_INTERP_SAL,ndt_interp_sal
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -1114,6 +1143,10 @@ c      ENDIF
          CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
          CALL read_salinity(kpp_3d_fields,kpp_const_fields)
       ENDIF
+c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
+c     before the first time in the input file.
+      IF (L_INTERP_OCNT) L_PERIODIC_OCNT=.TRUE.
+      IF (L_INTERP_SAL) L_PERIODIC_SAL=.TRUE.
 c
 c     We need to initialize the forcing file (for atmospheric fluxes)
 c     only if KPP is not coupled to an atmospheric model.
@@ -1190,8 +1223,8 @@ c
       day_out=int(kpp_const_fields%startt+(kpp_const_fields%dtsec/
      +     ndtocn)*ndt_per_file/spd)
       write(output_file(flen+1:flen+1),'(a)') '_'
-      write(output_file(flen+2:flen+5),'(i4.4)') day_out
-      write(output_file(flen+6:flen+8),'(3A)') '.nc'
+      write(output_file(flen+2:flen+6),'(i5.5)') day_out
+      write(output_file(flen+7:flen+9),'(3A)') '.nc'
 c      
       dtout=kpp_const_fields%dto/kpp_const_fields%spd
       IF (L_OUTPUT_INST) THEN
@@ -1205,8 +1238,8 @@ c
       IF (L_OUTPUT_MEAN) THEN
          flen=INDEX(mean_output_file,' ')-1
          write(mean_output_file(flen+1:flen+1),'(a)') '_'
-         write(mean_output_file(flen+2:flen+5),'(i4.4)') day_out
-         write(mean_output_file(flen+6:flen+14),'(9A)') '_means.nc'         
+         write(mean_output_file(flen+2:flen+6),'(i5.5)') day_out
+         write(mean_output_file(flen+7:flen+15),'(9A)') '_means.nc'         
          WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //mean_output_file
          CALL init_output(mean_output_file,mean_ncid_out,
@@ -1219,8 +1252,8 @@ c
       IF (L_OUTPUT_RANGE) THEN
          flen=INDEX(min_output_file,' ')-1
          write(min_output_file(flen+1:flen+1),'(a)') '_'
-         write(min_output_file(flen+2:flen+5),'(i4.4)') day_out
-         write(min_output_file(flen+6:flen+14),'(9A)') '_min.nc'         
+         write(min_output_file(flen+2:flen+6),'(i5.5)') day_out
+         write(min_output_file(flen+7:flen+13),'(7A)') '_min.nc'         
          WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //min_output_file
          CALL init_output(min_output_file,min_ncid_out,
@@ -1228,8 +1261,8 @@ c
      +        ndt_singout_range,varid_vec_range,varid_sing_range,
      +        zprof_varout_range,.FALSE.,.FALSE.)
          write(max_output_file(flen+1:flen+1),'(a)') '_'
-         write(max_output_file(flen+2:flen+5),'(i4.4)') day_out
-         write(max_output_file(flen+6:flen+14),'(9A)') '_max.nc'    
+         write(max_output_file(flen+2:flen+6),'(i5.5)') day_out
+         write(max_output_file(flen+7:flen+13),'(7A)') '_max.nc'    
            WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //max_output_file
          CALL init_output(max_output_file,max_ncid_out,
@@ -1612,4 +1645,104 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       RETURN
       END
+      
+      SUBROUTINE interp_ocnT(kpp_3d_fields,kpp_const_fields)      
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+#include <relax_3d.com>
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER prev_time,next_time,true_time
+      REAL prev_weight,next_weight,ndays_upd_ocnT
+      REAL, allocatable :: prev_ocnT(:,:),next_ocnT(:,:)
 
+      allocate(prev_ocnT(NPTS,NZP1))
+      allocate(next_ocnT(NPTS,NZP1))
+      true_time=kpp_const_fields%time
+      ndays_upd_ocnT=ndtupdocnT*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+      
+!     Read ocean temperatures for previous time
+      prev_time=FLOOR((true_time+ndays_upd_ocnT/2)/ndays_upd_ocnT)*
+     +     ndays_upd_ocnT-ndays_upd_ocnT*0.5
+      IF (prev_time .lt. 0) THEN
+         prev_weight=(ndays_upd_ocnT-ABS(true_time-prev_time))/
+     +        ndays_upd_ocnT
+         prev_time=prev_time+ocnT_period
+      ELSE
+         prev_weight=(ndays_upd_ocnT-(true_time-prev_time))/
+     +        ndays_upd_ocnT
+      ENDIF
+      WRITE(6,*) 'interp_ocnT : true_time = ',true_time
+      WRITE(6,*) 'interp_ocnT : prev_time = ',prev_time
+      WRITE(6,*) 'interp_ocnT : prev_weight = ',prev_weight
+      kpp_const_fields%time=prev_time
+      CALL READ_OCEAN_TEMPERATURES(kpp_3d_fields,kpp_const_fields)
+      prev_ocnT=kpp_3d_fields%ocnT_clim
+
+!     Read ocean temperatures for next time
+      next_time=prev_time+ndays_upd_ocnT
+      next_weight=1-prev_weight
+      WRITE(6,*) 'interp_ocnT : next_time = ',next_time
+      WRITE(6,*) 'interp_ocnT : next_weight = ',next_weight
+      kpp_const_fields%time=next_time
+      CALL READ_OCEAN_TEMPERATURES(kpp_3d_fields,kpp_const_fields)
+      next_ocnT=kpp_3d_fields%ocnT_clim
+
+      kpp_3d_fields%ocnT_clim=next_ocnT*next_weight+
+     +     prev_ocnT*prev_weight
+      kpp_const_fields%time=true_time
+
+      RETURN
+      END
+
+       SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)      
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+#include <relax_3d.com>
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER prev_time,next_time,true_time
+      REAL prev_weight,next_weight,ndays_upd_sal
+      REAL, allocatable :: prev_sal(:,:),next_sal(:,:)
+
+      allocate(prev_sal(NPTS,NZP1))
+      allocate(next_sal(NPTS,NZP1))
+      true_time=kpp_const_fields%time
+      ndays_upd_sal=ndtupdsal*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+      
+!     Read ocean salinity for previous time
+      prev_time=FLOOR((true_time+ndays_upd_sal/2)/ndays_upd_sal)*
+     +     ndays_upd_sal-ndays_upd_sal*0.5
+      IF (prev_time .lt. 0) THEN
+         prev_weight=(ndays_upd_sal-ABS(true_time-prev_time))/
+     +        ndays_upd_sal
+         prev_time=prev_time+sal_period
+      ELSE
+         prev_weight=(ndays_upd_sal-(true_time-prev_time))/
+     +        ndays_upd_sal
+      ENDIF
+      WRITE(6,*) 'interp_sal : true_time = ',true_time
+      WRITE(6,*) 'interp_sal : prev_time = ',prev_time
+      WRITE(6,*) 'interp_sal : prev_weight = ',prev_weight
+      kpp_const_fields%time=prev_time
+      CALL READ_SALINITY(kpp_3d_fields,kpp_const_fields)
+      prev_sal=kpp_3d_fields%sal_clim
+
+!     Read ocean salinity for next time
+      next_time=prev_time+ndays_upd_sal
+      next_weight=1-prev_weight
+      WRITE(6,*) 'interp_sal : next_time = ',next_time
+      WRITE(6,*) 'interp_sal : next_weight = ',next_weight
+      kpp_const_fields%time=next_time
+      CALL READ_SALINITY(kpp_3d_fields,kpp_const_fields)
+      next_sal=kpp_3d_fields%sal_clim
+
+      kpp_3d_fields%sal_clim=next_sal*next_weight+
+     +     prev_sal*prev_weight
+      kpp_const_fields%time=true_time
+
+      RETURN
+      END
+      

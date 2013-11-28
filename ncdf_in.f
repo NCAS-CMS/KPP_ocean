@@ -2092,7 +2092,7 @@ c
       INTEGER nuout,nuerr,start(4),count(4)
       INTEGER ix,iy,iz,ipoint,ocnT_varid,status,lat_varid,lon_varid,
      +     z_varid,z_dimid,time_varid,ocnT_ncid,k,lat_dimid,lon_dimid,
-     +     time_dimid,nlon_file,nlat_file,ntime_file,nz_file
+     +     time_dimid,nlon_file,nlat_file,ntime_file,nz_file,prev_start
 
       PARAMETER (nuout=6,nuerr=0)
       REAL*4, allocatable :: ocnT_in(:,:,:,:),latitudes(:),
@@ -2136,7 +2136,7 @@ c
       WRITE(6,*) kpp_3d_fields%dlon(1),kpp_3d_fields%dlat(1)
       CALL determine_netcdf_boundaries(ocnT_ncid,'ocean temp clim',
      &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
-     +     kpp_3d_fields%dlat(1),start(1),
+     &     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 
       status=NF_INQ_VARID(ocnT_ncid,'temperature',ocnT_varid)
@@ -2144,11 +2144,9 @@ c
       
       ndays_upd_ocnT = ndtupdocnT*kpp_const_fields%dto/
      +     kpp_const_fields%spd
-c      WRITE(nuout,*) ndays_upd_ocnT,FLOOR(time)*NINT(kpp_const_fields%spd),
-c     &     ndtupdocnT*NINT(dto),0.5*dto/spd*ndtupdocnT
       ocnT_time=(ndays_upd_ocnT)*
      &     (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
-     +     (ndtupdocnT*NINT(kpp_const_fields%dto)))+
+     &     (ndtupdocnT*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdocnT)
       WRITE(nuout,*) ocnT_time,last_timein
       
@@ -2170,6 +2168,7 @@ c     &     ndtupdocnT*NINT(dto),0.5*dto/spd*ndtupdocnT
       write(nuout,*) 'Reading ocean temperature for time ',ocnT_time
       start(4)=NINT((ocnT_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdocnT))+1
+
       write(nuout,*) 'Ocean temperature values are being read from ',
      &     'position',start(4)
       status=NF_GET_VAR1_REAL(ocnT_ncid,time_varid,start(4),time_in)
