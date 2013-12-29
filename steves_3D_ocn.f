@@ -335,7 +335,8 @@ c
 c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
-!$OMP& SHARED(kpp_timer) PRIVATE(trans_timer_name,phys_timer_name,tid)
+!$OMP& SHARED(kpp_timer,ocnT_file,sal_file) 
+!$OMP& PRIVATE(trans_timer_name,phys_timer_name,tid)
          tid=OMP_GET_THREAD_NUM()
          WRITE(trans_timer_name,'(A17,I2)') 'KPP 3D/2D thread ',tid
          WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',tid
@@ -345,7 +346,7 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
          WRITE(phys_timer_name,'(A21)') 'KPP Physics thread 01'
 #endif
          DO ipt=1,npts
-            IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+	    IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
                CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
                CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
                CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
@@ -382,6 +383,7 @@ c     NPK 17/5/13.
          ENDDO
 #ifdef OPENMP
 !$OMP END DO
+c	 WRITE(6,*) 'OpenMP thread ',tid,' finished main DO loop'
 !$OMP END PARALLEL
 #endif
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)

@@ -551,7 +551,7 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             DO ix=ifirst,ilast
                DO iy=jfirst,jlast
                   ipt=(iy-1)*NX_GLOBE+ix
-                  temp_1d((ix-ifirst)*NY+iy-jfirst+1)=
+                  temp_1d((iy-jfirst)*NX+ix-ifirst+1)=
      +                 kpp_3d_fields%cplwght(ipt)                     
                ENDDO
             ENDDO

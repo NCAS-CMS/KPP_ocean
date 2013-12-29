@@ -1926,7 +1926,7 @@ c
          DO iy=1,NY
             ipoint=(iy-1)*NX+ix
             bottom_temp(ipoint) = var_in(ix,iy,1)
-            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
+c            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
          ENDDO
       ENDDO     
 

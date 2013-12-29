@@ -525,8 +525,18 @@ c     Set cplwght equal to one (if not already set from NetCDF file)
 c     to obtain model SSTs.
                kpp_3d_fields%cplwght(ipoint_globe) = 
      +              MIN(kpp_3d_fields%cplwght(ipoint_globe),1.)
-c               WRITE(6,*) 'ix=',ix,'jy=',jy,
-c     +              'cplwght=',kpp_3d_fields%cplwght(ipoint_globe)
+               ipoint=NX*jyy+ixx
+               IF (kpp_3d_fields%L_OCEAN(ipoint) .and.
+     +              kpp_3d_fields%ocdepth(ipoint) .gt. 100) THEN
+                  kpp_3d_fields%L_OCEAN(ipoint)=.FALSE.
+                  kpp_3d_fields%cplwght(ipoint_globe)=0
+                  WRITE(6,*) 'Overwriting coupling mask at'
+                  WRITE(6,*) 'ixx=',ixx,'jyy=',jyy,'ipoint_globe=',
+     +                 ipoint_globe,'ipoint=',ipoint,'cplwght=',
+     +                 kpp_3d_fields%cplwght(ipoint_globe),
+     +                 'ocdepth=',kpp_3d_fields%ocdepth(ipoint),
+     +                 'L_OCEAN=',kpp_3d_fields%L_OCEAN(ipoint)
+               ENDIF
             ELSE
 c     Point is outside coupling domain.
 c     Set cplwght equal to a negative value to obtain
