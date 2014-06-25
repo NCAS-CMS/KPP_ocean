@@ -443,7 +443,7 @@ c         ENDDO
          call read_par(kpp_3d_fields,
      &        ncid_landsea,'lsm',1,1,landsea)
          DO ipt=1,npts
-            IF (landsea(ipt) .GE. 0.5) THEN
+            IF (landsea(ipt) .EQ. 1.0) THEN
                kpp_3d_fields%L_OCEAN(ipt)=.FALSE.
             ELSE
                kpp_3d_fields%L_OCEAN(ipt)=.TRUE.

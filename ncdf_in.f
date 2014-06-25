@@ -1423,14 +1423,14 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
 
 #ifndef COUPLE
       CALL determine_netcdf_boundaries(ncid,'SST climatology',
-     &     'latitude','longitude','time',kpp_3d_fields%dlon(1),
+     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 #else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'time',time_varid)
+      status=NF_INQ_VARID(ncid,'t',time_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMID(ncid,'time',time_dimid)
+      status=NF_INQ_DIMID(ncid,'t',time_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ncid,time_dimid,tmp_name,ntime_file)
       status=NF_GET_VAR1_REAL(ncid,
@@ -1581,14 +1581,14 @@ c     longitude and time.
 
 #ifndef COUPLE
       CALL determine_netcdf_boundaries(ncid,'ice climatology',
-     &     'latitude','longitude','time',kpp_3d_fields%dlon(1),
+     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 #else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'time',time_varid)
+      status=NF_INQ_VARID(ncid,'t',time_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMID(ncid,'time',time_dimid)
+      status=NF_INQ_DIMID(ncid,'t',time_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ncid,time_dimid,tmp_name,ntime_file)
       status=NF_GET_VAR1_REAL(ncid,
@@ -1746,14 +1746,14 @@ c     Open the netCDF file and find the correct time.
 
 #ifndef COUPLE
       CALL determine_netcdf_boundaries(ncid,'current climatology',
-     &     'latitude','longitude','time',kpp_3d_fields%dlon(1),
+     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 #else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'time',time_varid)
+      status=NF_INQ_VARID(ncid,'t',time_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMID(ncid,'time',time_dimid)
+      status=NF_INQ_DIMID(ncid,'t',time_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ncid,time_dimid,tmp_name,ntime_file)
       status=NF_GET_VAR1_REAL(ncid,
@@ -1862,7 +1862,7 @@ c     boundaries in the input file.
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       CALL determine_netcdf_boundaries(ncid,'bottom temp climatology',
-     &     'latitude','longitude','time',kpp_3d_fields%dlon(1),
+     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 

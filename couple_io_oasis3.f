@@ -273,15 +273,26 @@ c     Point is inside the coupling domain; set to weighted value
             ENDIF
             ice(ipoint_globe)=ice_in(ix,jy,1)
 c
-c     If there are no data available for the depth of ice, then
-c     assume a depth of 2 metres.  This is based on the default
-c     behavior in HadGEM3-A when running with AMIP-2 sea ice.
-c
-c     NPK 16/12/09 - R3
+c     If the user does not provide a climatological ice depth,
+c     then set the ice depth to be 2 metres.  Note that we set
+c     the depth to be 2 * the ice concentration because HadGEM3-A
+c     divides the provided depth by the ice concentration to obtain
+c     the mean depth over the ice-covered portion of the gridbox, 
+c     assuming that the ocean model provides the mean depth over the
+c     the entire gridbox.
+c     
+c     The previous, erroneous behaviour of setting our icedepth
+c     variable to 2m can be restored by setting L_BAD_ICE_DEPTH.
 c            
+c     NPK updated 25/6/14.
+c
             IF (.NOT. L_CLIM_ICE_DEPTH) THEN
                IF (ice(ipoint_globe) .GE. 0) THEN
-                  icedepth(ipoint_globe)=2.00
+                  IF (.NOT. L_BAD_ICE_DEPTH) THEN
+                     icedepth(ipoint_globe)=2.00*ice(ipoint_globe)
+                  ELSE
+                     icedepth(ipoint_globe)=2.
+                  ENDIF
                ELSE
                   icedepth(ipoint_globe)=0.00
                ENDIF

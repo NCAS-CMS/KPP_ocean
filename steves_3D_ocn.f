@@ -77,9 +77,9 @@ c into the main program.  NPK 17/08/10 - R3
 !$OMP END PARALLEL     
       WRITE(6,*) 'Initialising ',nthreads,'timers'
       IF (nthreads .eq. 0) THEN 
-         WRITE(6,*) 'nthreads = 0, resetting nthreads = 32'
-         nthreads=32
-         CALL OMP_SET_NUM_THREADS(32)
+         WRITE(6,*) 'nthreads = 0, resetting nthreads = 24'
+         nthreads=24
+         CALL OMP_SET_NUM_THREADS(24)
       ENDIF
       DO k=0,nthreads-1
         WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',k
@@ -1006,7 +1006,8 @@ c     Initialize and read the times namelist
       L_UPD_CLIMICE=.FALSE.
       L_CLIMICE=.FALSE.
       L_CLIMSST=.FALSE.
-      L_CLIMCURR=.FALSE.      
+      L_CLIMCURR=.FALSE. 
+      L_BAD_ICE_DEPTH=.FALSE.
       ifirst=1
       ilast=nx
       jfirst=1
@@ -1331,17 +1332,41 @@ c     Inputs
 c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=50) :: restart_outfile
+      CHARACTER(LEN=17) :: restart_outfile
 
-      OPEN(31,FILE=restart_outfile,status='unknown',form='unformatted')
-      WRITE(31) kpp_const_fields%time,kpp_3d_fields%U,kpp_3d_fields%X,
-     +     kpp_3d_fields%CP,
-     +     kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
-     +     kpp_3d_fields%Sref,kpp_3d_fields%SSref,kpp_3d_fields%Ssurf,
-     +     kpp_3d_fields%Tref,
-     &     kpp_3d_fields%old,kpp_3d_fields%new,kpp_3d_fields%Us,
-     +     kpp_3d_fields%Xs,kpp_3d_fields%hmixd
-      CLOSE(31)
+c     When the number of points in the model (NX*NY*NZP1) becomes
+c     quite large, we exceed the maximum size for Fortran unformatted
+c     binary files on certain machines.  The IF test below
+c     works around this by splitting the restart file in two.
+c     %Us and %Xs are the largest fields, so they get their own file.
+
+      WRITE(6,*) 'Total number of points = ',REAL(NPTS)*REAL(NZP1)
+      IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN
+         OPEN(31,FILE=restart_outfile,status='unknown',
+     +        form='unformatted')
+         WRITE(31) kpp_const_fields%time,kpp_3d_fields%U,
+     +        kpp_3d_fields%X,kpp_3d_fields%CP,
+     +        kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
+     +        kpp_3d_fields%Sref,kpp_3d_fields%SSref,
+     +        kpp_3d_fields%Ssurf,
+     +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new,
+     +        kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
+         CLOSE(31)
+      ELSE
+         OPEN(31,FILE=restart_outfile//'.1',status='unknown',
+     +        form='unformatted')
+         WRITE(31) kpp_const_fields%time,kpp_3d_fields%U,
+     +        kpp_3d_fields%X,kpp_3d_fields%CP,
+     +        kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
+     +        kpp_3d_fields%Sref,kpp_3d_fields%SSref,
+     +        kpp_3d_fields%Ssurf,
+     +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new
+         CLOSE(31)
+         OPEN(32,FILE=restart_outfile//'.2',status='unknown',
+     +        form='unformatted')
+         WRITE(32) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
+         CLOSE(32)
+      ENDIF
 
       RETURN
       END
@@ -1359,20 +1384,43 @@ c     Inputs
 c     
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=40) :: restart_infile
+      CHARACTER(LEN=17) :: restart_infile
       
-      OPEN(30,FILE=restart_infile,status='unknown',form='unformatted')
-      READ(30) kpp_const_fields%time,kpp_3d_fields%U,kpp_3d_fields%X,
-     +     kpp_3d_fields%CP,kpp_3d_fields%rho,kpp_3d_fields%hmix,
-     +     kpp_3d_fields%kmix,kpp_3d_fields%Sref,kpp_3d_fields%SSref,
-     +     kpp_3d_fields%Ssurf,kpp_3d_fields%Tref,
-     &     kpp_3d_fields%old,kpp_3d_fields%new,kpp_3d_fields%Us,
-     +     kpp_3d_fields%Xs,kpp_3d_fields%hmixd
-      CLOSE(30)
+      WRITE(6,*) 'Total number of points = ',REAL(NPTS)*REAL(NZP1)
+      IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN   
+         OPEN(30,FILE=restart_infile,status='unknown',
+     +        form='unformatted')
+         READ(30) kpp_const_fields%time,kpp_3d_fields%U,
+     +        kpp_3d_fields%X,kpp_3d_fields%CP,
+     +        kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
+     +        kpp_3d_fields%Sref,kpp_3d_fields%SSref,
+     +        kpp_3d_fields%Ssurf,
+     +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new,
+     +        kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
+         CLOSE(30)
+      ELSE
+         OPEN(30,FILE=restart_infile//'.1',status='unknown',
+     +        form='unformatted')
+         READ(30) kpp_const_fields%time,kpp_3d_fields%U,
+     +        kpp_3d_fields%X,kpp_3d_fields%CP,
+     +        kpp_3d_fields%rho,kpp_3d_fields%hmix,kpp_3d_fields%kmix,
+     +        kpp_3d_fields%Sref,kpp_3d_fields%SSref,
+     +        kpp_3d_fields%Ssurf,
+     +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new
+         CLOSE(30)
+         OPEN(31,FILE=restart_infile//'.2',status='unknown',
+     +        form='unformatted')
+         READ(31) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
+         CLOSE(31)
+      ENDIF
 
       IF (abs(kpp_const_fields%time-kpp_const_fields%startt) .GT. 1.e-4) 
      +     THEN 
-         write(nuerr,*) 'Start time doesn''t match the restart record'
+         WRITE(nuerr,*) 'Start time doesn''t match the restart record'
+         WRITE(nuerr,*) 'Start time in restart record = ',
+     +        kpp_const_fields%time
+         WRITE(nuerr,*) 'Start time in namelist = ',
+     +        kpp_const_fields%startt
          CALL MIXED_ABORT
       ENDIF
 
@@ -1698,7 +1746,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       RETURN
       END
 
-       SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)      
+      SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
 #include <kpp_3d_type.com>
 #include <relax_3d.com>
