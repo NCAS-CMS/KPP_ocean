@@ -1049,8 +1049,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
      +              SCLR_mean(j,i)=vec(j)/ndt_singout_mean(ivar)+
      +              SCLR_mean(j,i)
             ENDDO
+            i=i+1
          ENDIF
-         i=i+1      
       ENDDO
       deallocate(field)
       deallocate(vec)
