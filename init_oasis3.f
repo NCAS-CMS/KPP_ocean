@@ -144,9 +144,9 @@ c
          ENDIF
       ENDDO
 
+#ifdef UM78
       cl_read(1)='HEATFLUX'
-      cl_read(2)='SOLAR'
-!      cl_read(3)='RUNOFF'
+      cl_read(2)='PEN_SOL'
       cl_read(3)='WME'
       cl_read(4)='TRAIN'
       cl_read(5)='TSNOW'
@@ -156,6 +156,18 @@ c
       cl_read(9)='BMLT01'
       cl_read(10)='TAUX'
       cl_read(11)='TAUY'
+#endif
+#ifdef UM85
+      cl_read(1)='HEATFLUX'
+      cl_read(2)='PEN_SOL'
+      cl_read(3)='TRAIN'
+      cl_read(4)='TSNOW'
+      cl_read(5)='EVAP2D'
+      cl_read(6)='TMLT01'
+      cl_read(7)='BMLT01'
+      cl_read(8)='TAUX'
+      cl_read(9)='TAUY'
+#endif
 
       DO i=1,jpfldin
          CALL prism_def_var_proto(il_var_id_in(i),cl_read(i),

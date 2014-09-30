@@ -98,6 +98,13 @@ c
 #else
                CALL TWOD_GLOBAL_ONED_REGIONAL(temporary,solar)
 #endif
+	    CASE('PEN_SOL')
+#ifdef TOYCLIM
+               CALL ONED_GLOBAL_ONED_REGIONAL(temporary,solar)
+#else
+               CALL TWOD_GLOBAL_ONED_REGIONAL(temporary,solar)
+#endif
+
             CASE('TAUX')
 #ifdef TOYCLIM
                CALL ONED_GLOBAL_ONED_REGIONAL(temporary,ustress)
