@@ -80,6 +80,8 @@ SUBROUTINE mckpp_initialize_constants(kpp_const_fields)
   kpp_const_fields%ndt_varout_range=ndt_varout_range
   kpp_const_fields%ndt_singout_range=ndt_singout_range
   kpp_const_fields%zprof_varout_range=zprof_varout_range
+  kpp_const_fields%zprofs(:,1:N_ZPROFS_MAX)=zprofs(:,1:N_ZPROFS_MAX)
+  WRITE(6,*) kpp_const_fields%zprofs(:,1)
   
   kpp_const_fields%sst_file=sstin_file
   kpp_const_fields%ndtupdsst=ndtupdsst
@@ -94,7 +96,8 @@ SUBROUTINE mckpp_initialize_constants(kpp_const_fields)
   kpp_const_fields%L_PERIODIC_CLIMICE=L_PERIODIC_CLIMICE
   kpp_const_fields%climice_period=climice_period
   kpp_const_fields%L_BAD_ICE_DEPTH=L_BAD_ICE_DEPTH
-  
+  kpp_const_fields%ndtupdice=ndtupdice
+
   kpp_const_fields%L_CLIMCURR=L_CLIMCURR
   kpp_const_fields%L_UPD_CLIMCURR=L_UPD_CLIMCURR
   kpp_const_fields%ndtupdcurr=ndtupdcurr

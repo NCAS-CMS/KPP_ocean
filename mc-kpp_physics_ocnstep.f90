@@ -202,7 +202,8 @@ SUBROUTINE mckpp_physics_ocnstep(kpp_1d_fields,kpp_const_fields)
      IF (kpp_1d_fields%reset_flag .gt. comp_iter_max) THEN
         WRITE(6,*) 'Failed to find a reasonable solution in the semi-implicit integration after ',&
              comp_iter_max,' iterations.'
-        WRITE(6,*) 'Final profiles at point lat = ',kpp_1d_fields%dlat,' lon =',kpp_1d_fields%dlon,': '
+        WRITE(6,*) 'Final profiles at point lat = ',kpp_1d_fields%dlat,' lon =',kpp_1d_fields%dlon,&
+             ' ipt = ',kpp_1d_fields%point,':'
         WRITE(6,*) 'U = ',kpp_1d_fields%U(:,1)
         WRITE(6,*) 'V = ',kpp_1d_fields%U(:,2)
         WRITE(6,*) 'T = ',kpp_1d_fields%X(:,1)

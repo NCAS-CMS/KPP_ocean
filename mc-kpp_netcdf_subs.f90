@@ -95,15 +95,16 @@ SUBROUTINE MCKPP_READ_PAR (kpp_3d_fields,ncid,vname,npars,nt,par_out)
   
   CHARACTER(LEN=*) vname
   INTEGER ncid,npars,nt
-  REAL par_out(npts,npars,nt)
-  REAL*4,allocatable :: par_in(:,:,:,:),x_in(:),y_in(:)
+  REAL par_out(npts)
+  !REAL*4,allocatable :: par_in(:,:,:,:),x_in(:),y_in(:)
+  REAL*4 :: par_in(nx,ny,npars,nt),x_in(NX_GLOBE),y_in(NY_GLOBE)
 
   INTEGER start(4),count(4),ix,iy,ipt,ipar,ixx,iyy
   INTEGER status,dimid,varid
   
-  allocate(par_in(nx,ny,npars,nt))
-  allocate(x_in(NX_GLOBE))
-  allocate(y_in(NY_GLOBE))
+  !allocate(par_in(nx,ny,npars,nt))
+  !allocate(x_in(NX_GLOBE))
+  !allocate(y_in(NY_GLOBE))
   
   status=NF_INQ_DIMID(ncid,'longitude',dimid)
   IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
@@ -128,7 +129,7 @@ SUBROUTINE MCKPP_READ_PAR (kpp_3d_fields,ncid,vname,npars,nt,par_out)
   IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
   iyy=1
   DO WHILE (abs(y_in(iyy)-kpp_3d_fields%dlat(1)) .GT. 1.e-3)
-     WRITE(6,*) y_in(iyy),kpp_3d_fields%dlat(1)
+     !WRITE(6,*) y_in(iyy),kpp_3d_fields%dlat(1)
      iyy=iyy+1
   ENDDO
   start(2)=iyy
@@ -159,7 +160,7 @@ SUBROUTINE MCKPP_READ_PAR (kpp_3d_fields,ncid,vname,npars,nt,par_out)
      DO ix=1,nx
         ipt=(iy-1)*nx+ix
         DO ipar=1,npars
-           par_out(ipt,ipar,1)=par_in(ix,iy,ipar,1)
+           par_out(ipt)=par_in(ix,iy,ipar,1)
         ENDDO
      ENDDO
   ENDDO

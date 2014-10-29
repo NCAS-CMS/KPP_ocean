@@ -1,6 +1,6 @@
       INTEGER NZ,NZM1,NZP1,NDIM,NX,NY
       INTEGER*8 npts
-      PARAMETER(NZ      = 99  , NZM1 = NZ-1 , NZP1 = NZ+1 )
+      PARAMETER(NZ      = 59  , NZM1 = NZ-1 , NZP1 = NZ+1 )
 #ifdef CFS
       PARAMETER(NDIM  =  1 , NX = 87,  NY = 34, NPTS = NX * NY )
 #else
@@ -11,7 +11,7 @@
       PARAMETER(NDIM = 1, NX = 192, NY = 112, NPTS = NX*NY)
 !     PARAMETER(NDIM = 1, NX = 81, NY = 52, NPTS = NX*NY)
 #else
-      PARAMETER(NDIM  =  1 , NX = 192, NY = 112, NPTS = NX * NY )
+      PARAMETER(NDIM  =  1 , NX = 129, NY = 73, NPTS = NX * NY )
 !      PARAMETER(NDIM = 1, NX = 10, NY = 10, NPTS = NX*NY)
 #endif /*OASIS3*/
 #endif /*OASIS2*/
@@ -62,7 +62,7 @@
        PARAMETER(NX_GLOBE=192, NY_GLOBE=145)
 !     PARAMETER (NX_GLOBE=182, NY_GLOBE=152)
 #else
-       PARAMETER (NX_GLOBE=192, NY_GLOBE=145)
+       PARAMETER (NX_GLOBE=288, NY_GLOBE=217)
 #endif /*OASIS3*/
 #endif /*OASIS2*/
 #endif /*CFS*/

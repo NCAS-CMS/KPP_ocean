@@ -81,7 +81,7 @@
             
       common /output/ restart_outfile,&
            l_restartw,l_output_mean,l_output_inst,l_output_range,&
-           ndt_per_restart,restart_time,&
+           ndt_per_restart,restart_time,zprofs,&
            ndt_varout_inst,ndt_singout_inst,zprof_varout_inst,&
            ndt_varout_mean,ndt_singout_mean,zprof_varout_mean,&
            ndt_varout_range,ndt_singout_range,zprof_varout_range           

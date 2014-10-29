@@ -103,7 +103,7 @@
           talpha(0:NZP1tmax),sbeta(0:NZP1tmax),& ! Not needed outside physics
           reset_flag,dampu_flag,dampv_flag,freeze_flag
      integer :: old,new,jerlov,&
-          nmodeadv(2),modeadv(maxmodeadv,2)
+          nmodeadv(2),modeadv(maxmodeadv,2),point
      logical :: l_ocean,l_initflag,comp_flag
   ENDTYPE kpp_1D_type
   

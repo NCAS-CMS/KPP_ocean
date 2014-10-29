@@ -299,8 +299,7 @@
     forcing_file='1D_ocean_forcing.nc'
     ocnT_file='none'
     READ(75,NAME_FORCING)
-    write(nuout,*) 'KPP : Read Namelist FORCING'
-    WRITE(6,*) 'L_REST=',L_REST,'after namelist'
+    write(nuout,*) 'KPP : Read Namelist FORCING'    
     IF (L_FCORR_WITHZ .AND. L_FCORR) THEN
        WRITE(nuerr,*) 'KPP : L_FCORR and L_FCORR_WITHZ are '&
             //'mutually exclusive.  Choose one or neither.'
@@ -330,44 +329,7 @@
     IF (L_DAMP_CURR) THEN
        kpp_const_fields%dt_uvdamp=dtuvdamp
     ENDIF
-
-    IF (L_CLIMSST) CALL MCKPP_READ_SST(kpp_3d_fields,kpp_const_fields)
-    IF (L_CLIMICE) CALL MCKPP_READ_ICE(kpp_3d_fields,kpp_const_fields)
-    !IF (L_CLIMCURR) CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
-    IF (L_FCORR_WITHZ) CALL MCKPP_READ_FCORR_3D(kpp_3d_fields,kpp_const_fields)
-    IF (L_FCORR) CALL MCKPP_READ_FCORR_2D(kpp_3d_fields)
-    IF (L_SFCORR_WITHZ) CALL MCKPP_READ_SFCORR_3D(kpp_3d_fields,kpp_const_fields)
-    IF (L_SFCORR) CALL MCKPP_READ_SFCORR_2D(kpp_3d_fields)
-    IF (L_VARY_BOTTOM_TEMP) CALL MCKPP_READ_TEMPERATURES_BOTTOM(kpp_3d_fields,kpp_const_fields) !,bottom_temp)
-    IF (L_RESTART) THEN
-       CALL MCKPP_RESTART_IO_READ(kpp_3d_fields,kpp_const_fields,restart_infile)
-    ELSE
-       CALL MCKPP_INITIALIZE_OCEAN_PROFILES(kpp_3d_fields,kpp_const_fields)
-       write(nuout,*) 'KPP : Temperature, salinity and currents have been initialized.'
-       IF (L_UPD_BOTTOM_TEMP) CALL MCKPP_PHYSICS_OVERRIDES_BOTTOMTEMP(kpp_3d_fields,kpp_const_fields)
-    ENDIF
-    CALL MCKPP_INITIALIZE_FLUXES_VARIABLES(kpp_3d_fields)
-    IF (L_RELAX_SAL) CALL MCKPP_READ_SALINITY_3D(kpp_3d_fields,kpp_const_fields)
-    IF (L_RELAX_OCNT) CALL MCKPP_READ_TEMPERATURES_3D(kpp_3d_fields,kpp_const_fields)
-    IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL .AND. .NOT. L_RELAX_OCNT) THEN
-       CALL MCKPP_READ_TEMPERATURES_3D(kpp_3d_fields,kpp_const_fields)
-       CALL MCKPP_READ_SALINITY_3D(kpp_3d_fields,kpp_const_fields)
-    ENDIF
-    ! Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
-    ! before the first time in the input file.
-    IF (L_INTERP_OCNT) L_PERIODIC_OCNT=.TRUE.
-    IF (L_INTERP_SAL) L_PERIODIC_SAL=.TRUE.
-
-    ! We need to initialize the forcing file (for atmospheric fluxes)
-    ! only if KPP is not coupled to an atmospheric model.
-    ! NPK June 2009 - R2
-
-#ifndef COUPLE
-    kpp_const_fields%forcing_file=forcing_file
-    IF (L_FLUXDATA) THEN
-       CALL MCKPP_INITIALIZE_FLUXES_FILE(kpp_const_fields)       
-    ENDIF
-#endif
+            
     ! Initialize and read the output name list
     ndt_varout_inst(:)=0
     ndt_varout_mean(:)=0
@@ -405,14 +367,61 @@
 #endif /*COUPLE*/
     READ(75,NAME_OUTPUT)
     write(nuout,*) 'Read Namelist OUTPUT'    
-
+    
     ! Call routine to copy constants and logicals needed for ocean
     ! physics into the kpp_const_fields derived type.  Added for 
     ! compatability with OpenMP DEFAULT(private). NPK 8/2/13
-    CALL mckpp_initialize_constants(kpp_const_fields)    
- 
-    !!! BEYOND THIS POINT, ALL VALUES USED IN OTHER PARTS OF THE CODE
-    !!! MUST BE A MEMBER OF A DERIVED TYPE OR INCLUDED IN A PARAMETER FILE.
+    CALL mckpp_initialize_constants(kpp_const_fields)
+
+!!! BEYOND THIS POINT, ALL VALUES USED IN OTHER PARTS OF THE CODE
+!!! MUST BE A MEMBER OF A DERIVED TYPE OR INCLUDED IN A PARAMETER FILE.
+    
+    IF (L_CLIMSST) THEN 
+       WRITE(6,*) 'MCKPP_INITIALIZE: Calling MCKPP_READ_SST'
+       CALL MCKPP_READ_SST(kpp_3d_fields,kpp_const_fields)
+       WRITE(6,*) 'MCKPP_INITIALIZE: Returned from MCKPP_READ_SST'
+    ENDIF
+    IF (L_CLIMICE) CALL MCKPP_READ_ICE(kpp_3d_fields,kpp_const_fields)
+    !IF (L_CLIMCURR) CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
+    IF (L_FCORR_WITHZ) THEN 
+       WRITE(6,*) 'MCKPP_INITIALIZE: Calling MCKPP_READ_FCORR_3D'
+       CALL MCKPP_READ_FCORR_3D(kpp_3d_fields,kpp_const_fields)
+       WRITE(6,*) 'MCKPP_INITIALIZE: Returned from MCKPP_READ_FCORR_3D'
+    ENDIF
+    IF (L_FCORR) CALL MCKPP_READ_FCORR_2D(kpp_3d_fields)
+    IF (L_SFCORR_WITHZ) CALL MCKPP_READ_SFCORR_3D(kpp_3d_fields,kpp_const_fields)
+    IF (L_SFCORR) CALL MCKPP_READ_SFCORR_2D(kpp_3d_fields)
+    IF (L_VARY_BOTTOM_TEMP) CALL MCKPP_READ_TEMPERATURES_BOTTOM(kpp_3d_fields,kpp_const_fields) !,bottom_temp)
+    IF (L_RESTART) THEN
+       CALL MCKPP_RESTART_IO_READ(kpp_3d_fields,kpp_const_fields,restart_infile)
+    ELSE
+       WRITE (6,*) 'MCKPP_INITIALIZE: Calling MCKPP_INITIALIZE_OCEAN_PROFILES'
+       CALL MCKPP_INITIALIZE_OCEAN_PROFILES(kpp_3d_fields,kpp_const_fields)
+       WRITE (6,*) 'MCKPP_INITIALIZE: Returned from MCKPP_INITIALIZE_OCEAN_PROFILES'
+       IF (L_UPD_BOTTOM_TEMP) CALL MCKPP_PHYSICS_OVERRIDES_BOTTOMTEMP(kpp_3d_fields,kpp_const_fields)
+    ENDIF
+    CALL MCKPP_INITIALIZE_FLUXES_VARIABLES(kpp_3d_fields)
+    IF (L_RELAX_SAL) CALL MCKPP_READ_SALINITY_3D(kpp_3d_fields,kpp_const_fields)
+    IF (L_RELAX_OCNT) CALL MCKPP_READ_TEMPERATURES_3D(kpp_3d_fields,kpp_const_fields)
+    IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL .AND. .NOT. L_RELAX_OCNT) THEN
+       CALL MCKPP_READ_TEMPERATURES_3D(kpp_3d_fields,kpp_const_fields)
+       CALL MCKPP_READ_SALINITY_3D(kpp_3d_fields,kpp_const_fields)
+    ENDIF
+    ! Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
+    ! before the first time in the input file.
+    IF (L_INTERP_OCNT) L_PERIODIC_OCNT=.TRUE.
+    IF (L_INTERP_SAL) L_PERIODIC_SAL=.TRUE.
+
+    ! We need to initialize the forcing file (for atmospheric fluxes)
+    ! only if KPP is not coupled to an atmospheric model.
+    ! NPK June 2009 - R2
+
+#ifndef COUPLE
+    kpp_const_fields%forcing_file=forcing_file
+    IF (L_FLUXDATA) THEN
+       CALL MCKPP_INITIALIZE_FLUXES_FILE(kpp_const_fields)       
+    ENDIF
+#endif
     
     kpp_const_fields%ntout_vec_inst(:)=1
     kpp_const_fields%ntout_sing_inst(:)=1
@@ -423,6 +432,7 @@
 
     kpp_const_fields%zprofs_mask(:,0)=.TRUE.
     kpp_const_fields%zprofs_mask(:,1:N_ZPROFS_MAX)=.FALSE.
+
     kpp_const_fields%zprofs_nvalid(0)=NZP1
     DO i=1,N_ZPROFS_MAX
        j=1

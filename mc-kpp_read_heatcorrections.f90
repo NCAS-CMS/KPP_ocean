@@ -83,7 +83,7 @@ SUBROUTINE MCKPP_READ_FCORR_2D(kpp_3d_fields,kpp_const_fields)
 END SUBROUTINE MCKPP_READ_FCORR_2D
 
 SUBROUTINE MCKPP_READ_FCORR_3D(kpp_3d_fields,kpp_const_fields)
-        
+  
   IMPLICIT NONE
   INTEGER nuout,nuerr,start(4),count(4)
   INTEGER ix,iy,iz,ipoint,fcorr_varid,status,lat_varid,lon_varid,z_varid,z_dimid,time_varid,&
@@ -103,11 +103,13 @@ SUBROUTINE MCKPP_READ_FCORR_3D(kpp_3d_fields,kpp_const_fields)
   ! Read in a NetCDF file containing a 
   ! time-varying flux correction at every model vertical level.
   ! Frequency of read is controlled by ndtupdfcorr in the namelist
-  ! NPK 12/02/08  
+  ! NPK 12/02/08
   allocate(fcorr_in(NX,NY,NZP1,1))
   allocate(longitudes(NX_GLOBE))
   allocate(latitudes(NY_GLOBE))
   allocate(z(NZP1))
+  
+  WRITE(nuout,*) 'MCKPP_READ_FCORR_3D: Opening flux-correction file ',kpp_const_fields%fcorr_file
   status=NF_OPEN(kpp_const_fields%fcorr_file,0,fcorr_ncid)
   IF (status.NE.NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
   WRITE(nuout,*) 'Opened flux-correction input file ',fcorr_ncid
@@ -130,7 +132,8 @@ SUBROUTINE MCKPP_READ_FCORR_3D(kpp_3d_fields,kpp_const_fields)
      IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
      WRITE(nuout,*) 'Read in depths from the flux-correction input file'
   ENDIF
-
+  
+  WRITE(6,*) 'MCKPP_READ_FCORR_3D: Calling MCKPP_DETERMINE_NETCDF_BOUNDARIES'
   CALL MCKPP_DETERMINE_NETCDF_BOUNDARIES(fcorr_ncid,'flux correction','latitude','longitude',&
        't',kpp_3d_fields%dlon(1),kpp_3d_fields%dlat(1),start(1),start(2),first_timein,last_timein,time_varid)
   status=NF_INQ_VARID(fcorr_ncid,'fcorr',fcorr_varid)

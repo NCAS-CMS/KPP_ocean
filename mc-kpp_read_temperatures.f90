@@ -164,6 +164,7 @@ SUBROUTINE MCKPP_READ_TEMPERATURES_BOTTOM(kpp_3d_fields,kpp_const_fields)
   start(3)=NINT((bottomclim_time-first_timein)*kpp_const_fields%spd/&
        (kpp_const_fields%dto*kpp_const_fields%ndtupdbottom))+1
   write(nuout,*) 'Bottom temperatures are being read from position',start(3)
+  write(nuout,*) 'start=',start,'count=',count
   
   status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
   IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
@@ -192,8 +193,7 @@ SUBROUTINE MCKPP_READ_TEMPERATURES_BOTTOM(kpp_3d_fields,kpp_const_fields)
   DO ix=1,NX
      DO iy=1,NY
         ipoint=(iy-1)*NX+ix
-        kpp_3d_fields%bottom_temp(ipoint) = var_in(ix,iy,1)
-        !            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
+        kpp_3d_fields%bottom_temp(ipoint) = var_in(ix,iy,1)-offset_temp        
      ENDDO
   ENDDO
   

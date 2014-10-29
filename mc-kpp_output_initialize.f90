@@ -187,7 +187,7 @@ SUBROUTINE mckpp_output_initialize(filename,kpp_3d_fields,kpp_const_fields,outpu
   
   status=NF_CREATE(filename, nf_clobber, ncid)
   IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
-  WRITE(nuout,*) 'Output file ',filename,' created successfully.'
+  WRITE(nuout,*) 'MCKPP_OUTPUT_INITIALIZE: Output file ',filename,' created successfully.'
   
   delta=0.0
   IF (NX .GT. 1 ) delta=alon(2)-alon(1)
@@ -195,7 +195,7 @@ SUBROUTINE mckpp_output_initialize(filename,kpp_3d_fields,kpp_const_fields,outpu
   delta=0.0
   IF (NY .GT. 1) delta=alat(2)-alat(1)
   CALL MCKPP_NCDF_DEF_DIM (ncid,latdim,ny,lat_id,'latitude','deg',delta,' ')
-  CALL MCKPP_NCDF_DEF_DIM (ncid,hdim,NZP1,h_id,'h','m',0.0,'Layer Thickness')
+  CALL MCKPP_NCDF_DEF_DIM (ncid,hdim,NZP1,h_id,'h','m',0.0,'Layer Thickness')  
   delta=kpp_const_fields%dtout
   
   n_tdims=0
@@ -245,7 +245,7 @@ SUBROUTINE mckpp_output_initialize(filename,kpp_3d_fields,kpp_const_fields,outpu
         IF (.NOT.tdim_found) THEN 
            n_tdims=n_tdims+1
            dt_timeids(n_tdims)=dt_vec(j)
-           WRITE(time_name,'(A5,I0)') 'time_',n_tdims
+           WRITE(time_name,'(A5,I0)') 'time_',n_tdims          
            IF (n_tdims .eq. 1) THEN 
               CALL MCKPP_NCDF_DEF_DIM(ncid,time_dimids(j),NF_UNLIMITED,&
                    time_varids(1),'time_1','days',delta,' ')
@@ -257,7 +257,7 @@ SUBROUTINE mckpp_output_initialize(filename,kpp_3d_fields,kpp_const_fields,outpu
         ENDIF
         IF (.NOT.zdim_found) THEN
            m=NZP1
-           IF (zprof_vec(j).gt.0) m=kpp_const_fields%zprofs_nvalid(zprof_vec(j))
+           IF (zprof_vec(j).gt.0) m=kpp_const_fields%zprofs_nvalid(zprof_vec(j))           
            IF (zflag(k).eq.0) THEN
               n_ddims=n_ddims+1
               WRITE(z_name,'(A2,I0)') 'd_',n_ddims
@@ -301,7 +301,7 @@ SUBROUTINE mckpp_output_initialize(filename,kpp_3d_fields,kpp_const_fields,outpu
            n_tdims=n_tdims+1
            dt_timeids(n_tdims)=dt_sing(j)
            WRITE(time_name,'(A5,I0)') 'time_',n_tdims
-           IF (n_tdims .eq. 1) THEN
+           IF (n_tdims .eq. 1) THEN              
               CALL MCKPP_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),&
                    NF_UNLIMITED,time_varids(1),'time_1','days',delta,' ')
            ELSE

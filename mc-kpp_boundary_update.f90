@@ -13,11 +13,14 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
   INTEGER,parameter :: nuout=6,nuerr=0
 
   ! Update SST
+  WRITE(6,*) kpp_const_fields%L_UPD_CLIMSST,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdsst
   IF (kpp_const_fields%L_UPD_CLIMSST .AND. &
        MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdsst) .EQ. 0) THEN
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-     !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)            
+     !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+     WRITE(6,*) 'MCKPP_BOUNDARY_UPDATE: Calling MCKPP_READ_SST'
      CALL MCKPP_READ_SST(kpp_3d_fields,kpp_const_fields)
+     WRITE(6,*) 'MCKPP_BOUNDARY_UPDATE: Returned from MCKPP_READ_SST'
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)            
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
      WRITE(nuout,*) 'KPP: Called read_sstin, ntime =',kpp_const_fields%ntime
@@ -28,6 +31,7 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
      IF (kpp_const_fields%L_RELAX_SST) THEN
         !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
         !CALL KPP_TIMER_TIME(kpp_timer,'SST relaxation',1)
+        WRITE(6,*) 'MCKPP_BOUNDARY_UPDATE: Calling MCKPP_PHYSICS_OVERRIDES_SST0'
         CALL MCKPP_PHYSICS_OVERRIDES_SST0(kpp_3d_fields)
         !CALL KPP_TIMER_TIME(kpp_timer,'SST relaxation',0)
         !CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
@@ -36,26 +40,30 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
   ENDIF
   
   ! Update sea ice
+  WRITE(6,*) kpp_const_fields%L_UPD_CLIMICE,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdice  
   IF (kpp_const_fields%L_UPD_CLIMICE .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdice) .EQ. 0) THEN
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+     WRITE(6,*) 'MCKPP_BOUNDARY_UPDATE: Calling MCKPP_READ_ICE'
      CALL MCKPP_READ_ICE(kpp_3d_fields,kpp_const_fields)
+     WRITE(6,*) 'MCKPP_BOUNDARY_UPDATE: Returned from MCKPP_READ_ICE'
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
      WRITE(nuout,*) 'KPP: Called read_icein, ntime =',kpp_const_fields%ntime
   ENDIF
   
   ! Update surface currents
-  IF (kpp_const_fields%L_UPD_CLIMCURR .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdcurr) .EQ. 0) THEN
+  !IF(kpp_const_fields%L_UPD_CLIMCURR .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdcurr) .EQ. 0) THEN
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
      !CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-     WRITE(nuout,*) 'KPP: Called read_surface_currents, ntime =',kpp_const_fields%ntime
-  ENDIF
+     !WRITE(nuout,*) 'KPP: Called read_surface_currents, ntime =',kpp_const_fields%ntime
+  !ENDIF
   
   ! Update heat corrections
+  WRITE(6,*) kpp_const_fields%L_UPD_FCORR,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdfcorr  
   IF (kpp_const_fields%L_UPD_FCORR .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdfcorr) .EQ. 0) THEN
      IF (kpp_const_fields%L_FCORR_WITHZ) THEN
         !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)

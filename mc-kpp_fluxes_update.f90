@@ -125,7 +125,9 @@ SUBROUTINE mckpp_fluxes_update(kpp_3d_fields,kpp_const_fields,kpp_timer)
 !$OMP END PARALLEL
 #endif
   ELSE
+     WRITE(6,*) 'MCKPP_FLUXES_UPDATE: Calling MCKPP_READ_FLUXES'
      call MCKPP_READ_FLUXES(kpp_3d_fields,kpp_const_fields)
+     WRITE(6,*) 'MCKPP_FLUXES_UPDATE: Returned from MCKPP_READ_FLUXES'
   ENDIF
       
 #ifdef OPENMP

@@ -86,9 +86,9 @@ SUBROUTINE mckpp_physics_ocnint(kpp_1d_fields,kpp_const_fields,intri,kmixe,Uo,Xo
   ENDDO
   call MCKPP_PHYSICS_SOLVERS_TRIDCOF(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
   
-  call MCKPP_PHYSICS_SOLVERS_RHSMOD(npd,kpp_const_fields%hm,Xo(:,1),ntflx(:,1),diff,gcap,&
-       sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,rhs,kpp_const_fields)
-      
+  call MCKPP_PHYSICS_SOLVERS_TRIDRHS(npd,kpp_const_fields%hm,Xo(:,1),ntflx(:,1),diff,gcap,&
+       sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,rhs,kpp_const_fields)  
+  
   ! Surface relaxation is incompatible with flux corrections at depth (NPK 12/02/08).
   IF (kpp_const_fields%L_RELAX_SST .AND. .NOT. kpp_const_fields%L_FCORR_WITHZ .AND. .NOT. &
        kpp_const_fields%L_FCORR) THEN
@@ -156,7 +156,7 @@ SUBROUTINE mckpp_physics_ocnint(kpp_1d_fields,kpp_const_fields,intri,kmixe,Uo,Xo
   ENDDO
 
   call MCKPP_PHYSICS_SOLVERS_TRIDMAT(cu,cc,cl,rhs,Xo(:,1),NZ,kpp_1d_fields%X(:,1))
- 
+
   ! Salinity and other scalars
   DO k=0,NZtmax
      diff(k)=kpp_1d_fields%difs(k)

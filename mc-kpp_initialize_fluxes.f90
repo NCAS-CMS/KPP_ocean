@@ -47,7 +47,8 @@ SUBROUTINE mckpp_initialize_fluxes_file(kpp_const_fields)
   index(2)=1
   index(3)=1
   
-  status=NF_OPEN(kpp_const_fields%flx_ncid,0,kpp_const_fields%flx_ncid)
+  WRITE(6,*) 'MCKPP_INITIALIZE_FLUXES: Opening file ',kpp_const_fields%forcing_file
+  status=NF_OPEN(kpp_const_fields%forcing_file,0,kpp_const_fields%flx_ncid)
   IF (status .NE. NF_NOERR) CALL MCKPP_HANDLE_ERR(status)
   
   status=NF_INQ_VARID(kpp_const_fields%flx_ncid,'time',kpp_const_fields%flx_timein_id)

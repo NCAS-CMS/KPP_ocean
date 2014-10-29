@@ -13,7 +13,9 @@
 
     ! Only master processor does this
     ! Initialize model simulation (constants, initial and boundary conditions, namelist options)
+    WRITE(6,*) 'MCKPP_DRIVER: Calling MCKPP_INITIALIZE'
     CALL MCKPP_INITIALIZE(kpp_3d_fields,kpp_const_fields)
+    WRITE(6,*) 'MCKPP_DRIVER: Returned from MCKPP_INITIALIZE'
     ! Need to broadcast wm_ws lookup table
 
 #ifdef COUPLE
@@ -27,8 +29,11 @@
 
        ! Update surface fluxes if necessary, by invoking coupler if coupled, or from file if forced
        IF (MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtocn) .EQ. 0) THEN
+          WRITE(6,*) 'MCKPP_DRIVER: Calling MCKPP_FLUXES_UPDATE'
           CALL MCKPP_FLUXES_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
+          WRITE(6,*) 'MCKPP_DRIVER: Returned from MCKPP_FLUXES_UPDATE'
        ENDIF
+       !       STOP
 
        ! Update other (non-coupler-related) boundary conditions if necessary, from files
        CALL MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)

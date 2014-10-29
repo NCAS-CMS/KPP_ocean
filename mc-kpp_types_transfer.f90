@@ -171,6 +171,8 @@ SUBROUTINE mckpp_fields_3dto1d(kpp_fields_3d,point,kpp_fields_1d)
   kpp_fields_1d%dlat=temp          
   temp=kpp_fields_3d%dlon(point) !Not updated within physics
   kpp_fields_1d%dlon=temp
+
+  kpp_fields_1d%point=point
   
   RETURN
 END SUBROUTINE mckpp_fields_3dto1d
