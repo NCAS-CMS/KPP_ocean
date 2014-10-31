@@ -49,10 +49,11 @@ FORCED_FILES = mc-kpp_driver.f90 mc-kpp_initialize.f90 mc-kpp_output_inst.f90 mc
 	mc-kpp_physics_solvers.f90 mc-kpp_physics_verticalmixing.f90 mc-kpp_physics_swfrac_opt.f90 mc-kpp_physics_verticalmixing_bldepth.f90 \
 	mc-kpp_physics_verticalmixing_wscale.f90 mc-kpp_physics_verticalmixing_blmix.f90 mc-kpp_physics_verticalmixing_rimix.f90 \
 	mc-kpp_physics_verticalmixing_enhance.f90 mc-kpp_physics_verticalmixing_kppmix.f90 mc-kpp_physics_verticalmixing_z121.f90 \
-	mc-kpp_physics_verticalmixing_ddmix.f90 mc-kpp_restart_control.f90
+	mc-kpp_physics_verticalmixing_ddmix.f90 mc-kpp_restart_control.f90 mc-kpp_output_compute_means.f90 \
+	mc-kpp_output_compute_ranges.f90 mc-kpp_finalize.f90
 
 OASIS2_COUPLED_FILES = $(FORCED_FILES)
-OASIS3_COUPLED_FILES = $(OASIS2_COUPLED_FILES) mc-kpp_coupling_oasis3.f90
+OASIS3_COUPLED_FILES = $(OASIS2_COUPLED_FILES) mc-kpp_coupling_oasis3.f90 mc-kpp_coupling_step.f90
 CFS_COUPLED_FILES = $(FORCED_FILES) couple_io_cfs.f
 
 FORCED_OBJS = $(FORCED_FILES:.f90=.o)

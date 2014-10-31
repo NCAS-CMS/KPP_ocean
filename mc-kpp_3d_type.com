@@ -134,7 +134,7 @@
           ndtupdfcorr,ndtupdsfcorr,fcorr_period,sfcorr_period,&
           ndtupdocnt,ocnt_period,ndtupdsal,sal_period,ndt_interp_sal,ndt_interp_ocnt,&
           ndtupdbottom,bottom_temp_period,&
-          ifirst,ilast,jfirst,jlast
+          ifirst,ilast,jfirst,jlast,day_out
      INTEGER,dimension(N_VAROUTS) :: &
           ndt_varout_inst,ndt_varout_range,ndt_varout_mean,&
           zprof_varout_inst,zprof_varout_mean,zprof_varout_range,&

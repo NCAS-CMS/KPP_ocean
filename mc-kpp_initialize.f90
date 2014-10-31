@@ -371,7 +371,7 @@
     ! Call routine to copy constants and logicals needed for ocean
     ! physics into the kpp_const_fields derived type.  Added for 
     ! compatability with OpenMP DEFAULT(private). NPK 8/2/13
-    CALL mckpp_initialize_constants(kpp_const_fields)
+    CALL mckpp_initialize_constants(kpp_const_fields)    
 
 !!! BEYOND THIS POINT, ALL VALUES USED IN OTHER PARTS OF THE CODE
 !!! MUST BE A MEMBER OF A DERIVED TYPE OR INCLUDED IN A PARAMETER FILE.
@@ -445,10 +445,10 @@
 
     ! Set up the first output files for means and instantaneous fields.
     flen=INDEX(output_file,' ')-1
-    day_out=int(kpp_const_fields%startt+(kpp_const_fields%dtsec/ndtocn)*&
+    kpp_const_fields%day_out=int(kpp_const_fields%startt+(kpp_const_fields%dtsec/ndtocn)*&
          kpp_const_fields%ndt_per_file/kpp_const_fields%spd)
     write(output_file(flen+1:flen+1),'(a)') '_'
-    write(output_file(flen+2:flen+6),'(i5.5)') day_out
+    write(output_file(flen+2:flen+6),'(i5.5)') kpp_const_fields%day_out
     write(output_file(flen+7:flen+9),'(3A)') '.nc'
     
     kpp_const_fields%dtout=kpp_const_fields%dto/kpp_const_fields%spd
@@ -462,7 +462,7 @@
        allocate(kpp_3d_fields%SCLR_mean(NPTS,NSCLR_MEAN))
        flen=INDEX(mean_output_file,' ')-1
        write(mean_output_file(flen+1:flen+1),'(a)') '_'
-       write(mean_output_file(flen+2:flen+6),'(i5.5)') day_out
+       write(mean_output_file(flen+2:flen+6),'(i5.5)') kpp_const_fields%day_out
        write(mean_output_file(flen+7:flen+15),'(9A)') '_means.nc'         
        WRITE(nuout,*) 'KPP : Calling init_output for '//mean_output_file
        CALL mckpp_output_initialize(mean_output_file,kpp_3d_fields,&
@@ -477,13 +477,13 @@
        allocate(kpp_3d_fields%SCLR_range(NPTS,NSCLR_RANGE,2))
        flen=INDEX(min_output_file,' ')-1
        write(min_output_file(flen+1:flen+1),'(a)') '_'
-       write(min_output_file(flen+2:flen+6),'(i5.5)') day_out
+       write(min_output_file(flen+2:flen+6),'(i5.5)') kpp_const_fields%day_out
        write(min_output_file(flen+7:flen+13),'(7A)') '_min.nc'         
        WRITE(nuout,*) 'KPP : Calling init_output for '//min_output_file
        CALL mckpp_output_initialize(min_output_file,kpp_3d_fields,&
             kpp_const_fields,'minx')
        write(max_output_file(flen+1:flen+1),'(a)') '_'
-       write(max_output_file(flen+2:flen+6),'(i5.5)') day_out
+       write(max_output_file(flen+2:flen+6),'(i5.5)') kpp_const_fields%day_out
        write(max_output_file(flen+7:flen+13),'(7A)') '_max.nc'    
        WRITE(nuout,*) 'KPP : Calling init_output for '//max_output_file
        CALL mckpp_output_initialize(max_output_file,kpp_3d_fields,&
@@ -500,8 +500,9 @@
     CALL mckpp_physics_lookup(kpp_const_fields)
     CALL mckpp_initialize_ocean_model(kpp_3d_fields,kpp_const_fields)
     ! Write out the data from the initial condition
-    IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
+    IF ( .NOT. kpp_const_fields%L_RESTART .AND. kpp_const_fields%L_OUTPUT_INST) THEN
        DO l=1,N_VAROUTS
+          WRITE(6,*) l,kpp_const_fields%ndt_varout_inst(l)
           IF (kpp_const_fields%ndt_varout_inst(l) .gt. 0) &
                CALL mckpp_output_inst(kpp_3d_fields,kpp_const_fields,l)               
        ENDDO
@@ -512,7 +513,5 @@
     ENDIF
     
     CLOSE(75)
-    WRITE(6,*) 'MC-KPP: Returning from initialize'
-    
     RETURN
   END SUBROUTINE mckpp_initialize

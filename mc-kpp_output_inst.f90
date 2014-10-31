@@ -28,16 +28,15 @@ SUBROUTINE mckpp_output_inst(kpp_3d_fields,kpp_const_fields,diag_num)
   count(2)=NY
   start(1)=1
   start(2)=1
-        
-  write(nuout,*) 'Writing output for diagnostic ',diag_num,&
-       'to start=',start,'count=',count,'zprof=',zprof
-  
+          
   IF (diag_num .le. N_VAROUTS) THEN 
      zprof=kpp_const_fields%zprof_varout_inst(diag_num)
      start(3)=1
      start(4)=kpp_const_fields%ntout_vec_inst(diag_num)
      count(3)=kpp_const_fields%zprofs_nvalid(zprof)
-     count(4)=1
+     count(4)=1     
+     WRITE(nuout,*) 'MCKPP_OUTPUT_INST: Writing output for diagnostic ',diag_num,&
+          'to start=',start,'count=',count,'zprof=',zprof
      allocate(varout(NX,NY,kpp_const_fields%zprofs_nvalid(zprof)))
      allocate(temp_2d(NPTS,NZP1))
      SELECT CASE (diag_num)

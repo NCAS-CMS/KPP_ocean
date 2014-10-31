@@ -13,7 +13,7 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
   INTEGER,parameter :: nuout=6,nuerr=0
 
   ! Update SST
-  WRITE(6,*) kpp_const_fields%L_UPD_CLIMSST,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdsst
+  !WRITE(6,*) kpp_const_fields%L_UPD_CLIMSST,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdsst
   IF (kpp_const_fields%L_UPD_CLIMSST .AND. &
        MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdsst) .EQ. 0) THEN
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
@@ -40,7 +40,7 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
   ENDIF
   
   ! Update sea ice
-  WRITE(6,*) kpp_const_fields%L_UPD_CLIMICE,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdice  
+  !WRITE(6,*) kpp_const_fields%L_UPD_CLIMICE,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdice  
   IF (kpp_const_fields%L_UPD_CLIMICE .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdice) .EQ. 0) THEN
      !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
      !CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
@@ -63,7 +63,7 @@ SUBROUTINE MCKPP_BOUNDARY_UPDATE(kpp_3d_fields,kpp_const_fields,kpp_timer)
   !ENDIF
   
   ! Update heat corrections
-  WRITE(6,*) kpp_const_fields%L_UPD_FCORR,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdfcorr  
+  !WRITE(6,*) kpp_const_fields%L_UPD_FCORR,kpp_const_fields%ntime-1,kpp_const_fields%ndtupdfcorr  
   IF (kpp_const_fields%L_UPD_FCORR .AND. MOD(kpp_const_fields%ntime-1,kpp_const_fields%ndtupdfcorr) .EQ. 0) THEN
      IF (kpp_const_fields%L_FCORR_WITHZ) THEN
         !CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)

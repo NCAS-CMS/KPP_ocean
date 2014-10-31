@@ -35,7 +35,7 @@
       PARAMETER(NDHARM  =  5 ) 
 ! ocean advection
       INTEGER maxmodeadv
-      PARAMETER(maxmodeadv = 6 )	
+      PARAMETER(maxmodeadv = 6)
 ! richardson mixing
       INTEGER MR,MRP1
       PARAMETER(MR      =100 , MRP1 = MR+1)
