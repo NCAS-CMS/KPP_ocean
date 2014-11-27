@@ -363,32 +363,35 @@ c     write(40,*) time,iter, hmixn,hmixe,kmixn,kmixe
             ENDIF
 
 c     Damping currents, Added LH (06/08/2013)
-
-            dampu(:)=0.
-            do k=1,NZP1
-               do l=1,NVEL
-                 a=0.99*ABS(kpp_2d_fields%U(k,l))
-                 b=kpp_2d_fields%U(k,l)**2/
-     +      (kpp_const_fields%dt_uvdamp*(86400./kpp_const_fields%dto))
-                Ui=MIN(a,b)
+            
+            IF (kpp_const_fields%L_DAMP_CURR) THEN
+               dampu(:)=0.
+               do k=1,NZP1
+                  do l=1,NVEL
+                     a=0.99*ABS(kpp_2d_fields%U(k,l))
+                     b=kpp_2d_fields%U(k,l)**2/
+     +                    (kpp_const_fields%dt_uvdamp*
+     +                    (86400./kpp_const_fields%dto))
+                     Ui=MIN(a,b)
 c     LH (29/08/2013) Add Flags to check which Ui (a or b) is chosen, 
 c     dtuvdamp=360 (specified in namelist). 
 c     The flags for u and v can be requested as diagnostics dampu_flag, 
 c     dampv_flag (singout 11,12). Note that the value of the flag is equal to 
 c     the *fraction* of levels at that point where (U**2)/r .lt. alpha*ABS(U), 
 c     1.0=all Ui are (U**2)/r
-               IF (b .lt. a) THEN  
-                 dampU(l)=dampU(l)+1.0/REAL(NZP1)
-               ENDIF 
-
-c    Apply damping
-                kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) - 
-     +      SIGN(Ui,kpp_2d_fields%U(k,l))
+                     IF (b .lt. a) THEN  
+                        dampU(l)=dampU(l)+1.0/REAL(NZP1)
+                     ENDIF 
+                     
+c     Apply damping
+                     kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) - 
+     +                    SIGN(Ui,kpp_2d_fields%U(k,l))
+                  enddo
                enddo
-            enddo
-             kpp_2d_fields%dampu_flag=dampU(1)
-             kpp_2d_fields%dampv_flag=dampU(2)
-               
+               kpp_2d_fields%dampu_flag=dampU(1)
+               kpp_2d_fields%dampv_flag=dampU(2)
+            ENDIF
+            
 c     End of damping 
          
 c     Save variables for next timestep

@@ -338,6 +338,7 @@ c#include <vert_pgrid.com>
 #include <initialcon.com>
 #include <ocn_advec.com>
 #include <relax_3d.com>
+#include <currclim.com>
 
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
 
@@ -375,6 +376,7 @@ c#include <vert_pgrid.com>
       kpp_const_fields%L_RESTART=L_RESTART
       kpp_const_fields%L_RELAX_SAL=L_RELAX_SAL
       kpp_const_fields%L_RELAX_OCNT=L_RELAX_OCNT
+      kpp_const_fields%L_DAMP_CURR=L_DAMP_CURR
 
       RETURN
       END

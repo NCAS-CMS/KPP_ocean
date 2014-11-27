@@ -55,7 +55,7 @@ c      USE kpp_type_mod
       REAL,allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),bottom_temp(:),
      +     VEC_range(:,:,:,:),SCLR_range(:,:,:)
       
-      INTEGER j,k,nflx,nstep
+      INTEGER j,k,nflx,nstep,ix,iy,ipt_globe
 
 c Initialize the 3D KPP model 
 c Setup the constants, read the namelists, setup the initial conditions
@@ -335,7 +335,7 @@ c
 c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
-!$OMP& SHARED(kpp_timer,ocnT_file,sal_file) 
+!$OMP& SHARED(kpp_timer,ocnT_file,sal_file,ifirst,jfirst)
 !$OMP& PRIVATE(trans_timer_name,phys_timer_name,tid)
          tid=OMP_GET_THREAD_NUM()
          WRITE(trans_timer_name,'(A17,I2)') 'KPP 3D/2D thread ',tid
@@ -345,41 +345,52 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
          WRITE(trans_timer_name,'(A19)') 'KPP 3D/2D thread 01'
          WRITE(phys_timer_name,'(A21)') 'KPP Physics thread 01'
 #endif
-         DO ipt=1,npts
-	    IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-               CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
-               CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
-               CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
-               CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,1)
-               CALL ocnstep(kpp_2d_fields,kpp_const_fields)
+         DO ix=1,NX_GLOBE
+            DO iy=1,NY_GLOBE
+               ipt=(iy-jfirst)*NX+(ix-ifirst)+1
+#ifdef COUPLE
+               ipt_globe=(iy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
+     +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
+#else
+               IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+#endif
+                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
+                  CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,
+     +                 kpp_2d_fields)
+                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
+                  CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,1)
+                  CALL ocnstep(kpp_2d_fields,kpp_const_fields)
 c     If the integration has failed because of unrealistic values in T, S, U or V
 c     or very high RMS difference between the old and new profiles, then reset
 c     T and S to climatology (if available) and U and V to the initial profiles.
 c     NPK 17/5/13.
-               IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne. 'none'
-     +              .and. sal_file .ne. 'none') THEN
-                  WRITE(6,*) 'Resetting point to climatology ...'
-                  kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
-                  WRITE(6,*) 'T = ',kpp_2d_fields%ocnT_clim(:)
-                  kpp_2d_fields%X(:,2)=kpp_2d_fields%sal_clim(:)
-                  WRITE(6,*) 'S = ',kpp_2d_fields%sal_clim(:)
-                  kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
-	          WRITE(6,*) 'U = ',kpp_3d_fields%U_init(ipt,:,1)
-                  WRITE(6,*) 'V = ',kpp_3d_fields%U_init(ipt,:,2)
-                  kpp_2d_fields%reset_flag=999
-               ELSE IF (kpp_2d_fields%comp_flag) THEN
-                  WRITE(6,*) 'Cannot reset point to T,S climatology '//
-     +                 'as either ocean temperature or salinity data '//
-     +                 'not provided.  Will reset currents to initial'//
-     +                 'conditions and keep going.'
-                  kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
-                  kpp_2d_fields%reset_flag=999
+                  IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne. 
+     +                 'none' .and. sal_file .ne. 'none') THEN
+                     WRITE(6,*) 'Resetting point to climatology ...'
+                     kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
+                     WRITE(6,*) 'T = ',kpp_2d_fields%ocnT_clim(:)
+                     kpp_2d_fields%X(:,2)=kpp_2d_fields%sal_clim(:)
+                     WRITE(6,*) 'S = ',kpp_2d_fields%sal_clim(:)
+                     kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
+                     WRITE(6,*) 'U = ',kpp_3d_fields%U_init(ipt,:,1)
+                     WRITE(6,*) 'V = ',kpp_3d_fields%U_init(ipt,:,2)
+                     kpp_2d_fields%reset_flag=999
+                  ELSE IF (kpp_2d_fields%comp_flag) THEN
+                     WRITE(6,*) 'Cannot reset pt to T,S climatology '//
+     +                    'as either ocean T or S data '//
+     +                    'not provided.  Will reset U,V to initial'//
+     +                    'conditions and keep going.'
+                     kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
+                     kpp_2d_fields%reset_flag=999
+                  ENDIF
+                  CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,0)
+                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
+                  CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,
+     +                 kpp_3d_fields)
+                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
                ENDIF
-               CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,0)
-               CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
-               CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
-               CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
-            ENDIF
+            ENDDO
          ENDDO
 #ifdef OPENMP
 !$OMP END DO
@@ -1110,6 +1121,8 @@ c      ENDIF
       ENDIF
       IF (L_DAMP_CURR) THEN
          kpp_const_fields%dt_uvdamp=dtuvdamp
+      ELSE
+         kpp_const_fields%dt_uvdamp=1e20
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
@@ -1125,9 +1138,9 @@ c      ENDIF
       IF (L_VARY_BOTTOM_TEMP) 
      +     CALL read_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +     bottom_temp)
-       IF (L_RESTART) THEN
-          CALL READ_RESTART(kpp_3d_fields,kpp_const_fields,
-     +         restart_infile)
+      IF (L_RESTART) THEN
+         CALL READ_RESTART(kpp_3d_fields,kpp_const_fields,
+     +        restart_infile)
       ELSE
          CALL init_flds(kpp_3d_fields,kpp_const_fields)
          write(nuout,*) 'KPP : Temperature, salinity and currents ',

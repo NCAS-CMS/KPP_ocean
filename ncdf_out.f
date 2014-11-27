@@ -513,7 +513,7 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             allocate(temp_zprof(NPTS,zprofs_nvalid(zprof)))
             DO i=1,NZP1
                IF (zprofs_mask(i,zprof)) THEN
-                  temp_zprof(:,j)=temp_2d(:,j)
+                  temp_zprof(:,j)=temp_2d(:,i)
                   j=j+1
                ENDIF
             ENDDO
@@ -715,7 +715,7 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
             allocate(temp_zprof(NPTS,zprofs_nvalid(zprof)))
             DO i=1,NZP1
                IF (zprofs_mask(i,zprof)) THEN
-                  temp_zprof(:,j)=temp_2d(:,j)
+                  temp_zprof(:,j)=temp_2d(:,i)
                   j=j+1
                ENDIF
             ENDDO
@@ -838,7 +838,7 @@ c            WRITE(6,*) 'Calling reformat_mask_output_2d diag=',diag_num
                allocate(temp_zprof(NPTS,zprofs_nvalid(zprof)))
                DO i=1,NZP1
                   IF (zprofs_mask(i,zprof)) THEN
-                     temp_zprof(:,k)=temp_2d(:,k)
+                     temp_zprof(:,k)=temp_2d(:,i)
                      k=k+1
                   ENDIF
                ENDDO
