@@ -146,7 +146,7 @@ c
 
 #ifdef UM78
       cl_read(1)='HEATFLUX'
-      cl_read(2)='PEN_SOL'
+      cl_read(2)='SOLAR'
       cl_read(3)='WME'
       cl_read(4)='TRAIN'
       cl_read(5)='TSNOW'
