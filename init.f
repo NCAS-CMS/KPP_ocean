@@ -58,12 +58,23 @@ c define vertical grid fields
          IF (lstretchgrid) THEN
             sumh = 0.0
             dfac = 1.0 - exp(-dscale)
-            do 5 i = 1,(NZ)
+            do i = 1,(NZ)
                sk = - (float(i)-0.5)/float(NZ)
                kpp_const_fields%hm(i) = 
      +              DMAX*dfac/float(NZ)/dscale / ( 1.0 + sk*dfac )
                sumh = sumh + kpp_const_fields%hm(i)
- 5          continue
+            ENDDO            
+         ENDIF
+         IF (L_SLAB) THEN
+            IF (NZ .eq. 1) THEN
+               kpp_const_fields%dm(1)=slab_depth
+               kpp_const_fields%zm(1)=slab_depth*(-0.5)
+               kpp_const_fields%hm(1)=slab_depth
+            ELSE
+               WRITE(6,*) 'KPP : L_SLAB requires setting NZ=1 in'
+     +              ' parameter.inc.  Aborting.'
+               CALL MIXED_ABORT
+            ENDIF
          ENDIF
 c     
 c     layer thickness h, layer grids zgrid, interface depths d
@@ -429,6 +440,7 @@ c         ENDDO
 ! Automatically includes parameter.inc
 #include <kpp_3d_type.com>
 #include <landsea.com>
+#include <vert_pgrid.com>
 
       REAL landsea(npts)
       TYPE (kpp_3d_type) :: kpp_3d_fields
@@ -450,8 +462,12 @@ c         ENDDO
             ENDIF
          ENDDO
 
-         call read_par(kpp_3d_fields,ncid_landsea,'max_depth',1,1,
-     +        kpp_3d_fields%ocdepth)
+         IF (L_SLAB) THEN
+            kpp_3d_fields%ocdepth=(-1.0)*slab_depth
+         ELSE
+            call read_par(kpp_3d_fields,ncid_landsea,'max_depth',1,1,
+     +           kpp_3d_fields%ocdepth)
+         ENDIF
 
          WRITE(6,*) 'Read landsea mask'
 

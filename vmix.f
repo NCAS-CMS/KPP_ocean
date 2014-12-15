@@ -210,9 +210,16 @@ c        do n=1,nsclr
 c        wxNT(ipt,nz,n) = 0.0
 c        enddo
 c      else
-      dlimit = 0.00001
-      vlimit = 0.0001
-c     endif
+
+      IF (kpp_const_fields%L_SLAB) THEN
+c     Set very small background diffusivity values for slab ocean
+         dlimit=1e-20
+         vlimit=1e-20
+         kpp_2d_fields%wXNT(NZ,n)=0.0
+      ELSE
+         dlimit = 0.00001
+         vlimit = 0.0001
+      ENDIF
       do k=nz,nzp1
          kpp_2d_fields%difm(k) = vlimit
          kpp_2d_fields%difs(k) = dlimit

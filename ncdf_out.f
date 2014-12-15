@@ -926,13 +926,13 @@ c     Increment counter for time dimension of NetCDF file
 
       REAL,intent(inout) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
      +  SCLR_mean(NPTS,NSCLR_MEAN)
-      REAL, allocatable :: field(:,:),vec(:)
+      REAL :: field(NPTS,NZP1),vec(NPTS)
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe,upper_limit,lower_limit
       
-      allocate(field(NPTS,NZP1))
-      allocate(vec(NPTS))
+!      allocate(field(NPTS,NZP1))
+!      allocate(vec(NPTS))
 
       i=1
       DO ivar=1,N_VAROUTS
@@ -1052,8 +1052,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
             i=i+1
          ENDIF
       ENDDO
-      deallocate(field)
-      deallocate(vec)
+!      deallocate(field)
+!      deallocate(vec)
             
       RETURN
       END
@@ -1076,13 +1076,13 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
 
       REAL,intent(inout) :: VEC_range(NPTS,NZP1,NVEC_RANGE,2),
      +  SCLR_range(NPTS,NSCLR_RANGE,2)
-      REAL, allocatable :: field(:,:),vec(:)
-
+      REAL :: field(NPTS,NZP1),vec(NPTS)
+      
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe
       
-      allocate(field(NPTS,NZP1))
-      allocate(vec(NPTS))
+!      allocate(field(NPTS,NZP1))
+!      allocate(vec(NPTS))
 
       i=1
       DO ivar=1,N_VAROUTS
@@ -1205,8 +1205,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
          ENDIF
          i=i+1      
       ENDDO
-      deallocate(field)
-      deallocate(vec)
+!      deallocate(field)
+!      deallocate(vec)
             
       RETURN
       END

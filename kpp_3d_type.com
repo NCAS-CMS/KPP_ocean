@@ -104,7 +104,7 @@
      +     grav,vonk,TK0,sbc,epsw,
      +     albocn,sice,EL,SL,FL,FLSN,dto,time,
      +     startt,finalt,dtsec,
-     +     iso_thresh
+     +     iso_thresh,slab_depth
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
 	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
@@ -116,7 +116,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_FCORR_WITHZ,L_RESTART,
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,
-     +     L_DAMP_CURR
+     +     L_DAMP_CURR,L_SLAB
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

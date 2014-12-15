@@ -89,18 +89,8 @@ c for repeating integration, for (/U,V,T,S/). Typical (stable)
 c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
       data rmsd_threshold /1,1,1,1/
-
       data lambda /0.5/
 
-c     Copy old profiles (to allow 3D U,X)
-c      DO k=1,NZP1
-c         DO l=1,NVEL
-c            Uo(k,l)=U(ipt,k,l)
-c         ENDDO
-c         DO l=1,NSCLR
-c            Xo(k,l)=X(ipt,k,l)
-c         ENDDO
-c      ENDDO
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
       kpp_2d_fields%comp_flag=.TRUE.
@@ -144,11 +134,14 @@ c     added by SJW (17 Jan 03) to try an alleviate some non-convergences
                   Xx(k,l)=kpp_2d_fields%X(k,l)
                ENDDO
             ENDDO
-c            WRITE(6,*) 'Before vmix, U = ',kpp_2d_fields%U(:,1)
             call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
-c            WRITE(6,*) 'After vmix, U = ',kpp_2d_fields%U(:,1)
+c     Overwrite mixing depth when using slab ocean
+            IF (kpp_const_fields%L_SLAB) THEN
+               hmixe=slab_depth
+               kmixe=1
+            ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
-c            WRITE(6,*) 'After ocnint, U = ',kpp_2d_fields%U(:,1)
+            IF (kpp_const_fields%L_SLAB) kmixe=1
          ENDDO
 c     The original code can be restored by reseting iter=1 and removing the  
 c     above loop  
@@ -168,11 +161,14 @@ c     iter=1
                   Xx(k,l)=kpp_2d_fields%X(k,l)
                ENDDO
             ENDDO
-c            WRITE(6,*) 'Before vmix, U = ',kpp_2d_fields%U(:,1)
-            call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)       
-c            WRITE(6,*) 'After vmix, U = ',kpp_2d_fields%U(:,1)
+            call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)
+c     Overwrite mixing depth when using slab ocean
+            IF (kpp_const_fields%L_SLAB) THEN
+               hmixn=slab_depth
+               kmixn=1
+            ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
-c            WRITE(6,*) 'After ocnint, U = ',kpp_2d_fields%U(:,1)
+            IF (kpp_const_fields%L_SLAB) kmixn=1
             iter = iter + 1
          
 c     check iteration for convergence

@@ -331,7 +331,7 @@ c     values from the 2D variable.
 #include <ocn_paras.com>
 #include <ice_paras.com>
 #include <proc_swit.com>
-c#include <vert_pgrid.com>
+#include <vert_pgrid.com>
 #include <timocn.com>
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
@@ -357,6 +357,7 @@ c#include <vert_pgrid.com>
       kpp_const_fields%SL=SL
       kpp_const_fields%FL=FL
       kpp_const_fields%FLSN=FLSN
+      kpp_const_fields%slab_depth=slab_depth
 
       kpp_const_fields%LKPP=LKPP
       kpp_const_fields%LRI=LRI
@@ -377,6 +378,7 @@ c#include <vert_pgrid.com>
       kpp_const_fields%L_RELAX_SAL=L_RELAX_SAL
       kpp_const_fields%L_RELAX_OCNT=L_RELAX_OCNT
       kpp_const_fields%L_DAMP_CURR=L_DAMP_CURR
+      kpp_const_fields%L_SLAB=L_SLAB
 
       RETURN
       END

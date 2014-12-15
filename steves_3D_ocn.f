@@ -821,7 +821,8 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_PROCSWIT/LKPP,LRI,LDD,LICE,
      &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref
       NAMELIST/NAME_DOMAIN/DMAX,alon,alat,delta_lat,delta_lon,
-     &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file
+     &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
+     &     L_SLAB,slab_depth
       NAMELIST/NAME_START/ L_INITDATA,initdata_file,L_INTERPINIT,
      &     L_RESTART,restart_infile
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
@@ -911,6 +912,8 @@ c     Initilalize and read the location name list
       L_STRETCHGRID=.FALSE.
       L_REGGRID=.TRUE.
       L_VGRID_FILE=.FALSE.
+      L_SLAB=.FALSE.
+      slab_depth=0.0
       READ(75,NAME_DOMAIN)
       IF (DMAX .LE. 0.0) THEN 
          WRITE(nuerr,*) 'KPP : You must specify a depth for the domain'
@@ -919,6 +922,11 @@ c     Initilalize and read the location name list
       IF ((L_STRETCHGRID) .AND. (dscale .EQ. 0.0)) THEN
          WRITE(nuerr,*) 'KPP : You cannot have dscale=0 for stretched ',
      +        'grids'
+         CALL MIXED_ABORT
+      ENDIF
+      IF ((L_SLAB) .and. (slab_depth .le. 0.0)) THEN
+         WRITE(nuerr,*) 'KPP : You must specify a positive number for ',
+     +        'the depth of the slab ocean.'
          CALL MIXED_ABORT
       ENDIF
       write(nuout,*) 'KPP : Read Namelist DOMAIN'
