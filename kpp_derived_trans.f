@@ -14,7 +14,8 @@ c     at a specified point.
       REAL :: temp
       LOGICAL :: logical_temp
 
-      DO i=1,NZP1         
+      DO i=1,NZP1        
+         !WRITE(6,*) i
          DO j=1,NVEL
             temp=kpp_fields_3d%U(point,i,j)
             kpp_fields_2d%U(i,j)=temp
@@ -55,17 +56,23 @@ c     at a specified point.
             temp=kpp_fields_3d%dbloc(point,i)
             kpp_fields_2d%dbloc(i)=temp
          ENDIF
+         !WRITE(6,*) 'Finished for i = ',i
       ENDDO
       DO i=0,1
          temp=kpp_fields_3d%hmixd(point,i)
          kpp_fields_2d%hmixd(i)=temp
       ENDDO
+      !WRITE(6,*) 'Finished hmixd'
       DO i=0,NZP1tmax
+         !WRITE(6,*) i
+         !WRITE(6,*) 'rho'
          temp=kpp_fields_3d%rho(point,i)
          kpp_fields_2d%rho(i)=temp
+         !WRITE(6,*) 'cp'
          temp=kpp_fields_3d%cp(point,i)
          kpp_fields_2d%cp(i)=temp         
          IF (i .gt. 0) THEN
+            !WRITE(6,*) 'buoy'
             temp=kpp_fields_3d%buoy(point,i)
             kpp_fields_2d%buoy(i)=temp
          ENDIF
@@ -97,6 +104,7 @@ c     at a specified point.
             temp=kpp_fields_3d%swdk_opt(point,i)
             kpp_fields_2d%swdk_opt(i)=temp
          ENDIF
+         !WRITE(6,*) 'Finished for i =',i
       ENDDO
       
       DO i=1,2

@@ -88,13 +88,19 @@ c Critical depth-integrated RMS difference between old and new profiles
 c for repeating integration, for (/U,V,T,S/). Typical (stable) 
 c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
-      data rmsd_threshold /1,1,1,1/
+      data rmsd_threshold /4,4,1,1/
       data lambda /0.5/
 
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
       kpp_2d_fields%comp_flag=.TRUE.
       kpp_2d_fields%reset_flag=0
+      
+      !WRITE(6,*) 'Beginning of timestep:'
+      !WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
+      !WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
+      !WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
+      !WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
 
       DO WHILE (kpp_2d_fields%comp_flag .and. 
      + kpp_2d_fields%reset_flag .le. comp_iter_max)
@@ -134,10 +140,10 @@ c     added by SJW (17 Jan 03) to try an alleviate some non-convergences
                   Xx(k,l)=kpp_2d_fields%X(k,l)
                ENDDO
             ENDDO
-            call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
+             call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
 c     Overwrite mixing depth when using slab ocean
             IF (kpp_const_fields%L_SLAB) THEN
-               hmixe=slab_depth
+               hmixe=kpp_const_fields%slab_depth
                kmixe=1
             ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
@@ -164,7 +170,7 @@ c     iter=1
             call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)
 c     Overwrite mixing depth when using slab ocean
             IF (kpp_const_fields%L_SLAB) THEN
-               hmixn=slab_depth
+               hmixn=kpp_const_fields%slab_depth
                kmixn=1
             ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
@@ -220,52 +226,58 @@ c     in the semi-implicit integration.  Reset to original profile,
 c     add some noise via changing Coriolis term slightly, and try
 c     integration again.
 c     NPK 16/5/2013
-         kpp_2d_fields%comp_flag=.FALSE.
-         DO k=1,NZ
-            IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or. 
-     +           ABS(kpp_2d_fields%U(k,2)).ge.10 .or. 
-     +           ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
-     +           .ge. 10) THEN 
-               kpp_2d_fields%comp_flag=.TRUE.
-               kpp_2d_fields%f=kpp_2d_fields%f*1.01
-            ENDIF
-         END DO
-         IF (.NOT. kpp_2d_fields%comp_flag) THEN
-            rmsd(:)=0.
-            DO k=1,NZP1
-               rmsd(1)=rmsd(1)+(kpp_2d_fields%U(k,1)-Uo(k,1))*
-     +              (kpp_2d_fields%U(k,1)-Uo(k,1))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
-               rmsd(2)=rmsd(2)+(kpp_2d_fields%U(k,2)-Uo(k,2))*
-     +              (kpp_2d_fields%U(k,2)-Uo(k,2))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
-               rmsd(3)=rmsd(3)+(kpp_2d_fields%X(k,1)-Xo(k,1))*
-     +              (kpp_2d_fields%X(k,1)-Xo(k,1))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
-               rmsd(4)=rmsd(4)+(kpp_2d_fields%X(k,2)-Xo(k,2))*
-     +              (kpp_2d_fields%X(k,2)-Xo(k,2))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
-            ENDDO
-            DO k=1,4
-               rmsd(k)=SQRT(rmsd(k))
-               IF (rmsd(k).ge.rmsd_threshold(k)) THEN
-                  kpp_2d_fields%comp_flag=.TRUE.
-                  kpp_2d_fields%f=kpp_2d_fields%f*1.01
-               ENDIF
-            ENDDO
-         ENDIF
-         kpp_2d_fields%reset_flag=kpp_2d_fields%reset_flag+1
-         IF (kpp_2d_fields%reset_flag .gt. comp_iter_max) THEN
-            WRITE(6,*) 'Failed to find a reasonable solution '//
-     +           'in the semi-implicit integration after ',
-     +           comp_iter_max,' iterations.'
-            WRITE(6,*) 'Final profiles at point lat = ',
-     +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
-            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
-            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
-            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
-            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)            
-         ENDIF
+      kpp_2d_fields%comp_flag=.FALSE.
+      !WRITE(6,*) 'End of timestep:'
+      !WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
+      !WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
+      !WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
+      !WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
+c$$$         DO k=1,NZ
+c$$$            IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or. 
+c$$$     +           ABS(kpp_2d_fields%U(k,2)).ge.10 .or. 
+c$$$     +           ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
+c$$$     +           .ge. 10) THEN 
+c$$$               kpp_2d_fields%comp_flag=.TRUE.
+c$$$               kpp_2d_fields%f=kpp_2d_fields%f*1.01
+c$$$            ENDIF
+c$$$         END DO
+c$$$         IF (.NOT. kpp_2d_fields%comp_flag) THEN
+c$$$            rmsd(:)=0.
+c$$$            DO k=1,NZP1
+c$$$               rmsd(1)=rmsd(1)+(kpp_2d_fields%U(k,1)-Uo(k,1))*
+c$$$     +              (kpp_2d_fields%U(k,1)-Uo(k,1))*
+c$$$     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+c$$$               rmsd(2)=rmsd(2)+(kpp_2d_fields%U(k,2)-Uo(k,2))*
+c$$$     +              (kpp_2d_fields%U(k,2)-Uo(k,2))*
+c$$$     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+c$$$               rmsd(3)=rmsd(3)+(kpp_2d_fields%X(k,1)-Xo(k,1))*
+c$$$     +              (kpp_2d_fields%X(k,1)-Xo(k,1))*
+c$$$     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+c$$$               rmsd(4)=rmsd(4)+(kpp_2d_fields%X(k,2)-Xo(k,2))*
+c$$$     +              (kpp_2d_fields%X(k,2)-Xo(k,2))*
+c$$$     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+c$$$            ENDDO
+c$$$            DO k=1,4
+c$$$               rmsd(k)=SQRT(rmsd(k))
+c$$$               IF (rmsd(k).ge.rmsd_threshold(k)) THEN
+c$$$                  kpp_2d_fields%comp_flag=.TRUE.
+c$$$                  kpp_2d_fields%f=kpp_2d_fields%f*1.01
+c$$$               ENDIF
+c$$$            ENDDO
+c$$$         ENDIF
+c$$$         kpp_2d_fields%reset_flag=kpp_2d_fields%reset_flag+1
+c$$$         IF (kpp_2d_fields%reset_flag .gt. comp_iter_max) THEN
+c$$$            WRITE(6,*) 'Failed to find a reasonable solution '//
+c$$$     +           'in the semi-implicit integration after ',
+c$$$     +           comp_iter_max,' iterations.'
+c$$$            WRITE(6,*) 'Final profiles at point lat = ',
+c$$$     +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
+c$$$            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+c$$$            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+c$$$            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+c$$$            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
+c$$$            WRITE(6,*) 'hmix = ',hmixn,kmixn
+c$$$         ENDIF
       ENDDO
 c     End of trapping code.
          
@@ -576,6 +588,8 @@ c     Added by SJW (06/04)
 c     
          IF (kpp_2d_fields%relax_sst .GT. 1.e-10) THEN
             IF (.NOT. kpp_const_fields%L_RELAX_CALCONLY) THEN
+!               WRITE(6,*) kpp_2d_fields%relax_sst,kpp_const_fields%dto,
+!     +              kpp_2d_fields%SST0,kpp_const_fields%dm(kmixe)
                rhs(1)=rhs(1)+
      +              kpp_const_fields%dto*kpp_2d_fields%relax_sst*
      +              (kpp_2d_fields%SST0-Xo(1,1))*

@@ -345,15 +345,20 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
          WRITE(trans_timer_name,'(A19)') 'KPP 3D/2D thread 01'
          WRITE(phys_timer_name,'(A21)') 'KPP Physics thread 01'
 #endif
+!         DO ix=1,NX
+!            DO iy=1,NY_GLOBE
          DO ix=1,NX_GLOBE
             DO iy=1,NY_GLOBE
-               ipt=(iy-jfirst)*NX+(ix-ifirst)+1
 #ifdef COUPLE
                ipt_globe=(iy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
      +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
 #else
-               IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+                  IF (iy .ge. jfirst .and. iy .le. jlast .and.
+     +                 ix .ge. ifirst .and. ix .le. ilast) THEN
+                     ipt=(iy-jfirst)*NX+(ix-ifirst)+1
+                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+!                        WRITE(6,*) 'ipt = ',ipt,'ix=',ix,'iy=',iy
 #endif
                   CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
                   CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,
@@ -390,6 +395,9 @@ c     NPK 17/5/13.
      +                 kpp_3d_fields)
                   CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
                ENDIF
+#ifndef COUPLE
+            ENDIF
+#endif
             ENDDO
          ENDDO
 #ifdef OPENMP
@@ -468,6 +476,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF            
          ENDIF
+         WRITE(nuout,*) 'KPP: Finished checkpointing'
 c
 c     If we are going to output means, take means at the end of the timestep
 c     NPK 25/2/08 - R1
@@ -476,9 +485,11 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',1)
             CALL mean_output(kpp_3d_fields,VEC_mean,SCLR_mean)
+            WRITE(6,*) 'KPP: Finished meaning output'
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
+         WRITE(6,*) 'KPP: Finished meaning output'
          IF (L_OUTPUT_RANGE) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',1)
@@ -486,6 +497,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
+         WRITE(nuout,*) 'KPP: Finished ranging output'
 c     
 c     Output means every ndtout_mean timesteps
 c     NPK 25/2/08 - R1
@@ -1130,7 +1142,7 @@ c      ENDIF
       IF (L_DAMP_CURR) THEN
          kpp_const_fields%dt_uvdamp=dtuvdamp
       ELSE
-         kpp_const_fields%dt_uvdamp=1e20
+         kpp_const_fields%dt_uvdamp=10000
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)

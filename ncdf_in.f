@@ -1387,7 +1387,7 @@ c      include 'location.com'
 #ifdef COUPLE
       PARAMETER(sst_nx=NX_GLOBE,sst_ny=NY_GLOBE)
 #else
-      PARAMETER(sst_nx=NX,sst_ny=NY)
+      PARAMETER(sst_nx=NX_GLOBE,sst_ny=NY_GLOBE)
 #endif
       REAL sst_in(sst_nx,sst_ny,1),ice_in(sst_nx,sst_ny,1),
      &     snowdepth_in(sst_nx,sst_ny,1),icedepth_in(sst_nx,sst_ny,1)
@@ -1421,12 +1421,12 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       status=NF_INQ_VARID(ncid,'sst',varid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
 
-#ifndef COUPLE
-      CALL determine_netcdf_boundaries(ncid,'SST climatology',
-     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
-     +     kpp_3d_fields%dlat(1),start(1),
-     &     start(2),first_timein,last_timein,time_varid)
-#else
+!#ifndef COUPLE
+!      CALL determine_netcdf_boundaries(ncid,'SST climatology',
+!     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
+!     +     kpp_3d_fields%dlat(1),start(1),
+!     &     start(2),first_timein,last_timein,time_varid)
+!#else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'t',time_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -1438,7 +1438,7 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
-#endif
+!#endif
       sstclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
      +     kpp_const_fields%spd*ndtupdsst
 c      WRITE(6,*) kpp_const_fields%time,kpp_const_fields%dto,

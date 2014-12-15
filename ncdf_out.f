@@ -936,6 +936,7 @@ c     Increment counter for time dimension of NetCDF file
 
       i=1
       DO ivar=1,N_VAROUTS
+         WRITE(6,*) ivar
          IF (ndt_varout_mean(ivar) .gt. 0) THEN
 c            WRITE(6,*) 'Computing means for ivar = ',ivar,'i=',i
 c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
@@ -1009,8 +1010,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
          ENDIF
       ENDDO
       i=1
-      DO ivar=1,N_SINGOUTS         
-!         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
+      DO ivar=1,N_SINGOUTS 
+         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
          IF (ndt_singout_mean(ivar) .gt. 0) THEN
             SELECT CASE (ivar)
             CASE(1)
@@ -1077,7 +1078,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       REAL,intent(inout) :: VEC_range(NPTS,NZP1,NVEC_RANGE,2),
      +  SCLR_range(NPTS,NSCLR_RANGE,2)
       REAL :: field(NPTS,NZP1),vec(NPTS)
-      
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe
       

@@ -71,33 +71,36 @@ c define vertical grid fields
                kpp_const_fields%zm(1)=slab_depth*(-0.5)
                kpp_const_fields%hm(1)=slab_depth
             ELSE
-               WRITE(6,*) 'KPP : L_SLAB requires setting NZ=1 in'
-     +              ' parameter.inc.  Aborting.'
+               WRITE(6,*) 'KPP : L_SLAB requires setting NZ=1 in',
+     +              'parameter.inc.  Aborting.'
                CALL MIXED_ABORT
             ENDIF
-         ENDIF
+         ELSE
 c     
 c     layer thickness h, layer grids zgrid, interface depths d
 c     
-         hsum = 0.0
-         kpp_const_fields%dm(0) = 0.0
-         do 15 i=1,NZ
-            if(lstretchgrid) then
-               kpp_const_fields%hm(i) = kpp_const_fields%hm(i) 
-     +              *DMAX / sumh 
-            else   
-               kpp_const_fields%hm(i) = DMAX / real(NZ) 
-            endif   
-            kpp_const_fields%zm(i) =  0.0 - (hsum + 0.5 * 
-     +           kpp_const_fields%hm(i) )
-            hsum = hsum + kpp_const_fields%hm(i)
-            kpp_const_fields%dm(i) = hsum
+            hsum = 0.0
+            kpp_const_fields%dm(0) = 0.0
+            do 15 i=1,NZ
+               if(lstretchgrid) then
+                  kpp_const_fields%hm(i) = kpp_const_fields%hm(i) 
+     +                 *DMAX / sumh 
+               else   
+                  kpp_const_fields%hm(i) = DMAX / real(NZ) 
+               endif   
+               kpp_const_fields%zm(i) =  0.0 - (hsum + 0.5 * 
+     +              kpp_const_fields%hm(i) )
+               hsum = hsum + kpp_const_fields%hm(i)
+               kpp_const_fields%dm(i) = hsum
 c     write(nuout,*) 'h=',hm(i),' dm=',dm(i),' z=',zm(i),' i=',i
- 15      continue
+ 15         continue
+         ENDIF
       ENDIF
       kpp_const_fields%hm(nzp1) = 1.e-10 
       kpp_const_fields%zm(nzp1) = -DMAX
-
+      WRITE(6,*) kpp_const_fields%hm,kpp_const_fields%zm,
+     +     kpp_const_fields%dm
+      
       DO ipt=1,npts
 c     
 c     compute geographic location

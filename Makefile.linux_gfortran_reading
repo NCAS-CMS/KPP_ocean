@@ -12,7 +12,7 @@ F90=f90n
 # C Preprocessor
 CPP=cpp
 # Flags for the Fortran compiler
-F90_FLAGS=-cpp -O3 -fdefault-real-8 -ffixed-line-length-72 -I. -fopenmp -g
+F90_FLAGS=-cpp -g -fdefault-real-8 -ffixed-line-length-72 -I.
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=
 # Oasis 2 static library
@@ -59,7 +59,7 @@ GFS_FORCED_LINK = $(F90) $(GFS_FORCED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_I
 .f.o :
 	$(F90) $(F90_FLAGS) $(CPP_FLAGS) $(NCDF_INC) -c $< -o ${<:.f=.o}
 
-forced : CPP_FLAGS=$(F90_CPP_FLAG)-DOPENMP
+forced : CPP_FLAGS=$(F90_CPP_FLAG)
 forced : $(FORCED_OBJS)
 	$(FORCED_LINK)
 

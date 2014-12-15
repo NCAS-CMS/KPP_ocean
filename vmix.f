@@ -215,11 +215,12 @@ c      else
 c     Set very small background diffusivity values for slab ocean
          dlimit=1e-20
          vlimit=1e-20
-         kpp_2d_fields%wXNT(NZ,n)=0.0
       ELSE
          dlimit = 0.00001
          vlimit = 0.0001
       ENDIF
+
+      kpp_2d_fields%wXNT(NZ,n)=0.0
       do k=nz,nzp1
          kpp_2d_fields%difm(k) = vlimit
          kpp_2d_fields%difs(k) = dlimit
