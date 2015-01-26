@@ -351,6 +351,7 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
             DO iy=1,NY_GLOBE
 #ifdef COUPLE
                ipt_globe=(iy-1)*NX_GLOBE+ix
+               ipt=(iy-jfirst)*NX+(ix-ifirst)+1
                IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
      +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
 #else
@@ -1151,10 +1152,10 @@ c      ENDIF
      +     CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR_WITHZ) 
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
-      IF (L_FCORR) CALL read_fcorr(kpp_3d_fields)
+      IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
       IF (L_SFCORR_WITHZ) 
      +     CALL read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
-      IF (L_SFCORR) CALL read_sfcorr(kpp_3d_fields)
+      IF (L_SFCORR) CALL read_sfcorr(kpp_3d_fields,kpp_const_fields)
       IF (L_VARY_BOTTOM_TEMP) 
      +     CALL read_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +     bottom_temp)
