@@ -217,10 +217,13 @@ c     Should we set wxNT(NZ,:) to zero as well for the slab? This is
 c     done above for LNBFLX.
          dlimit=1e-20
          vlimit=1e-20
+         DO n=1,nsclr
+            kpp_2d_fields%wXNT(NZ,n)=0.0
+         ENDDO
       ELSE
          dlimit = 0.00001
          vlimit = 0.0001
-      ENDIF     
+      ENDIF
       do k=nz,nzp1
          kpp_2d_fields%difm(k) = vlimit
          kpp_2d_fields%difs(k) = dlimit

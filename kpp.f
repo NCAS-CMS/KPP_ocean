@@ -136,9 +136,11 @@ c     combine interior and boundary layer coefficients and nonlocal term
          enddo
         
 c     For slab, set all values to small numbers
-         kpp_2d_fields%difm(1:NZtmax)=1e-20
-         kpp_2d_fields%dift(1:NZtmax)=1e-20
-         kpp_2d_fields%difs(1:NZtmax)=1e-20
+         IF (kpp_const_fields%L_SLAB) THEN
+            kpp_2d_fields%difm(1:NZtmax)=1e-20
+            kpp_2d_fields%dift(1:NZtmax)=1e-20
+            kpp_2d_fields%difs(1:NZtmax)=1e-20
+         ENDIF
          
 
 c     
@@ -590,10 +592,17 @@ c     &     difmiw,difsiw,c1
       data  epsln   / 1.e-16 /  ! a small number          
       data  Riinfty /  0.8     / ! LMD default was = 0.7
       data  Ricon   / -0.2    / ! note: exp was repl by multiplication
-      data  difm0   / 0.000005  /  ! max visc due to shear instability
-      data  difs0   / 0.000005  /  ! max diff ..  .. ..    ..
-      data  difmiw  / 0.000001  / ! background/internal waves visc(m^2/s)
-      data  difsiw  / 0.000001 / ! ..         ..       ..    diff(m^2/s)
+      IF (kpp_const_fields%L_SLAB) THEN
+         data  difm0   / 0.000005  / ! max visc due to shear instability
+         data  difs0   / 0.000005  / ! max diff ..  .. ..    ..
+         data  difmiw  / 0.000001  / ! background/internal waves visc(m^2/s)
+         data  difsiw  / 0.000001 / ! ..         ..       ..    diff(m^2/s)
+      ELSE
+         data difm0   / 0.005   /
+         data difs0   / 0.005   /
+         data difmiw  / 0.0001  /
+         data difsiw  / 0.00001 /
+      ENDIF
       data  difmcon / 0.0000   / ! max visc for convection  (m^2/s)
       data  difscon / 0.0000   / ! max diff for convection  (m^2/s)
       data  c1/ 1.0/
