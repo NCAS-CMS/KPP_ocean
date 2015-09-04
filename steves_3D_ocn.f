@@ -76,7 +76,7 @@ c into the main program.  NPK 17/08/10 - R3
       nthreads=OMP_GET_NUM_THREADS()
 !$OMP END PARALLEL     
       WRITE(6,*) 'Initialising ',nthreads,'timers'
-      IF (nthreads .eq. 0) THEN 
+      IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN 
          WRITE(6,*) 'nthreads = 0, resetting nthreads = 24'
          nthreads=24
          CALL OMP_SET_NUM_THREADS(24)
@@ -345,8 +345,6 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
          WRITE(trans_timer_name,'(A19)') 'KPP 3D/2D thread 01'
          WRITE(phys_timer_name,'(A21)') 'KPP Physics thread 01'
 #endif
-!         DO ix=1,NX
-!            DO iy=1,NY_GLOBE
          DO ix=1,NX_GLOBE
             DO iy=1,NY_GLOBE
 #ifdef COUPLE
@@ -355,8 +353,8 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
                IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
      +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
 #else
-                  IF (iy .ge. jfirst .and. iy .le. jlast .and.
-     +                 ix .ge. ifirst .and. ix .le. ilast) THEN
+               IF (iy .ge. jfirst .and. iy .le. jlast .and.
+     +              ix .ge. ifirst .and. ix .le. ilast) THEN
                      ipt=(iy-jfirst)*NX+(ix-ifirst)+1
                      IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
 !                        WRITE(6,*) 'ipt = ',ipt,'ix=',ix,'iy=',iy

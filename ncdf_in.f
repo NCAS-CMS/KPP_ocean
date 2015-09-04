@@ -750,7 +750,7 @@ c      include 'location.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
 
-      CHARACTER*20 vname
+      CHARACTER(LEN=*) :: vname
       INTEGER ncid,npars,nt
       INTEGER par_out(npts,npars,nt)
       INTEGER par_in(nx,ny,npars,nt)
@@ -758,7 +758,7 @@ c      include 'location.com'
 
       INTEGER start(4),count(4),ix,iy,ipt,ipar
       INTEGER status,dimid,varid
-      
+
       status=NF_INQ_DIMID(ncid,'longitude',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'longitude',varid)
@@ -789,7 +789,6 @@ c      include 'location.com'
       count(3)=npars
       start(4)=1
       count(4)=1
-
 
       status=NF_INQ_VARID(ncid,vname,varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)

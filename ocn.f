@@ -1278,7 +1278,6 @@ c     Determine hmix for initial profile:
 !$OMP DO SCHEDULE(dynamic)
 #endif
          DO ipt=1,npts
-c            WRITE(6,*) 'ipt=',ipt
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)            
             IF (kpp_2d_fields%L_OCEAN) THEN
 c               DO k=1,NZP1

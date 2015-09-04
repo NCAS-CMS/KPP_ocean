@@ -14,7 +14,7 @@ F90=gfortran
 # C Preprocessor
 CPP=cpp
 # Flags for the Fortran compiler
-F90_FLAGS=-cpp -O3 -fdefault-real-8 -ffixed-line-length-72 -I.
+F90_FLAGS=-cpp -fdefault-real-8 -ffixed-line-length-72 -I. -fopenmp
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=
 # Oasis 2 static library
@@ -23,9 +23,9 @@ OASIS2_LIB=/opt/src/oasis_2.4.1_pathscale/lib/clim/src_MPI1/climmpi1.a
 OASIS3_MODDIR=/opt/src/oasis3_2-5/prism/macosx_gfortran/lib/mods
 OASIS3_LIB=-L/opt/src/oasis3_2-5/prism/macosx_gfortran/lib -lpsmile.MPI1 -lmpp_io 
 # NetCDF dynamic libraries
-NCDF_LIB=-L/sw/opt/netcdf7/lib -lnetcdf -lnetcdff
+NCDF_LIB=-L/usr/local/lib -lnetcdf -lnetcdff
 # NetCDF include files
-NCDF_INC=-I/sw/opt/netcdf7/include
+NCDF_INC=-I/usr/local/include
 # MPI (or OpenMPI) include files
 #MPI_INC=-I/opt/include
 # MPI dynamic libraries
@@ -39,7 +39,7 @@ EXECUTABLE=KPP_ocean
 # -- No user modifications beyond this point --
 
 FORCED_FILES = steves_3D_ocn.f steves_fluxes.f subs1D.f ncdf_in.f ncdf_out.f \
-	ocn.f 3D_netcdf.f init.f kpp.f vmix.f kpp_timer.f
+	ocn.f 3D_netcdf.f init.f kpp.f vmix.f kpp_timer.f kpp_derived_trans.f
 OASIS2_COUPLED_FILES = $(FORCED_FILES) couple_io_oasis2.f init_oasis2.f
 OASIS3_COUPLED_FILES = $(FORCED_FILES) couple_io_oasis3.f init_oasis3.f
 CFS_COUPLED_FILES = $(FORCED_FILES) couple_io_cfs.f
@@ -61,7 +61,7 @@ GFS_FORCED_LINK = $(F90) $(GFS_FORCED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_I
 .SUFFIXES: .f .o
 
 .f.o :
-	$(F90) -g -fopenmp $(F90_FLAGS) $(CPP_FLAGS) $(OASIS3_MOD_FLAG) $(NCDF_INC) $(MPI_INC) -c $< -o ${<:.f=.o}
+	$(F90) $(F90_FLAGS) $(CPP_FLAGS) $(OASIS3_MOD_FLAG) $(NCDF_INC) $(MPI_INC) -c $< -o ${<:.f=.o}
 
 forced : CPP_FLAGS=$(F90_CPP_FLAG)-DOPENMP
 forced : $(FORCED_OBJS) 
