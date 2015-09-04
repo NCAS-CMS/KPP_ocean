@@ -69,7 +69,7 @@ c define vertical grid fields
             IF (NZ .eq. 1) THEN
                kpp_const_fields%dm(1)=slab_depth
                kpp_const_fields%zm(1)=slab_depth*(-0.5)
-               kpp_const_fields%hm(1)=slab_depth
+               kpp_const_fields%hm(1)=slab_depth               
             ELSE
                WRITE(6,*) 'KPP : L_SLAB requires setting NZ=1 in',
      +              'parameter.inc.  Aborting.'
@@ -111,7 +111,7 @@ c
 c     Coriolis Parameter ! check the necessity of this
 c     
             if(abs(kpp_3d_fields%dlat(ipt)).lt.2.5) then    
-	   kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 
+               kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 
      +         sin(2.5*twopi/360.)*SIGN(1.,kpp_3d_fields%dlat(ipt))
             else  
                kpp_3d_fields%f(ipt) = 2. * (twopi/86164.) * 

@@ -858,43 +858,51 @@ c     NPK 29/06/08
       status=NF_INQ_VARID(fcorr_ncid,'fcorr',fcorr_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
        
-      ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
-     +     kpp_const_fields%spd
-      fcorr_time=(ndays_upd_fcorr)*
-     &     (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
-     +     (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
-     &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
 
-      IF (fcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_FCORR) THEN 
-            DO WHILE (fcorr_time .gt. last_timein)
-               fcorr_time=fcorr_time-fcorr_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'Time for which to read the flux & 
-     & corrections exceeds the last time in the netCDF file &
-     & and L_PERIODIC_FCORR has not been specified.  &
-     & Attempting to read flux corrections will lead to an error, so &
-     & aborting now ...'
+      IF (L_UPD_FCORR) THEN
+         ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
+     +        kpp_const_fields%spd
+         fcorr_time=(ndays_upd_fcorr)*
+     &       (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
+     +       (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
+     &       (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
+         
+         IF (fcorr_time .gt. last_timein) THEN
+            IF (L_PERIODIC_FCORR) THEN 
+               DO WHILE (fcorr_time .gt. last_timein)
+                  fcorr_time=fcorr_time-fcorr_period
+               ENDDO
+            ELSE
+               WRITE(nuout,*) 'Time for which to read the flux & 
+     &corrections exceeds the last time in the netCDF file &
+     &and L_PERIODIC_FCORR has not been specified.  &
+     &Attempting to read flux corrections will lead to an error, so &
+     &aborting now ...'
+               CALL MIXED_ABORT
+            ENDIF
+         ENDIF 
+         
+         write(nuout,*) 'Reading flux correction for time ',fcorr_time
+         start(3)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
+     +        (kpp_const_fields%dto*ndtupdfcorr))+1
+         write(nuout,*) 'Flux corrections are being read from position',
+     &        start(3)
+         status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(3),time_in)
+         
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         IF (abs(time_in-fcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
+     +        kpp_const_fields%spd) THEN
+            write(nuerr,*) 'Cannot find time',fcorr_time,
+     &           'in flux-correction input file'
+            write(nuerr,*) 'The closest I came was',time_in
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
-
-      write(nuout,*) 'Reading flux correction for time ',fcorr_time
-      start(3)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
-     +     (kpp_const_fields%dto*ndtupdfcorr))+1
-      write(nuout,*) 'Flux corrections are being read from position',
-     &     start(3)
-      status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(3),time_in)
-      
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      IF (abs(time_in-fcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
-     +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time',fcorr_time,
-     &        'in flux-correction input file'
-         write(nuerr,*) 'The closest I came was',time_in
-         CALL MIXED_ABORT
+      ELSE
+c If not updating the flux correction, read from beginning of file
+         start(3)=1
+         count(3)=1
       ENDIF
+      
       status=NF_GET_VARA_REAL(fcorr_ncid,fcorr_varid,start,count
      &     ,fcorr_twod_in)
       write(nuout,*) 'Flux corrections have been read from position',

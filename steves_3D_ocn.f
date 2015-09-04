@@ -163,7 +163,7 @@ c
       DO ntime=1,nend*ndtocn
          kpp_const_fields%ntime=ntime
          IF (MOD(kpp_const_fields%ntime-1,ndtocn) .EQ. 0) THEN            
-            WRITE(6,*) 'Calling fluxes'
+!            WRITE(6,*) 'Calling fluxes'
 #ifdef COUPLE
 #ifdef OASIS2
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
@@ -186,7 +186,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)            
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #endif /*COUPLE*/
-            WRITE(6,*) 'Called fluxes'
+!            WRITE(6,*) 'Called fluxes'
          ENDIF
 c      
 c     Re-writing update logic to allow user to choose independently whether to
@@ -330,7 +330,7 @@ c     Call Large et al. (1994) boundary-layer ocean physics routines
 c     
          kpp_const_fields%time=kpp_const_fields%startt+ntime*
      +        kpp_const_fields%dto/kpp_const_fields%spd
-         WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
+!         WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
 c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 #ifdef OPENMP
@@ -444,7 +444,7 @@ c            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
 c            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 c         ENDIF
 
-         WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
+!         WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
 c
 c     Implement more-frequent checkpointing, upon request
 c     NPK 02/02/10 - R3
@@ -477,7 +477,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF            
          ENDIF
-         WRITE(nuout,*) 'KPP: Finished checkpointing'
+!         WRITE(nuout,*) 'KPP: Finished checkpointing'
 c
 c     If we are going to output means, take means at the end of the timestep
 c     NPK 25/2/08 - R1
@@ -486,11 +486,11 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',1)
             CALL mean_output(kpp_3d_fields,VEC_mean,SCLR_mean)
-            WRITE(6,*) 'KPP: Finished meaning output'
+!            WRITE(6,*) 'KPP: Finished meaning output'
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
-         WRITE(6,*) 'KPP: Finished meaning output'
+!         WRITE(6,*) 'KPP: Finished meaning output'
          IF (L_OUTPUT_RANGE) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',1)
@@ -498,7 +498,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
-         WRITE(nuout,*) 'KPP: Finished ranging output'
+!         WRITE(nuout,*) 'KPP: Finished ranging output'
 c     
 c     Output means every ndtout_mean timesteps
 c     NPK 25/2/08 - R1
@@ -583,7 +583,7 @@ c
      +        .NE. nend*ndtocn) THEN
             day_out=day_out+NINT(kpp_const_fields%dtsec/FLOAT(ndtocn)
      +           *FLOAT(ndt_per_file)/kpp_const_fields%spd)
-            WRITE(nuout,*) 'day_out=',day_out
+            !WRITE(nuout,*) 'day_out=',day_out
             IF (L_OUTPUT_INST) THEN
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
@@ -835,7 +835,7 @@ c     +     bottom_temp(:)
      &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref
       NAMELIST/NAME_DOMAIN/DMAX,alon,alat,delta_lat,delta_lon,
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
-     &     L_SLAB,slab_depth
+     &     L_SLAB,L_COLUMBIA_LAND,slab_depth
       NAMELIST/NAME_START/ L_INITDATA,initdata_file,L_INTERPINIT,
      &     L_RESTART,restart_infile
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
@@ -926,6 +926,7 @@ c     Initilalize and read the location name list
       L_REGGRID=.TRUE.
       L_VGRID_FILE=.FALSE.
       L_SLAB=.FALSE.
+      L_COLUMBIA_LAND=.FALSE.
       slab_depth=0.0
       READ(75,NAME_DOMAIN)
       IF (DMAX .LE. 0.0) THEN 
@@ -1455,7 +1456,8 @@ c
      +        kpp_const_fields%time
          WRITE(nuerr,*) 'Start time in namelist = ',
      +        kpp_const_fields%startt
-         CALL MIXED_ABORT
+c         CALL MIXED_ABORT
+	 kpp_const_fields%time=kpp_const_fields%startt
       ENDIF
 
       RETURN

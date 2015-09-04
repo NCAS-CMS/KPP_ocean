@@ -436,8 +436,8 @@ c     +        time_varids(k)
       start(3)=1
       start(4)=ntout
       
-      write(nuout,*) 'Writing output for diagnostic ',diag_num,
-     + 'to start=',start,'count=',count,'zprof=',zprof
+!      write(nuout,*) 'Writing output for diagnostic ',diag_num,
+!     + 'to start=',start,'count=',count,'zprof=',zprof
 
 c     NPK 25/2/08.
 c     Stop opening and closing output files with each flush of output.
@@ -582,7 +582,7 @@ c     NPK 25/2/08
 c     Stop opening and closing output files with each flush of output.
 c     Just do it once at the beginning/end of the simulation.
 c      call output_close
-      WRITE(nuout,*) ' Output successfully written'
+!      WRITE(nuout,*) ' Output successfully written'
       RETURN
       END
 
@@ -706,8 +706,8 @@ c     +     ' Time=',TOUT,' time_id = ',time_id
          CASE DEFAULT
             temp_2d(:,:)=VEC_mean(:,:,mean_num)
          END SELECT
-         WRITE(6,*) 'In WRITE_MEANS for diag_num=',diag_num,'zprof=',
-     +        zprof
+!         WRITE(6,*) 'In WRITE_MEANS for diag_num=',diag_num,'zprof=',
+!     +        zprof
 c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
 
          IF (zprof .gt. 0) THEN
@@ -726,9 +726,9 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
      +           kpp_3d_fields%L_OCEAN,missval,varout)
          ENDIF
 
-         WRITE(6,*) 'Writing to ncid=',mean_ncid_out,' varid=',
-     +        varid,' with start =',start,' and count =',
-     +        count
+!         WRITE(6,*) 'Writing to ncid=',mean_ncid_out,' varid=',
+!     +        varid,' with start =',start,' and count =',
+!     +        count
          status=NF_PUT_VARA_REAL(
      &        mean_ncid_out,varid,start,count,VAROUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -751,8 +751,8 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
      &              SINGOUT(ix,iy)=SCLR_mean(ipt,mean_num)
             ENDDO
          ENDDO            
-         WRITE(nuout,*) 'In write_means for singout, i=',mean_num,
-     &        'diag_num=',diag_num
+!         WRITE(nuout,*) 'In write_means for singout, i=',mean_num,
+!     &        'diag_num=',diag_num
          status=NF_PUT_VARA_REAL(
      &        mean_ncid_out,varid,start,count,SINGOUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -852,17 +852,17 @@ c            WRITE(6,*) 'Calling reformat_mask_output_2d diag=',diag_num
             ENDIF         
             SELECT CASE (j)
             CASE (1)                              
-               WRITE(6,*) 'Writing to ncid=',min_ncid_out,' varid=',
-     +              varid,' with start =',start,' and count =',
-     +              count
+!               WRITE(6,*) 'Writing to ncid=',min_ncid_out,' varid=',
+!     +              varid,' with start =',start,' and count =',
+!     +              count
                status=NF_PUT_VARA_REAL(
      &              min_ncid_out,varid,start,count,VAROUT)
                IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
                VEC_range(:,:,range_num,j)=2e20
             CASE (2)
-               WRITE(6,*) 'Writing to ncid=',max_ncid_out,' varid=',
-     +              varid,' with start =',start,' and count =',
-     +              count
+!               WRITE(6,*) 'Writing to ncid=',max_ncid_out,' varid=',
+!     +              varid,' with start =',start,' and count =',
+!     +              count
                status=NF_PUT_VARA_REAL(
      &              max_ncid_out,varid,start,count,VAROUT)
                IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -936,7 +936,7 @@ c     Increment counter for time dimension of NetCDF file
 
       i=1
       DO ivar=1,N_VAROUTS
-         WRITE(6,*) ivar
+c         WRITE(6,*) ivar
          IF (ndt_varout_mean(ivar) .gt. 0) THEN
 c            WRITE(6,*) 'Computing means for ivar = ',ivar,'i=',i
 c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
@@ -1011,7 +1011,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       ENDDO
       i=1
       DO ivar=1,N_SINGOUTS 
-         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
+!         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
          IF (ndt_singout_mean(ivar) .gt. 0) THEN
             SELECT CASE (ivar)
             CASE(1)

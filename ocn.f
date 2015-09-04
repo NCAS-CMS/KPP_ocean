@@ -78,9 +78,9 @@ c      integer kmixe(npts),kmixn(npts)
 c
 c More Local Variables (to make implicit none)
 c
-      real deltaz,rhonot,a,b
+      real deltaz,rhonot,a,b, dzb(NZ)
       integer k,l,n
-c Number of iterations for computational instability
+cdc Number of iterations for computational instability
       integer comp_iter_max
       real rmsd(4),rmsd_threshold(4)
       data comp_iter_max /10/
@@ -90,6 +90,39 @@ c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
       data rmsd_threshold /4,4,1,1/
       data lambda /0.5/
+
+c Change slab depth for Columbia ITCZ experiments within specified bounds
+      IF (kpp_const_fields%L_SLAB .and. 
+     +     kpp_const_fields%L_COLUMBIA_LAND) THEN
+         IF (kpp_2d_fields%dlat .ge. -30 .and.
+     +        kpp_2d_fields%dlat .le. 30 .and.
+     +        kpp_2d_fields%dlon .ge. 0 .and.
+     +        kpp_2d_fields%dlon .le. 45) THEN
+c	    WRITE(6,*) 'Change slab depth at ',
+c     +		kpp_2d_fields%dlat,kpp_2d_fields%dlon
+            kpp_const_fields%dm(1)=30
+            kpp_const_fields%zm(1)=-15
+            kpp_const_fields%hm(1)=30        
+         ELSE
+            kpp_const_fields%dm(1)=kpp_const_fields%slab_depth
+            kpp_const_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
+            kpp_const_fields%hm(1)=kpp_const_fields%slab_depth
+         ENDIF
+c Force recomputation of tridiagonal matrix coefficients
+         do k=1,NZ
+            dzb(k) = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
+         enddo         
+         kpp_const_fields%tri(0,1,1) = kpp_const_fields%dto/
+     +        kpp_const_fields%hm(1)
+         kpp_const_fields%tri(1,1,1) = kpp_const_fields%dto/
+     +        kpp_const_fields%hm(1)/dzb(1)
+         do k=2,NZ
+            kpp_const_fields%tri(k,1,1) = kpp_const_fields%dto/
+     +           kpp_const_fields%hm(k)/dzb(k)
+            kpp_const_fields%tri(k,0,1) = kpp_const_fields%dto/
+     +           kpp_const_fields%hm(k)/dzb(k-1)
+         enddo
+      ENDIF
 
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
@@ -143,7 +176,20 @@ c     added by SJW (17 Jan 03) to try an alleviate some non-convergences
              call vmix(kpp_2d_fields,kpp_const_fields,hmixe,kmixe)
 c     Overwrite mixing depth when using slab ocean
             IF (kpp_const_fields%L_SLAB) THEN
-               hmixe=kpp_const_fields%slab_depth
+               IF (kpp_const_fields%L_COLUMBIA_LAND) THEN
+                  IF (kpp_2d_fields%dlat .ge. -30 .and.
+     +                 kpp_2d_fields%dlat .le. 30 .and.
+     +                 kpp_2d_fields%dlon .ge. 0 .and.
+     +                 kpp_2d_fields%dlon .le. 45) THEN
+c                     WRITE(6,*) 'Change slab depth at ',
+c     +                    kpp_2d_fields%dlat,kpp_2d_fields%dlon
+                     hmixe=0.1
+                  ELSE
+                     hmixe=kpp_const_fields%slab_depth
+                  ENDIF
+               ELSE
+                  hmixe=kpp_const_fields%slab_depth
+               ENDIF               
                kmixe=1
             ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
@@ -170,9 +216,23 @@ c     iter=1
             call vmix(kpp_2d_fields,kpp_const_fields,hmixn,kmixn)
 c     Overwrite mixing depth when using slab ocean
             IF (kpp_const_fields%L_SLAB) THEN
-               hmixn=kpp_const_fields%slab_depth
+               IF (kpp_const_fields%L_COLUMBIA_LAND) THEN
+                  IF (kpp_2d_fields%dlat .ge. -30 .and.
+     +                 kpp_2d_fields%dlat .le. 30 .and.
+     +                 kpp_2d_fields%dlon .ge. 0 .and.
+     +                 kpp_2d_fields%dlon .le. 45) THEN
+c                     WRITE(6,*) 'Change slab depth at ',
+c     +                    kpp_2d_fields%dlat,kpp_2d_fields%dlon
+                     hmixn=0.1
+                  ELSE
+                     hmixn=kpp_const_fields%slab_depth
+                  ENDIF
+               ELSE
+                  hmixn=kpp_const_fields%slab_depth
+               ENDIF
                kmixn=1
             ENDIF
+
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
             IF (kpp_const_fields%L_SLAB) kmixn=1
             iter = iter + 1
@@ -1194,6 +1254,7 @@ c     tri(0     ,1,.........) : dt/h(1) factor for rhs flux
 c     tri(k=1:NZ,0,.........) : dt/h(k)/ {dzb(k-1)=z(k-1)-z(k)=dzabove}
 c     tri(k=1:NZ,1,.........) : dt/h(k)/ {dzb(k  )=z(k)-z(k+1)=dzbelow}
 c
+      
       do 10 k=1,NZ
          dzb(k)     = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
  10   continue

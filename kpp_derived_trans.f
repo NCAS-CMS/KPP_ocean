@@ -387,6 +387,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_RELAX_OCNT=L_RELAX_OCNT
       kpp_const_fields%L_DAMP_CURR=L_DAMP_CURR
       kpp_const_fields%L_SLAB=L_SLAB
+      kpp_const_fields%L_COLUMBIA_LAND=L_COLUMBIA_LAND
 
       RETURN
       END
