@@ -345,18 +345,19 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
          WRITE(trans_timer_name,'(A19)') 'KPP 3D/2D thread 01'
          WRITE(phys_timer_name,'(A21)') 'KPP Physics thread 01'
 #endif
+#ifdef COUPLE
          DO ix=1,NX_GLOBE
             DO iy=1,NY_GLOBE
-#ifdef COUPLE
                ipt_globe=(iy-1)*NX_GLOBE+ix
                ipt=(iy-jfirst)*NX+(ix-ifirst)+1
                IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
      +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
 #else
-               IF (iy .ge. jfirst .and. iy .le. jlast .and.
-     +              ix .ge. ifirst .and. ix .le. ilast) THEN
-                     ipt=(iy-jfirst)*NX+(ix-ifirst)+1
-                     IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
+        DO ipt=1,npts
+!           IF (iy .ge. jfirst .and. iy .le. jlast .and.
+!     +                 ix .ge. ifirst .and. ix .le. ilast) THEN
+           !ipt=(iy-jfirst)*NX+(ix-ifirst)+1
+           IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
 !                        WRITE(6,*) 'ipt = ',ipt,'ix=',ix,'iy=',iy
 #endif
                   CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
@@ -394,10 +395,12 @@ c     NPK 17/5/13.
      +                 kpp_3d_fields)
                   CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
                ENDIF
-#ifndef COUPLE
-            ENDIF
-#endif
+!#ifndef COUPLE
+!            ENDIF
+!#endif
+#ifdef COUPLE
             ENDDO
+#endif
          ENDDO
 #ifdef OPENMP
 !$OMP END DO
