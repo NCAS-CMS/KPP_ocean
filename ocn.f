@@ -11,13 +11,13 @@ c        albocn=0.06                             (init cnsts in input.f)
 c   - no net fresh water flux into ocean when forcing with state
 c        variables (laflx >= 1):
 c        sflux(7,2,jptr) = - sflux(6,2,jptr)        (atmflx in fluxes.f)
-c   - use psnow flux data to input observed SST, 
+c   - use psnow flux data to input observed SST,
 c                                                    (fread in atmrad.f)
 c  ALSO :
 c         General ability to read large scale forcing from euc and doc LES
 c ----------------------------------------------------------------------
 c Originally ~/KPP/LARGE/ocn.f (from Bill Large)
-c  Modified by SJW to remove those bits which a specific to Bill's 
+c  Modified by SJW to remove those bits which a specific to Bill's
 c work and just leave the bit we need
 c Started 18/03/02
 c-----------------------------------------------------------------------
@@ -39,9 +39,9 @@ c              16 Nov 1994 - wgl : new KPP codes no temporary grid
 #include <ocn_energy.com>
 
 c Input/Output
-c      real U(NPTS,NZP1,NVEL), X(NPTS,NZP1,NSCLR), Rig(npts,nz), 
+c      real U(NPTS,NZP1,NVEL), X(NPTS,NZP1,NSCLR), Rig(npts,nz),
 c     +     dbloc(npts,nz), shsq(npts,nz)
-c      REAL U_oned(NZP1,NVEL), X_oned(NZP1,NSCLR), Rig_oned(NZP1), 
+c      REAL U_oned(NZP1,NVEL), X_oned(NZP1,NSCLR), Rig_oned(NZP1),
 c     +     dbloc_oned(NZ),shsq_oned(NZP1)
 
       TYPE(kpp_2d_type) :: kpp_2d_fields
@@ -53,7 +53,7 @@ c      real hmixd_oned(0:1),     ! storage arrays for extrapolations
 c     +     Us_oned(NZP1,NVEL ,0:1), ! ..      ..     ..  ..
 c     +     Xs_oned(NZP1,NSCLR,0:1)  ! ..      ..     ..  ..
 c      integer old,new           ! extrapolation index for Us,Xs,hmixd
-c      common/ saveUXh / 
+c      common/ saveUXh /
 c     +     old,new,Us,Xs,hmixd
 c
 c Local
@@ -85,14 +85,15 @@ c Number of iterations for computational instability
       real rmsd(4),rmsd_threshold(4)
       data comp_iter_max /10/
 c Critical depth-integrated RMS difference between old and new profiles
-c for repeating integration, for (/U,V,T,S/). Typical (stable) 
+c for repeating integration, for (/U,V,T,S/). Typical (stable)
 c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
-      data rmsd_threshold /4,4,1,1/
+!      data rmsd_threshold /4,4,1,1/
+      data rmsd_threshold /100,100,100,100/
       data lambda /0.5/
 
 c Change slab depth for Columbia ITCZ experiments within specified bounds
-      IF (kpp_const_fields%L_SLAB .and. 
+      IF (kpp_const_fields%L_SLAB .and.
      +     kpp_const_fields%L_COLUMBIA_LAND) THEN
          IF (kpp_2d_fields%dlat .ge. -30 .and.
      +        kpp_2d_fields%dlat .le. 30 .and.
@@ -102,7 +103,7 @@ c	    WRITE(6,*) 'Change slab depth at ',
 c     +		kpp_2d_fields%dlat,kpp_2d_fields%dlon
             kpp_const_fields%dm(1)=30
             kpp_const_fields%zm(1)=-15
-            kpp_const_fields%hm(1)=30        
+            kpp_const_fields%hm(1)=30
          ELSE
             kpp_const_fields%dm(1)=kpp_const_fields%slab_depth
             kpp_const_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
@@ -111,7 +112,7 @@ c     +		kpp_2d_fields%dlat,kpp_2d_fields%dlon
 c Force recomputation of tridiagonal matrix coefficients
          do k=1,NZ
             dzb(k) = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
-         enddo         
+         enddo
          kpp_const_fields%tri(0,1,1) = kpp_const_fields%dto/
      +        kpp_const_fields%hm(1)
          kpp_const_fields%tri(1,1,1) = kpp_const_fields%dto/
@@ -128,14 +129,14 @@ c Force recomputation of tridiagonal matrix coefficients
       Xo=kpp_2d_fields%X(:,:)
       kpp_2d_fields%comp_flag=.TRUE.
       kpp_2d_fields%reset_flag=0
-      
-      !WRITE(6,*) 'Beginning of timestep:'
-      !WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
-      !WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
-      !WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
-      !WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
 
-      DO WHILE (kpp_2d_fields%comp_flag .and. 
+!      WRITE(6,*) 'Beginning of timestep:'
+!      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
+!      WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
+!      WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
+!      WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
+
+      DO WHILE (kpp_2d_fields%comp_flag .and.
      +     kpp_2d_fields%reset_flag .le. comp_iter_max)
 c     Estimate new profiles by  extrapolation
          do 20 k=1,NZP1
@@ -151,8 +152,8 @@ c     Estimate new profiles by  extrapolation
      +              kpp_2d_fields%Xs(k,l,kpp_2d_fields%old)
                Xx(k,l)=kpp_2d_fields%X(k,l)
  24         continue
- 20      continue      
-      
+ 20      continue
+
 c     Iteration loop for semi-implicit integration
 c     Reset iteration counter
          iter=0
@@ -189,16 +190,16 @@ c     +                    kpp_2d_fields%dlat,kpp_2d_fields%dlon
                   ENDIF
                ELSE
                   hmixe=kpp_const_fields%slab_depth
-               ENDIF               
+               ENDIF
                kmixe=1
             ENDIF
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixe,Uo,Xo)
             IF (kpp_const_fields%L_SLAB) kmixe=1
          ENDDO
-c     The original code can be restored by reseting iter=1 and removing the  
-c     above loop  
+c     The original code can be restored by reseting iter=1 and removing the
+c     above loop
 c     iter=1
-         
+
          IF (kpp_const_fields%LKPP) THEN
  45         continue
             DO k=1,NZP1
@@ -232,20 +233,20 @@ c     +                    kpp_2d_fields%dlat,kpp_2d_fields%dlon
                ENDIF
                kmixn=1
             ENDIF
-            
+
             call ocnint(kpp_2d_fields,kpp_const_fields,1,kmixn,Uo,Xo)
             IF (kpp_const_fields%L_SLAB) kmixn=1
             iter = iter + 1
-            
+
 c     check iteration for convergence
             tol = hmixtolfrac*kpp_const_fields%hm(kmixn)
             if(kmixn.eq.NZP1) tol = hmixtolfrac*kpp_const_fields%hm(NZ)
 c     write(40,*) abs(hmixn(ipt)-hmixe(ipt))/tol
             if(abs(hmixn-hmixe).gt.tol)  then
 c     Uncommeting the following the lines iconv=0 to IF (iconv ...)
-c     will make the model do two consecutive tests for convergence of the 
+c     will make the model do two consecutive tests for convergence of the
 c     hmix (added by SJW 17 Jan 03). This did not work well in testing for
-c     long timestep, high resolution (the model generally failed to satisfy the 
+c     long timestep, high resolution (the model generally failed to satisfy the
 c     convergence test on two consecutive iterations.
                iconv=0
             ELSE
@@ -265,11 +266,11 @@ c     use shallower hmix
                   if(hmixn.gt.hmixe) then
                      hmixe = hmixn ! comment out for hmix data
                      kmixe = kmixn ! ..      ..  ..  hmix data
-                     goto 45    ! ..      ..  ..  hmix data 
-                  endif  
+                     goto 45    ! ..      ..  ..  hmix data
+                  endif
                endif
             endif
-            if( iter.gt.(itermax+1) ) then 
+            if( iter.gt.(itermax+1) ) then
                write(nuout,1009) kpp_const_fields%ntime, ! comment out for hmix data
      +              kpp_2d_fields%dlon,kpp_2d_fields%dlat,
      +              hmixe,hmixn,
@@ -278,7 +279,7 @@ c     use shallower hmix
      +              ' location=(',f7.2,',',f6.2,')',/,
      +              '  hmixest=',f7.2,' hmixnew=',f7.2,' diff=',f6.1,
      +              ' kmixn=',i3,' iteration=',i3)
-            endif       
+            endif
          ENDIF
 c     Trap for profiles that are very different from original profile
 c     or clearly erroneous, to detect rare instances of instability
@@ -293,13 +294,24 @@ c     NPK 16/5/2013
       !WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
       !WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
          DO k=1,NZ
-            IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or. 
-     +           ABS(kpp_2d_fields%U(k,2)).ge.10 .or. 
-     +           ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
-     +           .ge. 10) THEN 
-               kpp_2d_fields%comp_flag=.TRUE.
-               kpp_2d_fields%f=kpp_2d_fields%f*
-     +			(1.01+MOD(kpp_2d_fields%reset_flag,2)*(-0.02))
+            ! For slab ocean, do not test vertical gradient of temperature
+            ! as this is likely to be very large due to the deep ocean below.
+            IF (kpp_const_fields%L_SLAB) THEN
+              IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
+     +           ABS(kpp_2d_fields%U(k,2)).ge.10) THEN
+                kpp_2d_fields%comp_flag=.TRUE.
+                kpp_2d_fields%f=kpp_2d_fields%f*
+     +	           (1.01+MOD(kpp_2d_fields%reset_flag,2)*(-0.02))
+              ENDIF
+            ELSE
+              IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
+     +            ABS(kpp_2d_fields%U(k,2)).ge.10 .or.
+     +            ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
+     +            .ge. 10) THEN
+                kpp_2d_fields%comp_flag=.TRUE.
+                kpp_2d_fields%f=kpp_2d_fields%f*
+     +			       (1.01+MOD(kpp_2d_fields%reset_flag,2)*(-0.02))
+              ENDIF
             ENDIF
          END DO
          IF (.NOT. kpp_2d_fields%comp_flag) THEN
@@ -333,15 +345,15 @@ c     NPK 16/5/2013
      +           comp_iter_max,' iterations.'
             WRITE(6,*) 'At point lat = ',
      +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
-!     WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
-!     WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
-!     WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
-!     WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
-!     WRITE(6,*) 'hmix = ',hmixn,kmixn
+            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
+            WRITE(6,*) 'hmix = ',hmixn,kmixn
          ENDIF
       ENDDO
 c     End of trapping code.
-      
+
 c     Output  Results from permanent grid iterations to common.inc
 c     Compute diagnostic fluxes for writing to dat file
       do k=1,NZ
@@ -356,29 +368,29 @@ c     Compute diagnostic fluxes for writing to dat file
      +        ((kpp_2d_fields%X(k,1)-
      +        kpp_2d_fields%X(k+1,1))/deltaz-kpp_2d_fields%ghat(k)*
      +        kpp_2d_fields%wX(0,1))
-         kpp_2d_fields%wX(k,nsp1)= kpp_const_fields%grav * 
-     +        (kpp_2d_fields%talpha(k)*kpp_2d_fields%wX(k,1) - 
+         kpp_2d_fields%wX(k,nsp1)= kpp_const_fields%grav *
+     +        (kpp_2d_fields%talpha(k)*kpp_2d_fields%wX(k,1) -
      +        kpp_2d_fields%sbeta(k) * kpp_2d_fields%wX(k,2))
          do n=1,NVEL
             kpp_2d_fields%wU(k,n)= -kpp_2d_fields%difm(k)*
      +           (kpp_2d_fields%U(k,n)-kpp_2d_fields%U(k+1,n))/deltaz
          enddo
-      enddo      
-            
+      enddo
+
 c     Compute energetics
       rhonot = 1026.
-      Eflx = 0.5 * ( (Uo(1,1) + kpp_2d_fields%U(1,1)) * 
+      Eflx = 0.5 * ( (Uo(1,1) + kpp_2d_fields%U(1,1)) *
      +     kpp_2d_fields%sflux(1,5,0) +
-     &     (Uo(1,2) + kpp_2d_fields%U(1,2)) * 
+     &     (Uo(1,2) + kpp_2d_fields%U(1,2)) *
      +     kpp_2d_fields%sflux(2,5,0) )
-      Esnk =-0.5*rhonot* ( (Uo(NZ,1) + kpp_2d_fields%U(NZ,1)) * 
+      Esnk =-0.5*rhonot* ( (Uo(NZ,1) + kpp_2d_fields%U(NZ,1)) *
      &     kpp_2d_fields%wU(NZ,1) +
-     &     (Uo(NZ,2) + kpp_2d_fields%U(NZ,2)) * 
+     &     (Uo(NZ,2) + kpp_2d_fields%U(NZ,2)) *
      &     kpp_2d_fields%wU(NZ,2) )
             Ptke = 0.0
 c     use "amax1" to prevent "underflow" in single precision
             do 120 k=1,NZ-1
-               Ptke = Ptke - 0.5*( amax1(kpp_2d_fields%wU(k,1),1.E-10)* 
+               Ptke = Ptke - 0.5*( amax1(kpp_2d_fields%wU(k,1),1.E-10)*
      &              (rhonot   * (Uo(k,1) + kpp_2d_fields%U(k,1)) -
      &              rhonot   * (Uo(k+1,1) + kpp_2d_fields%U(k+1,1)) ) +
      &              amax1(kpp_2d_fields%wU(k,2),1.E-10)*
@@ -387,14 +399,14 @@ c     use "amax1" to prevent "underflow" in single precision
  120        continue
             Tmke = 0.0
             do 130 k=1,NZP1
-               rmke(k) = 0.5 * rhonot * (kpp_2d_fields%U(k,1)**2 + 
+               rmke(k) = 0.5 * rhonot * (kpp_2d_fields%U(k,1)**2 +
      +              kpp_2d_fields%U(k,2)**2) * kpp_const_fields%hm(k)
                Tmke = Tmke + rmke(k)
  130        continue
-            
+
 c     check heat and salt budgets
 c     call budget(Xo,kpp_2d_fields,kpp_const_fields)
-            
+
 c     Set new profiles
 c            do k=1,NZP1         ! values at NZP1 only change for slab ocean
 c               do n=1,NVEL
@@ -406,18 +418,18 @@ c               enddo
 c            enddo
 c     Set correct surface values, and CP and rho profiles for new profiles
 c     Get latest profiles
-c     Removed to ensure that hmix,diff,cp,rho diagnostics are consistent with 
-c     those used in the final iteration of the timestep 
+c     Removed to ensure that hmix,diff,cp,rho diagnostics are consistent with
+c     those used in the final iteration of the timestep
 c     (CP,RHO are not quite correct for updated values, but are the values
 c     by the integration) (SJW 16/01/03)
 c     Need to consider improving convergence test!!! (SJW 16/01/03)
-                  
-c     The final call to vmix is removed to ensure that the diffusion and 
+
+c     The final call to vmix is removed to ensure that the diffusion and
 c     boundary layer profiles in the diagnostics are the ones used to calculate
 c     the fluxes, as it stands at the moment this means that the CP and rho are
 c     also the values used in the timestepping not the values appropriate to the
-c     S,T at the new time level.  
-c     call vmix(Un,Xn,hmixe,kmixe)  
+c     S,T at the new time level.
+c     call vmix(Un,Xn,hmixe,kmixe)
 c     write(40,*) time,iter, hmixn,hmixe,kmixn,kmixe
             kpp_2d_fields%hmix = hmixn
             kpp_2d_fields%kmix = kmixn
@@ -432,7 +444,7 @@ c     write(40,*) time,iter, hmixn,hmixe,kmixn,kmixe
             ENDIF
 
 c     Damping currents, Added LH (06/08/2013)
-            
+
             IF (kpp_const_fields%L_DAMP_CURR) THEN
                dampu(:)=0.
                do k=1,NZP1
@@ -442,31 +454,31 @@ c     Damping currents, Added LH (06/08/2013)
      +                    (kpp_const_fields%dt_uvdamp*
      +                    (86400./kpp_const_fields%dto))
                      Ui=MIN(a,b)
-c     LH (29/08/2013) Add Flags to check which Ui (a or b) is chosen, 
-c     dtuvdamp=360 (specified in namelist). 
-c     The flags for u and v can be requested as diagnostics dampu_flag, 
-c     dampv_flag (singout 11,12). Note that the value of the flag is equal to 
-c     the *fraction* of levels at that point where (U**2)/r .lt. alpha*ABS(U), 
+c     LH (29/08/2013) Add Flags to check which Ui (a or b) is chosen,
+c     dtuvdamp=360 (specified in namelist).
+c     The flags for u and v can be requested as diagnostics dampu_flag,
+c     dampv_flag (singout 11,12). Note that the value of the flag is equal to
+c     the *fraction* of levels at that point where (U**2)/r .lt. alpha*ABS(U),
 c     1.0=all Ui are (U**2)/r
-                     IF (b .lt. a) THEN  
+                     IF (b .lt. a) THEN
                         dampU(l)=dampU(l)+1.0/REAL(NZP1)
-                     ENDIF 
-                     
+                     ENDIF
+
 c     Apply damping
-                     kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) - 
+                     kpp_2d_fields%U(k,l)= kpp_2d_fields%U(k,l) -
      +                    SIGN(Ui,kpp_2d_fields%U(k,l))
                   enddo
                enddo
                kpp_2d_fields%dampu_flag=dampU(1)
                kpp_2d_fields%dampv_flag=dampU(2)
             ENDIF
-            
-c     End of damping 
-         
+
+c     End of damping
+
 c     Save variables for next timestep
             kpp_2d_fields%old = kpp_2d_fields%new
             kpp_2d_fields%new = 1 - kpp_2d_fields%old
-            kpp_2d_fields%hmixd(kpp_2d_fields%new) = 
+            kpp_2d_fields%hmixd(kpp_2d_fields%new) =
      +           kpp_2d_fields%hmix
             do k=1,NZP1
                do l=1,NVEL
@@ -478,16 +490,16 @@ c     Save variables for next timestep
      +                 kpp_2d_fields%X(k,l)
                enddo
             enddo
-                        
+
 c     close(40+ntime)
             return
             end
-      
+
 ***********************************************************************
-      
+
       SUBROUTINE ocnint(kpp_2d_fields,kpp_const_fields,intri,kmixe,
      +     Uo,Xo)
-      
+
 c     Integrate the ocn model by backwards Euler(implicit)discretization
 c     On input : Un,Xn are estimated profiles which are used
 c                to estimate diffusivity profiles at new time.
@@ -506,7 +518,7 @@ c Input
       integer intri             ! index for tri.diag. coeff
 c     +     nzi
 c      real  Uo(nzi+1,NVEL), Xo(nzi+1,NSCLR), ! old profiles
-c     +      z(nzi+1),h(nzi+1),d(0:nzi)      
+c     +      z(nzi+1),h(nzi+1),d(0:nzi)
       REAL Uo(NZP1,NVEL),Xo(NZP1,NSCLR)
 c Output
 c      real  Un(nzi+1,NVEL), Xn(nzi+1,NSCLR)  ! new profiles
@@ -531,7 +543,7 @@ c
 c     Small value to use when applying flux corrections at depth:
 c     Amount to add to temperatures if flux corrections change
 c     sign of vertical temperature gradient.
-c     
+c
 c      real prev_t
 
 c      COMMON /save_fcorr_withz/ fcorr_withz, tinc_fcorr
@@ -559,34 +571,34 @@ c                               set coefficients of tridiagonal matrix
       call tridcof(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
 c                               U right hand side and solution
       rhs(1)= Uo(1,1) + kpp_const_fields%dto*
-     +     ( ftemp*.5*(Uo(1,2)+kpp_2d_fields%U(1,2)) - 
-     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1)) 
+     +     ( ftemp*.5*(Uo(1,2)+kpp_2d_fields%U(1,2)) -
+     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1))
 c      rhs(1)=Uo(1,1)+kpp_const_fields%dto*(ftemp*Uo(1,2) -
 c     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
-     +        kpp_2d_fields%U(i,2)) 
+     +        kpp_2d_fields%U(i,2))
 c         rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)
       enddo
       i=NZ                      ! bottom
       rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
      +     kpp_2d_fields%U(i,2)) + kpp_const_fields%tri(i,1,intri)*
      +     kpp_2d_fields%difm(i)*Uo(i+1,1)
-c      rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)+ 
+c      rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)+
 c     +     kpp_const_fields%tri(i,1,intri)*
 c     +     kpp_2d_fields%difm(i)*Uo(i+1,1)
 
       call tridmat(cu,cc,cl,rhs,Uo(:,1),NZ,kpp_2d_fields%U(:,1))
 c     V rhs and solution
       rhs(1)= Uo(1,2) - kpp_const_fields%dto*
-     +     ( ftemp*.5*(Uo(1,1)+kpp_2d_fields%U(1,1)) + 
+     +     ( ftemp*.5*(Uo(1,1)+kpp_2d_fields%U(1,1)) +
      +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
 c      rhs(1)=Uo(1,2)-kpp_const_fields%dto*
 c     +     ( ftemp*Uo(1,1)+
 c     +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,2) - kpp_const_fields%dto*ftemp*.5*(Uo(i,1)+
-     +        kpp_2d_fields%U(i,1)) 
+     +        kpp_2d_fields%U(i,1))
 c         rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)
       enddo
       i=NZ
@@ -596,12 +608,12 @@ c         rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)
 c      rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)+
 c     +     kpp_const_fields%tri(i,1,intri)*
 c     +     kpp_2d_fields%difm(i)*Uo(i+1,2)
-      
+
       npd = 1
       call tridmat(cu,cc,cl,rhs,Uo(:,2),NZ,kpp_2d_fields%U(:,2))
 c      f(ipt)= ftemp
 c      WRITE(6,*) 'After computation of U, sst = ',kpp_2d_fields%X(1,1)
- 
+
 c *******************************************************************
 c Scalar solutions of tridiagonal matrix
 c     Temperature (different from other scalars because of ghat-term
@@ -636,17 +648,17 @@ c     +        kpp_const_fields%dto,kmixe,
 c     +        kpp_const_fields%dm(kmixe),NZ,
 c     +        rhs,kpp_2d_fields,kpp_const_fields)
 c      enddo
-      
+
 c     Surface relaxation is incompatible with
 c     flux corrections at depth (NPK 12/02/08).
-      IF (kpp_const_fields%L_RELAX_SST .AND. .NOT. 
-     +     kpp_const_fields%L_FCORR_WITHZ .AND. .NOT. 
+      IF (kpp_const_fields%L_RELAX_SST .AND. .NOT.
+     +     kpp_const_fields%L_FCORR_WITHZ .AND. .NOT.
      +     kpp_const_fields%L_FCORR) THEN
-c     
+c
 c     Relax the Mixed layer temperature back to SST0
 c     By using a flux correction at the surface
 c     Added by SJW (06/04)
-c     
+c
          IF (kpp_2d_fields%relax_sst .GT. 1.e-10) THEN
             IF (.NOT. kpp_const_fields%L_RELAX_CALCONLY) THEN
 !               WRITE(6,*) kpp_2d_fields%relax_sst,kpp_const_fields%dto,
@@ -664,7 +676,7 @@ c
             kpp_2d_fields%fcorr=0.0
          ENDIF
       ENDIF
-      
+
 c     Relax the mixed-layer temperature by using a USER-SPECIFIED
 c     flux correction at the surface!  Requires setting L_FCORR
 c     in the namelist and related options for input file and update
@@ -672,26 +684,26 @@ c     frequency. Values are stored in fcorr_twod (two-dimensional flux correctio
 c
 c     Added by NPK (29/6/08)
 
-      IF (kpp_const_fields%L_FCORR .AND. .NOT. 
-     +     kpp_const_fields%L_RELAX_SST .AND. 
+      IF (kpp_const_fields%L_FCORR .AND. .NOT.
+     +     kpp_const_fields%L_RELAX_SST .AND.
      &     .NOT. kpp_const_fields%L_FCORR_WITHZ) THEN
          rhs(1)=rhs(1)+
      +        kpp_const_fields%dto*kpp_2d_fields%fcorr_twod/
      +        (kpp_2d_fields%rho(1)*kpp_2d_fields%cp(1)*
      +        kpp_const_fields%hm(1))
       ENDIF
-c     
+c
 c     Correct the temperature at each layer in the model by using a flux
-c     correction applied directly to each layer.  Requires a 
+c     correction applied directly to each layer.  Requires a
 c     three-dimensional (x,y,z) input file of flux corrections.
 c     Input flux corrections must be in units of W/m-3.
 c
 c     Added by NPK (12/2/08)
-c     
+c
 c     Surface relaxation is incompatible with
 c     flux corrections at depth (NPK 12/02/08).
       kpp_2d_fields%tinc_fcorr(:)=0.
-      IF (kpp_const_fields%L_FCORR_WITHZ .AND. .NOT. 
+      IF (kpp_const_fields%L_FCORR_WITHZ .AND. .NOT.
      +     kpp_const_fields%L_FCORR) THEN
          DO k=1,NZP1
             kpp_2d_fields%tinc_fcorr(k) = kpp_const_fields%dto*
@@ -699,7 +711,7 @@ c     flux corrections at depth (NPK 12/02/08).
      +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
          ENDDO
       ENDIF
-      
+
 c     Relax the temperature at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of ocean temperatures via subroutine
@@ -710,14 +722,14 @@ c     Store the relaxation term as tinc_fcorr so that, on output,
 c     that field contains the actual correction applied in K/timestep.
             kpp_2d_fields%tinc_fcorr(k)=kpp_2d_fields%tinc_fcorr(k)+
      +           kpp_const_fields%dto*kpp_2d_fields%relax_ocnT*
-     +           (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))            
+     +           (kpp_2d_fields%ocnT_clim(k)-Xo(k,1))
          ENDDO
       ENDIF
       DO k=1,NZP1
          rhs(k) = rhs(k) + kpp_2d_fields%tinc_fcorr(k)
 c     Modify the correction field so that, when output, it is in
 c     the correct units to be input as a flux correction via
-c     L_FCORR_WITHZ (see above).         
+c     L_FCORR_WITHZ (see above).
          kpp_2d_fields%ocnTcorr(k)=kpp_2d_fields%tinc_fcorr(k)*
      +        kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k)/
      +        kpp_const_fields%dto
@@ -728,22 +740,22 @@ c      WRITE(6,*) 'cu=',cu,'cc=',cc,'cl=',cl,'rhs=',rhs,'Xo=',Xo(:,1),
 c     + 'NZ=',NZ
       call tridmat(cu,cc,cl,rhs,Xo(:,1),NZ,kpp_2d_fields%X(:,1))
 c      WRITE(6,*) 'After tridmat on temp, sst = ',kpp_2d_fields%X(1,1)
- 
+
 c     Salinity and other scalars
       DO k=0,NZtmax
          diff(k)=kpp_2d_fields%difs(k)
-      ENDDO   
+      ENDDO
       call tridcof(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
       do 200 n=2,NSCLR
          DO k=0,NZtmax
             ntflx(k,n)=kpp_2d_fields%wXNT(k,n)
          ENDDO
-         ghatflux = kpp_2d_fields%wX(0,n) 
+         ghatflux = kpp_2d_fields%wX(0,n)
          sturflux = kpp_2d_fields%wX(0,n)
          call tridrhs(npd,kpp_const_fields%hm,Xo(:,n),ntflx(:,n),
      >        diff,gcap,sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,
      +        rhs,kpp_const_fields)
-         
+
 c     modify rhs for advections
          do imode=1,kpp_2d_fields%nmodeadv(2)
             adv_mode=kpp_2d_fields%modeadv(imode,2)
@@ -753,20 +765,20 @@ c     modify rhs for advections
      +           kpp_const_fields%dm(kmixe),
      +           NZ,rhs,kpp_2d_fields,kpp_const_fields)
          enddo
-         
+
 c     -----Added by LH (28/05/2013) modified NPK (4/7/13)
-         
+
          if (n .eq. 2) then
             kpp_2d_fields%sinc_fcorr(:)=0.
 c     Surface salinity  relaxation is incompatible with
 c     flux corrections at depth.
-            IF (kpp_const_fields%L_SFCORR_WITHZ .AND. .NOT. 
+            IF (kpp_const_fields%L_SFCORR_WITHZ .AND. .NOT.
      +           kpp_const_fields%L_SFCORR) THEN
                DO k=1,NZP1
                   kpp_2d_fields%sinc_fcorr(k) = kpp_const_fields%dto*
      +                 kpp_2d_fields%sfcorr_withz(k)
                ENDDO
-            ENDIF          
+            ENDIF
 c     Relax the salinity at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of salinity via subroutine
@@ -791,8 +803,8 @@ c     L_SFCORR_WITHZ (see above).
             ENDDO
          ENDIF
 c     -----end of Added LH 28/05/2013
-         
-         
+
+
 c     removed LH 28/05/2013
 c     IF (n .eq. 2 .and. kpp_const_fields%L_RELAX_SAL) THEN
 c     IF (kpp_2d_fields%relax_sal .GT. 1.e-10) THEN
@@ -805,19 +817,19 @@ c     ENDDO
 c     ELSE
 c     kpp_2d_fields%scorr(:)=0.0
 c     ENDIF
-c     ENDIF         
+c     ENDIF
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
  200  continue
       return
       end
-      
+
 ************************************************************************
 
       SUBROUTINE tridcof(diff,nzi,ind,cu,cc,cl,kpp_const_fields)
 
 c     Compute coefficients for tridiagonal matrix (dimension=nzi).
 c     Note: cu(1) = 0. and cl(nzi) = 0. are necessary conditions.
-c-----     
+c-----
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -848,10 +860,10 @@ c In the surface layer
 c Inside the domain
       do 10 i=2,nzi
       cu(i) =    - kpp_const_fields%tri(i,0,ind)*diff(i-1)
-      cc(i) = 1. + kpp_const_fields%tri(i,1,ind)*diff(i)   + 
+      cc(i) = 1. + kpp_const_fields%tri(i,1,ind)*diff(i)   +
      +     kpp_const_fields%tri(i,0,ind)*diff(i-1)
       cl(i) =    - kpp_const_fields%tri(i,1,ind)*diff(i)
- 10   continue   
+ 10   continue
 c In the bottom layer
       cl(nzi)= 0.
       return
@@ -863,7 +875,7 @@ c In the bottom layer
      +                   dto,nzi,ind,rhs,kpp_const_fields)
 
 c     Compute right hand side of tridiagonal matrix for scalar fields:
-c     =  yo (old field) 
+c     =  yo (old field)
 c      + flux-divergence of ghat
 c      + flux-divergence of non-turbulant fluxes
 c     Note: surface layer needs +dto/h(1) * surfaceflux
@@ -886,9 +898,9 @@ c                              =    1 for p-grid
      +     yo(nzi+1),    ! old profile
      +     ntflux(0:nzi),! non-turbulent flux = wXNT(0:nzi,1:2)
      +     diff(0:nzi),  ! diffusivity profile on interfaces
-     +     ghat(nzi),    ! ghat turbulent flux   
+     +     ghat(nzi),    ! ghat turbulent flux
      +     sturflux,     ! surface turbulent (kinematic) flux = wX(0,n)
-     +     ghatflux      ! surface flux for ghat: includes solar flux      
+     +     ghatflux      ! surface flux for ghat: includes solar flux
       integer npd        ! included in list by sjw for implicit none
 c Output
       real rhs(nzi)      ! right hand side
@@ -900,7 +912,7 @@ c more local variables to make implicit none
       integer i
       real divflx
        divflx =  1.0 / float(npd)
- 
+
 c In the surface layer (dto/h(1)=tri(0,1,ind)
       rhs(1)= yo(1) + dto/h(1) *
      +        (   ghatflux*diff(1)*ghat(1)
@@ -926,8 +938,8 @@ c Inside the rest of the domain
      +        ( ghatflux*(diff(i)*ghat(i) - diff(i-1)*ghat(i-1))
      +        +ntflux(i) - ntflux(i-1) )
  10   continue
-      
-c     In the bottom layer     
+
+c     In the bottom layer
       if(nzi.gt.1) then   ! not for slab ocean
       i=nzi
       rhs(i)= yo(i) + dto/h(i) *
@@ -942,14 +954,14 @@ c**********************************************************************
       subroutine rhsmod(jsclr,mode,A,
      +     dto,km,dm,nzi,rhs,kpp_2d_fields,
      +     kpp_const_fields)
- 
-c     Modify rhs to correct scalar, jsclr, 
+
+c     Modify rhs to correct scalar, jsclr,
 c     for advection according to mode
 c mode = 1 : Steady upper layer horizontal advection
-c        2 : Steady mixed layer horizontal advection to km-1 
+c        2 : Steady mixed layer horizontal advection to km-1
 c        3 : Steady horizontal advection throughout the entire column
-c        4 : Steady vertical advection (= deep horizontal) below 100m 
-c            to bottom 
+c        4 : Steady vertical advection (= deep horizontal) below 100m
+c            to bottom
 c            (Change: start below 100m, instead of at layer 16, and
 c            do not advect into bottom layer, 7-1-93)
 c        5 : Steady bottom diffusion
@@ -975,7 +987,7 @@ c      DOUBLE PRECISION time     ! time in days from jan 1 of any year.
       real dto,                 ! ocean time step
 c     +     dpy,                 ! days per year (added as input on 7-1-93)
      +     dm,                  ! depth d(km+.5)
-     +     A                    ! advection of heat(W/m2) or Salt(PSU m/s)      
+     +     A                    ! advection of heat(W/m2) or Salt(PSU m/s)
 
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -996,7 +1008,7 @@ c     data f/.1,.1,6*0.0,.1,.3,.4,.2/
      &         40.52,37.06,29.83,29.47,15.77, 1.47,14.55,
      &          4.22,28.19,39.54,19.58,20.27,11.19,21.72/
 
-      if(mode.le.0) return 
+      if(mode.le.0) return
 c               find ocean year
 c        iyr = 1 + idint((time-75.0)/dpy)
 c        day = time - dpy * (idint(time/dpy))  ! 365.25))
@@ -1013,12 +1025,12 @@ c        Am =  12. * f(month) * A                       ! Seasonal
 
       if(mode.eq.1) then
 c                          correct upper layer advection
-         if(jsclr.eq.1) fact = dto * Am / 
+         if(jsclr.eq.1) fact = dto * Am /
      +        (kpp_2d_fields%rho(1)*kpp_2d_fields%cp(1))
          if(jsclr.eq.2) fact = dto * Am * 0.033
-         rhs(1) = rhs(1) 
+         rhs(1) = rhs(1)
      &        + fact / kpp_const_fields%hm(1)
-         
+
       else if(mode.eq.2) then
 c     correct mixed layer advection
          delta = 0.0
@@ -1026,13 +1038,13 @@ c     correct mixed layer advection
             delta = delta + kpp_const_fields%hm(n)
          enddo
          do 215 n=1,km-1
-            if(jsclr.eq.1) fact = dto * Am / 
-     +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n)) 
+            if(jsclr.eq.1) fact = dto * Am /
+     +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n))
             if(jsclr.eq.2) fact = dto * Am * 0.033
-            rhs(n) = rhs(n) 
-     &           + fact  / delta        
+            rhs(n) = rhs(n)
+     &           + fact  / delta
  215     continue
-         
+
       else if (mode.eq.3) then
 c     throughout whole water column
          delta = 0.0
@@ -1040,14 +1052,14 @@ c     throughout whole water column
             delta = delta + kpp_const_fields%hm(n)
          enddo
          do 315 n=1,nzi
-            if(jsclr.eq.1) fact = dto * Am / 
+            if(jsclr.eq.1) fact = dto * Am /
      +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n))
             if(jsclr.eq.2) fact = dto * Am * 0.033
             rhs(n) = rhs(n)
-     &           + fact / delta 
+     &           + fact / delta
  315     continue
-               
-               
+
+
       else if (mode.eq.4) then
 c     vertical advection = deep horizontal
          nzend=nzi-1            ! nzend=nzi (change:7-1-93)
@@ -1059,24 +1071,24 @@ c     vertical advection = deep horizontal
             delta = delta + kpp_const_fields%hm(n)
          enddo
          do 415 n=n1,nzend
-            if(jsclr.eq.1) fact = dto * Am / 
+            if(jsclr.eq.1) fact = dto * Am /
      +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n))
             if(jsclr.eq.2) fact = dto * Am * 0.033
             rhs(n) = rhs(n)
-     &           + fact / delta 
+     &           + fact / delta
  415     continue
-         
+
       else if(mode.eq.5) then
 c     correct bottom layer diffusion
          if(jsclr.eq.1) fact = dto * Am / (kpp_2d_fields%rho(nzi)*
      +        kpp_2d_fields%cp(nzi))
          if(jsclr.eq.2) fact = dto * Am * 0.033
-         rhs(nzi) = rhs(nzi) 
+         rhs(nzi) = rhs(nzi)
      &        + fact / kpp_const_fields%hm(nzi)
-         
-      else 
-                  
-c     seasonal mixed layer or thermocline advection  
+
+      else
+
+c     seasonal mixed layer or thermocline advection
 c     find ocean year
 c     iyr = 1 + idint((time-75.0)/dpy)
 c     day = time - dpy * (idint(time/dpy))  ! 365.25))
@@ -1086,17 +1098,17 @@ c     if(month.gt.12) then
 c     write(nuerr,*) 'STOP rhsmod (ocn.f):'
 c     write(nuerr,*) '     rounding error, month gt 12 =',month
 c     stop 97
-c     endif   
+c     endif
 c     diag
 c     Am = -12. * f(month) * (xsA(iyr) - 0.0 )       ! Annual
 c     Am =  12. * f(month) * A                       ! Seasonal
 c     Am = A                                          ! Steady
-         
+
          if(mode.eq.6) then
 c     mixed layer to dm
             n1 = 1
             depth = kpp_const_fields%hm(1)
-            dmax  = dm -  0.5 * (kpp_const_fields%hm(km) + 
+            dmax  = dm -  0.5 * (kpp_const_fields%hm(km) +
      +           kpp_const_fields%hm(km-1))
             delta = 0.0
             do 605 n =n1,nzi
@@ -1106,12 +1118,12 @@ c     mixed layer to dm
                if(depth.ge.dmax) go to 606
  605        continue
  606        continue
-            
+
          else if (mode.eq.7) then
-c     thermocline to 100m   
+c     thermocline to 100m
             n1 = km - 1
-            depth = dm - 0.5 * kpp_const_fields%hm(km) 
-            dmax = 100.        
+            depth = dm - 0.5 * kpp_const_fields%hm(km)
+            dmax = 100.
             delta = 0.0
             do 705 n=n1,nzi
                n2 = n
@@ -1120,33 +1132,33 @@ c     thermocline to 100m
                if(depth.ge.dmax) go to 706
  705        continue
  706        continue
-            
+
          else
             write(nuerr,*) 'STOP in rhsmod (ocn.f):'
             write(nuerr,*) '      mode out of range, mode=',mode
             CALL MIXED_ABORT
          endif
-         
+
 c     Finish both 6 and 7 here
-         do 615 n=n1,n2  
-            if(jsclr.eq.1) fact = dto * Am / 
-     +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n)) 
+         do 615 n=n1,n2
+            if(jsclr.eq.1) fact = dto * Am /
+     +           (kpp_2d_fields%rho(n)*kpp_2d_fields%cp(n))
             if(jsclr.eq.2) fact = dto * Am * 0.033
             rhs(n) = rhs(n) + fact  / delta
  615     continue
-    
+
       endif
-      
+
       return
       end
-      
+
 ***********************************************************************
 
       SUBROUTINE tridmat(cu,cc,cl,rhs,yo,nzi,yn)
 c
 c     Solve tridiagonal matrix for new vector yn, given right hand side
 c     vector rhs. Note: yn(nzi+1) = yo(nzi+1).
-c-----     
+c-----
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1159,10 +1171,10 @@ c Input
      +     cl (nzi),            ! lower .....      (k-1) ..
      +     rhs(nzi),            ! right hand side
      +     yo(nzi+1),yni            ! old field
-c     +     diff(0:nzi)     
+c     +     diff(0:nzi)
 c Output
       real yn(nzi+1)    ! new field
-c Local 
+c Local
       real gam(NZtmax), ! temporary array for tridiagonal solver
      +     bet          ! ...
 c more local for implicit none
@@ -1186,18 +1198,18 @@ c     Pause 3
          endif
 c     to avoid "Underflow" at single precision on the sun
          yn(i) =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet
-c     yni   =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet 
+c     yni   =      (rhs(i)  - cu(i)  *yn(i-1)  )/bet
 c     yn(i) = max( (rhs(i)  - cu(i)  *yn(i-1)  )/bet , 1.E-12 )
-c     if(yni.lt.0.) 
+c     if(yni.lt.0.)
 c     +        yn(i) = min( (rhs(i)  - cu(i)  *yn(i-1)  )/bet ,-1.E-12 )
  21   continue
 
-c     yn(nzi)  = (rhs(nzi)- cu(nzi)*yn(nzi-1) 
+c     yn(nzi)  = (rhs(nzi)- cu(nzi)*yn(nzi-1)
 c    +                    + tri(nzi,1,ind)*diff(nzi)*yo(nzi+1) )/bet
 c                                                      ! bottom
       do 22 i=nzi-1,1,-1
          yn(i)  = yn(i) - gam(i+1)*yn(i+1)
- 22   continue   
+ 22   continue
       yn(nzi+1) = yo(nzi+1)
 
       return
@@ -1211,7 +1223,7 @@ c     Initialize ocean model:
 c     Set coefficients for tridiagonal matrix solver.
 c     Compute hmix and diffusivity profiles for initial profile.
 c     Prepare for first time step.
-c     
+c
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1226,11 +1238,11 @@ c      real  U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
 c     Output
 c      real dbloc(NPTS,nz),shsq(NPTS,nzp1),Rig(NPTS,nzp1)
       TYPE(kpp_3d_type) :: kpp_3d_fields
-      
+
 c     Local
       TYPE(kpp_2d_type) :: kpp_2d_fields
 c      real U0(NZP1,NVEL),X0(NZP1,NSCLR)
-      
+
 c     Common Blocks
 c      real tri(0:NZtmax,0:1,NGRID)! dt/dz/dz factors in trid. matrix
 c      common/ trifac / tri
@@ -1249,17 +1261,21 @@ c Local variables
 c     more local for implicit none
       integer k,kmix0,n,l,ipt
       real hmix0,deltaz
-c     
+c
 c     Compute factors for coefficients of tridiagonal matrix elements.
 c     tri(0     ,1,.........) : dt/h(1) factor for rhs flux
 c     tri(k=1:NZ,0,.........) : dt/h(k)/ {dzb(k-1)=z(k-1)-z(k)=dzabove}
 c     tri(k=1:NZ,1,.........) : dt/h(k)/ {dzb(k  )=z(k)-z(k+1)=dzbelow}
 c
-      
+
+      IF (kpp_const_fields%L_SLAB) THEN
+        kpp_const_fields%dm(1)=kpp_const_fields%slab_depth
+        kpp_const_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
+        kpp_const_fields%hm(1)=kpp_const_fields%slab_depth
+      ENDIF
       do 10 k=1,NZ
          dzb(k)     = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
  10   continue
-
       kpp_const_fields%tri(0,1,1) = kpp_const_fields%dto/
      +     kpp_const_fields%hm(1)
       kpp_const_fields%tri(1,1,1) = kpp_const_fields%dto/
@@ -1270,16 +1286,16 @@ c
          kpp_const_fields%tri(k,0,1) = kpp_const_fields%dto/
      +        kpp_const_fields%hm(k)/dzb(k-1)
  20   continue
-      
+
       IF ( .NOT. kpp_const_fields%L_RESTART) THEN
-c     
+c
 c     Determine hmix for initial profile:
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
 !$OMP DO SCHEDULE(dynamic)
 #endif
          DO ipt=1,npts
-            CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)            
+            CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
             IF (kpp_2d_fields%L_OCEAN) THEN
 c               DO k=1,NZP1
 c                  DO i=1,nvel
@@ -1292,7 +1308,7 @@ c               ENDDO
                kpp_2d_fields%L_INITFLAG=.TRUE.
                CALL vmix(kpp_2d_fields,kpp_const_fields,hmix0,kmix0)
                kpp_2d_fields%L_INITFLAG=.FALSE.
-               IF (.NOT. kpp_const_fields%L_SLAB) THEN 
+               IF (.NOT. kpp_const_fields%L_SLAB) THEN
                   kpp_2d_fields%hmix = hmix0
                   kpp_2d_fields%kmix = kmix0
                ELSE
@@ -1315,7 +1331,7 @@ c Evaluate initial fluxes (to write to output data file)
      +                 ((kpp_2d_fields%X(k,1)-
      +                 kpp_2d_fields%X(k+1,1))/deltaz-
      +                 kpp_2d_fields%ghat(k)*kpp_2d_fields%wX(0,1))
-                  kpp_2d_fields%wX(k,nsp1)= kpp_const_fields%grav * 
+                  kpp_2d_fields%wX(k,nsp1)= kpp_const_fields%grav *
      +                 (kpp_2d_fields%talpha(k)*kpp_2d_fields%wX(k,1) -
      +                 kpp_2d_fields%sbeta(k) * kpp_2d_fields%wX(k,2))
                   do  n=1,NVEL
@@ -1324,12 +1340,12 @@ c Evaluate initial fluxes (to write to output data file)
      +                    deltaz
                   enddo
                enddo
-               
+
 c     Prepare for first time step
-               
+
 c     indices for extrapolation
                kpp_2d_fields%old = 0
-               kpp_2d_fields%new = 1               
+               kpp_2d_fields%new = 1
 c     initialize array for extrapolating hmixd,Us,Xs
                kpp_2d_fields%hmixd(0) = kpp_2d_fields%hmix
                kpp_2d_fields%hmixd(1) = kpp_2d_fields%hmix
@@ -1339,7 +1355,7 @@ c     initialize array for extrapolating hmixd,Us,Xs
      +                    kpp_2d_fields%U(k,l)
                      kpp_2d_fields%Us(k,l,1)=
      +                    kpp_2d_fields%U(k,l)
-                  enddo               
+                  enddo
                   do l=1,NSCLR
                      kpp_2d_fields%Xs(k,l,0)=kpp_2d_fields%X(k,l)
                      kpp_2d_fields%Xs(k,l,1)=kpp_2d_fields%X(k,l)
@@ -1357,24 +1373,24 @@ c     ENDIF
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
-#endif      
+#endif
       ENDIF
       return
       end
-      
+
 *********************************************************************
       subroutine swfrac( fact, z, jwtype, swdk )
 c     compute fraction of solar short-wave flux penetrating to specified
 c     depth (times fact) due to exponential decay in  Jerlov water type
-c     reference : two band solar absorption model of simpson and 
+c     reference : two band solar absorption model of simpson and
 c     paulson (1977)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
       integer nwtype
-      parameter(nwtype=5) ! max number of different water types 
+      parameter(nwtype=5) ! max number of different water types
 c
 c  model
 c#include <local_pt.com>
@@ -1383,7 +1399,7 @@ c      integer imt         ! number of horizontal grid points
 
 c  input
       real fact           ! scale  factor to apply to depth array
-      real z         ! vertical height ( <0.) for desired sw 
+      real z         ! vertical height ( <0.) for desired sw
 c                           fraction                                 (m)
       integer jwtype ! index for jerlov water type
 
@@ -1405,7 +1421,7 @@ c
       data rmin         / -80. /
 c
 c      do 100 i = ipt,ipt
-        
+
          r1      = MAX(z*fact/a1(jwtype), rmin)
 	 r2      = MAX(z*fact/a2(jwtype), rmin)
          swdk =      rfac(jwtype)  * exp(r1)
@@ -1423,19 +1439,19 @@ c  100 continue
       PARAMETER (nuout=6,nuerr=0)
 
 #include <kpp_3d_type.com>
-      
+
       type(kpp_2d_type) :: kpp_2d_fields
       type(kpp_const_type) :: kpp_const_fields
       real X1,X2
       dimension X1(nzp1,nsclr)
-      
+
       real T1,T2,S1,S2
       real fltn
       real dhdt,dfdt,qtop,ftop,qbot,fbot
       real delt,fact,rhs,diff
       integer k
- 
-      T1 = 0.0  
+
+      T1 = 0.0
       T2 = 0.0
       S1 = 0.0
       S2 = 0.0
@@ -1449,27 +1465,27 @@ c  100 continue
       write(nuout,*) k,X1(k,1),kpp_2d_fields%X(k,1),X1(k,2),
      +     kpp_2d_fields%X(k,2)
   5   continue
-      dhdt = (T2 - T1) * kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) / 
+      dhdt = (T2 - T1) * kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) /
      +     kpp_const_fields%dto
-      dfdt = (S1 - S2) * kpp_2d_fields%rho(0) / kpp_2d_fields%Ssurf / 
+      dfdt = (S1 - S2) * kpp_2d_fields%rho(0) / kpp_2d_fields%Ssurf /
      +     kpp_const_fields%dto
       Qtop = kpp_2d_fields%sflux(3,5,0) + kpp_2d_fields%sflux(4,5,0)
       Ftop = kpp_2d_fields%sflux(6,5,0)
-      Qbot = -kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) * 
+      Qbot = -kpp_2d_fields%rho(0) * kpp_2d_fields%cp(0) *
      +     (kpp_2d_fields%wX(nz,1) + kpp_2d_fields%wXNT(nz,1) )
-      Fbot =  kpp_2d_fields%rhoh2o / kpp_2d_fields%Ssurf  *  
+      Fbot =  kpp_2d_fields%rhoh2o / kpp_2d_fields%Ssurf  *
      +     kpp_2d_fields%wX(nz,2)
-      
+
       write(nuout,*) 'heat ',Qtop,dhdt,Qbot
       write(nuout,*) 'salt ',Ftop,dfdt,Fbot
       write(nuout,*) kpp_const_fields%dto,kpp_2d_fields%rho(0),
      +     kpp_2d_fields%CP(0),kpp_2d_fields%Ssurf,
      +     kpp_2d_fields%sflux(3,5,0),kpp_2d_fields%sflux(4,5,0)
-      
+
       do 15 k=1,nz
-         delt = (kpp_2d_fields%X(k,1)-X1(k,1)) 
+         delt = (kpp_2d_fields%X(k,1)-X1(k,1))
          fact = kpp_const_fields%dto / kpp_const_fields%hm(k)
-      rhs  = fact * (kpp_2d_fields%wX(k,1)-kpp_2d_fields%wX(k-1,1) + 
+      rhs  = fact * (kpp_2d_fields%wX(k,1)-kpp_2d_fields%wX(k-1,1) +
      +     kpp_2d_fields%wXNT(k,1)-kpp_2d_fields%wXNT(k-1,1) )
       diff = delt - rhs
       write(nuout,*) kpp_2d_fields%wX(k-1,1),kpp_2d_fields%wXNT(k-1,1),
@@ -1519,7 +1535,7 @@ c *********************************************************
 c      real tri(0:NZtmax,0:1,NGRID)
 c      common/ trifac / tri
       integer i
-      
+
       do i=1,nzi
       cu(i) = 0.
       cc(i) = 1.
@@ -1531,19 +1547,19 @@ c      common/ trifac / tri
 
 
 ************************************************************************
-      subroutine swfrac_opt( fact, kpp_2d_fields, 
+      subroutine swfrac_opt( fact, kpp_2d_fields,
      +     kpp_const_fields)
 c     compute fraction of solar short-wave flux penetrating to specified
 c     depth (times fact) due to exponential decay in  Jerlov water type
-c     reference : two band solar absorption model of simpson and 
+c     reference : two band solar absorption model of simpson and
 c     paulson (1977)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
       integer nwtype
-      parameter(nwtype=5) ! max number of different water types 
+      parameter(nwtype=5) ! max number of different water types
 c
 c  model
 ! Automatically includes parameter.inc!
@@ -1551,13 +1567,13 @@ c  model
 c#include <local_pt.com>
 c#include <times.com>
 c#include <vert_pgrid.com>
-      
+
 c      integer imt         ! number of horizontal grid points
 
 c  input
       real fact                 ! scale  factor to apply to depth array
 c     integer k                 ! index of vertical grid point
-c     real z                    ! vertical height ( <0.) for desired sw 
+c     real z                    ! vertical height ( <0.) for desired sw
 c                                    fraction (m)
       type(kpp_2d_type) :: kpp_2d_fields
       type(kpp_const_type) :: kpp_const_fields
@@ -1588,11 +1604,11 @@ c     do 100 i = ipt,ipt
      +        fact/a1(kpp_2d_fields%jerlov), rmin)
          r2      = MAX(kpp_const_fields%zm(l)*
      +        fact/a2(kpp_2d_fields%jerlov), rmin)
-         kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  * 
-     +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)            
+         kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  *
+     +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)
 c     100        continue
       ENDDO
-      
+
 c      DO i=ipt,ipt
 c     swdk=kpp_2d_fields%swfrac(l)
 c      ENDDO

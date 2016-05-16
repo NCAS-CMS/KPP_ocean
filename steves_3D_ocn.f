@@ -1,6 +1,6 @@
       PROGRAM ocn_model_3D
 **************************************************************************
-* 3D version of the 1D ocean model using the kpp mixing scheme of 
+* 3D version of the 1D ocean model using the kpp mixing scheme of
 * Large et al, with his interface between the ocean and kpp scheme
 * calls his subroutines
 * init_ocn : to initialize the ocean model
@@ -46,7 +46,7 @@ c      USE kpp_type_mod
 #include <initialcon.com>
 #include <sstclim.com>
 #include <ocn_advec.com>
-      
+
 * Local variables
       TYPE(kpp_3d_type),allocatable :: kpp_3d_fields
       TYPE(kpp_2d_type) :: kpp_2d_fields
@@ -54,10 +54,10 @@ c      USE kpp_type_mod
       TYPE(kpp_timer_type) :: kpp_timer
       REAL,allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),bottom_temp(:),
      +     VEC_range(:,:,:,:),SCLR_range(:,:,:)
-      
+
       INTEGER j,k,nflx,nstep,ix,iy,ipt_globe
 
-c Initialize the 3D KPP model 
+c Initialize the 3D KPP model
 c Setup the constants, read the namelists, setup the initial conditions
 c
 c Add bottom temperatures to the call to INITIALIZE, in case the bottom temperatures
@@ -68,15 +68,15 @@ c into the main program.  NPK 17/08/10 - R3
      +  omp_get_thread_num
       CHARACTER(LEN=21) phys_timer_name
       CHARACTER(LEN=19) trans_timer_name
-      
+
       CALL KPP_TIMER_INIT(kpp_timer)
 #ifdef OPENMP
 !$OMP PARALLEL PRIVATE(nthreads)
       CALL OMP_SET_DYNAMIC(.FALSE.)
       nthreads=OMP_GET_NUM_THREADS()
-!$OMP END PARALLEL     
+!$OMP END PARALLEL
       WRITE(6,*) 'Initialising ',nthreads,'timers'
-      IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN 
+      IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN
          WRITE(6,*) 'nthreads = 0, resetting nthreads = 24'
          nthreads=24
          CALL OMP_SET_NUM_THREADS(24)
@@ -128,7 +128,7 @@ c
 c     Initialize the OASIS2 coupling interface
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'OASIS2 initialization',1)
-         CALL inicmo(nend*ndtocn,ndtocn,int(kpp_const_fields%dto)) 
+         CALL inicmo(nend*ndtocn,ndtocn,int(kpp_const_fields%dto))
          CALL KPP_TIMER_TIME(kpp_timer,'OASIS2 initialization',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
@@ -144,7 +144,7 @@ c     When coupling to the UM via OASIS3, we must send the initial ocean fields 
 c     the atmosphere.  The UM does an OASIS3 "get" first, then an OASIS3 "send."
 c     We must match this with a "send" before we post our first "get", otherwise
 c     the whole system deadlocks and no one has any fun.
-c     
+c
 c     Note that the OASIS3 "get" is handled by the first call to <fluxes> in
 c     the time-stepping loop below.     NPK 2/10/09
 c
@@ -162,7 +162,7 @@ c     Main KPP time-stepping loop
 c
       DO ntime=1,nend*ndtocn
          kpp_const_fields%ntime=ntime
-         IF (MOD(kpp_const_fields%ntime-1,ndtocn) .EQ. 0) THEN            
+         IF (MOD(kpp_const_fields%ntime-1,ndtocn) .EQ. 0) THEN
 !            WRITE(6,*) 'Calling fluxes'
 #ifdef COUPLE
 #ifdef OASIS2
@@ -183,21 +183,21 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',1)
             CALL fluxes(kpp_3d_fields,kpp_const_fields,kpp_timer)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)            
+            CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #endif /*COUPLE*/
 !            WRITE(6,*) 'Called fluxes'
          ENDIF
-c      
+c
 c     Re-writing update logic to allow user to choose independently whether to
 c     update SST, sea ice, flux corrections and bottom temperatures.
 c     NPK 15/10/09 - R3
 c
          IF (L_UPD_CLIMSST .AND. MOD(ntime-1,ndtupdsst) .EQ. 0) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)            
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL read_sstin(kpp_3d_fields,kpp_const_fields)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)            
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             WRITE(nuout,*) 'KPP: Called read_sstin, ntime =',
      +           kpp_const_fields%ntime
@@ -213,7 +213,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'SST relaxation',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
                WRITE(nuout,*) 'KPP: Called upd_sst0, ntime =',
-     +              kpp_const_fields%ntime               
+     +              kpp_const_fields%ntime
             ENDIF
          ENDIF
          IF (L_UPD_CLIMICE .AND. MOD(ntime-1,ndtupdice) .EQ. 0) THEN
@@ -273,8 +273,8 @@ c
      +              kpp_const_fields%ntime
             ENDIF
          ENDIF
-         IF (L_UPD_BOTTOM_TEMP .AND. MOD(ntime-1,ndtupdbottom) .EQ. 0) 
-     +        THEN            
+         IF (L_UPD_BOTTOM_TEMP .AND. MOD(ntime-1,ndtupdbottom) .EQ. 0)
+     +        THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL read_bottom_temp(kpp_3d_fields,kpp_const_fields,
@@ -287,7 +287,7 @@ c
 c
 c     Add ability to relax to salinity climatology
 c     NPK 24/08/11 - R3b3
-         IF (L_UPD_SAL .AND. MOD(ntime-1,ndtupdsal) .EQ. 0 .AND. 
+         IF (L_UPD_SAL .AND. MOD(ntime-1,ndtupdsal) .EQ. 0 .AND.
      +        .NOT. L_INTERP_SAL) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
@@ -315,7 +315,7 @@ c     NPK 24/08/11 - R3b3
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             WRITE(nuout,*) 'KPP: Called read_ocean_temperatures,'//
      +           ' ntime =',kpp_const_fields%ntime
-         ELSEIF (L_UPD_OCNT .AND. L_INTERP_OCNT .AND. 
+         ELSEIF (L_UPD_OCNT .AND. L_INTERP_OCNT .AND.
      +           MOD(ntime-1,ndt_interp_ocnt).EQ.0) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
@@ -327,7 +327,7 @@ c     NPK 24/08/11 - R3b3
          ENDIF
 c
 c     Call Large et al. (1994) boundary-layer ocean physics routines
-c     
+c
          kpp_const_fields%time=kpp_const_fields%startt+ntime*
      +        kpp_const_fields%dto/kpp_const_fields%spd
 !         WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
@@ -350,7 +350,7 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
             DO iy=1,NY_GLOBE
                ipt_globe=(iy-1)*NX_GLOBE+ix
                ipt=(iy-jfirst)*NX+(ix-ifirst)+1
-               IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
+               IF (kpp_3d_fields%L_OCEAN(ipt) .and.
      +              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
 #else
         DO ipt=1,npts
@@ -370,7 +370,7 @@ c     If the integration has failed because of unrealistic values in T, S, U or 
 c     or very high RMS difference between the old and new profiles, then reset
 c     T and S to climatology (if available) and U and V to the initial profiles.
 c     NPK 17/5/13.
-                  IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne. 
+                  IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne.
      +                 'none' .and. sal_file .ne. 'none') THEN
                      WRITE(6,*) 'Resetting point to climatology ...'
                      kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
@@ -413,7 +413,7 @@ c     Following the physics routines, update the temperature of the
 c     bottom layer, if necessary
 c     NPK 10/4/08 - R1
 c
-         IF (L_VARY_BOTTOM_TEMP) THEN 
+         IF (L_VARY_BOTTOM_TEMP) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL upd_bottom_temp(kpp_3d_fields,kpp_const_fields,
@@ -421,7 +421,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
-         IF (L_NO_FREEZE) THEN             
+         IF (L_NO_FREEZE) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             kpp_3d_fields%freeze_flag(:)=0.
@@ -450,7 +450,7 @@ c
 c     Implement more-frequent checkpointing, upon request
 c     NPK 02/02/10 - R3
 c
-         IF (ndt_per_restart .NE. nend*ndtocn) THEN            
+         IF (ndt_per_restart .NE. nend*ndtocn) THEN
             IF (MOD(ntime,ndt_per_restart).EQ.0) THEN
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',1)
@@ -467,7 +467,7 @@ c
                   WRITE(restart_time,'(A1,I4)') '0',
      +                 FLOOR(kpp_const_fields%time)
                ELSE
-                  WRITE(restart_time,'(I5)') 
+                  WRITE(restart_time,'(I5)')
      +                 FLOOR(kpp_const_fields%time)
                ENDIF
                WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
@@ -476,7 +476,7 @@ c
      +              restart_outfile)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-            ENDIF            
+            ENDIF
          ENDIF
 !         WRITE(nuout,*) 'KPP: Finished checkpointing'
 c
@@ -500,13 +500,13 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
          ENDIF
 !         WRITE(nuout,*) 'KPP: Finished ranging output'
-c     
+c
 c     Output means every ndtout_mean timesteps
 c     NPK 25/2/08 - R1
 c
          DO j=1,N_VAROUTS
             IF (ndt_varout_mean(j) .gt. 0 .and. L_OUTPUT_MEAN) THEN
-               IF (MOD(ntime,ndt_varout_mean(j)).EQ.0) THEN 
+               IF (MOD(ntime,ndt_varout_mean(j)).EQ.0) THEN
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL write_means(kpp_3d_fields,kpp_const_fields,
@@ -517,7 +517,7 @@ c
                ENDIF
             ENDIF
             IF (ndt_varout_inst(j) .gt. 0 .and. L_OUTPUT_INST) THEN
-               IF (MOD(ntime,ndt_varout_inst(j)).EQ.0) THEN 
+               IF (MOD(ntime,ndt_varout_inst(j)).EQ.0) THEN
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_inst(kpp_3d_fields,kpp_const_fields,j,
@@ -537,7 +537,7 @@ c
      +                 ntout_vec_range(j))
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-               ENDIF            
+               ENDIF
             ENDIF
          ENDDO
          DO j=1,N_SINGOUTS
@@ -553,7 +553,7 @@ c
                ENDIF
             ENDIF
             IF (ndt_singout_inst(j) .gt. 0 .and. L_OUTPUT_INST) THEN
-               IF (MOD(ntime,ndt_singout_inst(j)).EQ.0) THEN 
+               IF (MOD(ntime,ndt_singout_inst(j)).EQ.0) THEN
                   CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                   CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                   CALL output_inst(kpp_3d_fields,kpp_const_fields,
@@ -580,7 +580,7 @@ c     then close the current files and create new ones.
 c     Updated to take advantage of new ndt_per_file option.
 c     NPK 10/6/09 - R2
 c
-         IF (kpp_const_fields%time .GE. float(day_out) .AND. ntime 
+         IF (kpp_const_fields%time .GE. float(day_out) .AND. ntime
      +        .NE. nend*ndtocn) THEN
             day_out=day_out+NINT(kpp_const_fields%dtsec/FLOAT(ndtocn)
      +           *FLOAT(ndt_per_file)/kpp_const_fields%spd)
@@ -601,7 +601,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF
             IF (L_OUTPUT_MEAN) THEN
-               write(mean_output_file(flen+2:flen+6),'(i5.5)') 
+               write(mean_output_file(flen+2:flen+6),'(i5.5)')
      &              day_out
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
@@ -618,7 +618,7 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF
             IF (L_OUTPUT_RANGE) THEN
-               write(min_output_file(flen+2:flen+6),'(i5.5)') 
+               write(min_output_file(flen+2:flen+6),'(i5.5)')
      &              day_out
                write(max_output_file(flen+2:flen+6),'(i5.5)')
      &              day_out
@@ -642,14 +642,14 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             ENDIF
          ENDIF
-         
+
 c
 c     Output coupled fields to the atmospheric models via
 c     the approprite coupling routines.
 c     NPK May 2008 for OASIS2 - R1
 c     NPK March 2009 for CFS - R2
 c     NPK 18/09/09 for OASIS3 - R3
-c     
+c
 #ifdef COUPLE
          IF ((MOD(ntime,ndtocn) .EQ. 0)
 #ifdef OASIS2
@@ -677,10 +677,10 @@ c
          ENDIF
 #endif /*COUPLE*/
       ENDDO
-      
+
       WRITE(nuout,*) 'KPP: Successful termination of the model ',
      +     'integration'
-      
+
       IF (L_RESTARTW) THEN
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing restart file',1)
@@ -697,7 +697,7 @@ c
             WRITE(restart_time,'(A1,I4)') '0',
      +           FLOOR(kpp_const_fields%time)
          ELSE
-            WRITE(restart_time,'(I5)') 
+            WRITE(restart_time,'(I5)')
      +           FLOOR(kpp_const_fields%time)
          ENDIF
          WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
@@ -708,25 +708,25 @@ c
          CALL KPP_TIMER_TIME(kpp_timer,'Writing restart file',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
-      
+
 c     Stop opening and closing files at every output.  Just do it once at the beginning/end
 c     of the simulation.
-c     NPK 25/2/08 - R1      
-      IF (L_OUTPUT_INST) THEN          
+c     NPK 25/2/08 - R1
+      IF (L_OUTPUT_INST) THEN
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
          CALL output_close(ncid_out)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
-      IF (L_OUTPUT_MEAN) THEN          
+      IF (L_OUTPUT_MEAN) THEN
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
          CALL output_close(mean_ncid_out)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
       ENDIF
-      IF (L_OUTPUT_RANGE) THEN          
+      IF (L_OUTPUT_RANGE) THEN
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
          CALL output_close(min_ncid_out)
@@ -737,7 +737,7 @@ c     NPK 25/2/08 - R1
       WRITE(nuout,*) 'KPP : Closed output files'
 
 #ifdef COUPLE
-#ifdef OASIS2      
+#ifdef OASIS2
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
       CALL KPP_TIMER_TIME(kpp_timer,'OASIS2 output',1)
       CALL coupled_out (kpp_3d_fields%X,ntime,.TRUE.)
@@ -771,7 +771,7 @@ c     For MPI, should do STOP 0 to return an exit code of 0
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
       CALL KPP_TIMER_PRINT(kpp_timer)
 #endif /*COUPLE*/
-      
+
       END
 
       SUBROUTINE initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
@@ -784,7 +784,7 @@ c     For MPI, should do STOP 0 to return an exit code of 0
 c      USE kpp_type_mod
       IMPLICIT NONE
       INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)      
+      PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
@@ -823,7 +823,7 @@ c     +     bottom_temp(:)
      +     SCLR_mean(NPTS,NSCLR_MEAN),bottom_temp(NPTS),
      +     VEC_range(NPTS,NZP1,NVEC_RANGE,2),
      +     SCLR_range(NPTS,NSCLR_RANGE,2)
-    
+
 * Local Variablies, including some read in from name lists
       REAL dscale ! (neg)lambda parameter for defining the stretch
       REAL alat,alon,delta_lat,delta_lon
@@ -930,7 +930,7 @@ c     Initilalize and read the location name list
       L_COLUMBIA_LAND=.FALSE.
       slab_depth=0.0
       READ(75,NAME_DOMAIN)
-      IF (DMAX .LE. 0.0) THEN 
+      IF (DMAX .LE. 0.0) THEN
          WRITE(nuerr,*) 'KPP : You must specify a depth for the domain'
          CALL MIXED_ABORT
       ENDIF
@@ -990,7 +990,7 @@ c     Initialize and read the start name list
       L_INTERPINIT= .TRUE.
       L_RESTART= .FALSE.
       WRITE(restart_infile,*) 'fort.30'
-      READ(75,NAME_START) 
+      READ(75,NAME_START)
       write(nuout,*) 'KPP : Read Namelist START'
 c
 c     Initialize and read the times namelist
@@ -998,9 +998,9 @@ c     Initialize and read the times namelist
       dtsec=0.0
       startt=-999.999
       finalt=-999.999
-      READ(75,NAME_TIMES) 
+      READ(75,NAME_TIMES)
       IF ((dtsec .LE. 0.0) .OR. (startt .LT. 0.0)
-     +     .OR. (finalt .LT. 0.0)) THEN 
+     +     .OR. (finalt .LT. 0.0)) THEN
          WRITE(nuerr,*) 'KPP : You must specify values of ',
      +        'dtsec,startt,finalt in the namelist'
          CALL MIXED_ABORT
@@ -1016,7 +1016,7 @@ c     Initialize and read the times namelist
       IF (float(nend*ndtocn) .NE. (kpp_const_fields%finalt-
      +     kpp_const_fields%startt)/kpp_const_fields%dto) THEN
          WRITE(nuerr,*) 'KPP : The integration length is not ',
-     +        'a multiple of the ocean timestep' 
+     +        'a multiple of the ocean timestep'
          WRITE(nuerr,*) 'dto=',kpp_const_fields%dto
          WRITE(nuerr,*) 'finalt=',kpp_const_fields%finalt
          WRITE(nuerr,*) 'startt=',kpp_const_fields%startt
@@ -1040,7 +1040,7 @@ c     Initialize and read the times namelist
       L_UPD_CLIMICE=.FALSE.
       L_CLIMICE=.FALSE.
       L_CLIMSST=.FALSE.
-      L_CLIMCURR=.FALSE. 
+      L_CLIMCURR=.FALSE.
       L_BAD_ICE_DEPTH=.FALSE.
       ifirst=1
       ilast=nx
@@ -1056,7 +1056,7 @@ c     If the model is coupled or if coupling weights
 c     have been explicitly enabled, initialize the weights.
 c     NPK 10/9/07 - R1
 c     NPK 2/11/09 - Added #ifdef - R3
-c     
+c
 #ifdef COUPLE
       CALL init_cplwght(kpp_3d_fields)
 #else
@@ -1083,7 +1083,7 @@ c     Initialize and read the advection namelist
       write(nuout,*) 'KPP : Read Namelist ADVEC'
       IF (L_RELAX_SST .OR. L_RELAX_SAL .OR. L_RELAX_OCNT) THEN
          CALL init_relax(kpp_3d_fields,kpp_const_fields)
-      ENDIF      
+      ENDIF
 c     Initialize and read the paras namelist
       paras_file='3D_ocnparas.nc'
       L_JERLOV=.TRUE.
@@ -1150,15 +1150,15 @@ c      ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
       IF (L_CLIMICE) CALL read_icein(kpp_3d_fields,kpp_const_fields)
-      IF (L_CLIMCURR) 
+      IF (L_CLIMCURR)
      +     CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
-      IF (L_FCORR_WITHZ) 
+      IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
-      IF (L_SFCORR_WITHZ) 
+      IF (L_SFCORR_WITHZ)
      +     CALL read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_SFCORR) CALL read_sfcorr(kpp_3d_fields,kpp_const_fields)
-      IF (L_VARY_BOTTOM_TEMP) 
+      IF (L_VARY_BOTTOM_TEMP)
      +     CALL read_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +     bottom_temp)
       IF (L_RESTART) THEN
@@ -1168,16 +1168,16 @@ c      ENDIF
          CALL init_flds(kpp_3d_fields,kpp_const_fields)
          write(nuout,*) 'KPP : Temperature, salinity and currents ',
      +        ' have been initialized.'
-         IF (L_UPD_BOTTOM_TEMP) 
+         IF (L_UPD_BOTTOM_TEMP)
      +        CALL upd_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +        bottom_temp)
       ENDIF
       CALL init_flx(kpp_3d_fields)
-      IF (L_RELAX_SAL) 
+      IF (L_RELAX_SAL)
      +     CALL read_salinity(kpp_3d_fields,kpp_const_fields)
       IF (L_RELAX_OCNT)
      +     CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
-      IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL 
+      IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL
      +     .AND. .NOT. L_RELAX_OCNT) THEN
          CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
          CALL read_salinity(kpp_3d_fields,kpp_const_fields)
@@ -1205,12 +1205,12 @@ c     Initialize and read the output name list
       zprof_varout_range(:)=0
       ndt_singout_inst(:)=0
       ndt_singout_mean(:)=0
-      ndt_singout_range(:)=0     
+      ndt_singout_range(:)=0
       zprofs(:,:)=0
-      
+
       L_OUTPUT_MEAN=.FALSE.
       L_OUTPUT_INST=.TRUE.
-      L_RESTARTW=.TRUE.      
+      L_RESTARTW=.TRUE.
       ndt_per_restart=nend*ndtocn
       ntout_vec_inst(:)=1
       ntout_sing_inst(:)=1
@@ -1242,7 +1242,7 @@ c
      +     ndtocn))
 #endif /*COUPLE*/
       READ(75,NAME_OUTPUT)
-      write(nuout,*) 'Read Namelist OUTPUT'     
+      write(nuout,*) 'Read Namelist OUTPUT'
       zprofs_mask(:,0)=.TRUE.
       zprofs_Mask(:,1:N_ZPROFS_MAX)=.FALSE.
       zprofs_nvalid(0)=NZP1
@@ -1264,7 +1264,7 @@ c
       write(output_file(flen+1:flen+1),'(a)') '_'
       write(output_file(flen+2:flen+6),'(i5.5)') day_out
       write(output_file(flen+7:flen+9),'(3A)') '.nc'
-c      
+c
       dtout=kpp_const_fields%dto/kpp_const_fields%spd
       IF (L_OUTPUT_INST) THEN
          CALL init_output(output_file,ncid_out,kpp_3d_fields,
@@ -1278,7 +1278,7 @@ c
          flen=INDEX(mean_output_file,' ')-1
          write(mean_output_file(flen+1:flen+1),'(a)') '_'
          write(mean_output_file(flen+2:flen+6),'(i5.5)') day_out
-         write(mean_output_file(flen+7:flen+15),'(9A)') '_means.nc'         
+         write(mean_output_file(flen+7:flen+15),'(9A)') '_means.nc'
          WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //mean_output_file
          CALL init_output(mean_output_file,mean_ncid_out,
@@ -1292,7 +1292,7 @@ c
          flen=INDEX(min_output_file,' ')-1
          write(min_output_file(flen+1:flen+1),'(a)') '_'
          write(min_output_file(flen+2:flen+6),'(i5.5)') day_out
-         write(min_output_file(flen+7:flen+13),'(7A)') '_min.nc'         
+         write(min_output_file(flen+7:flen+13),'(7A)') '_min.nc'
          WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //min_output_file
          CALL init_output(min_output_file,min_ncid_out,
@@ -1301,7 +1301,7 @@ c
      +        zprof_varout_range,.FALSE.,.FALSE.)
          write(max_output_file(flen+1:flen+1),'(a)') '_'
          write(max_output_file(flen+2:flen+6),'(i5.5)') day_out
-         write(max_output_file(flen+7:flen+13),'(7A)') '_max.nc'    
+         write(max_output_file(flen+7:flen+13),'(7A)') '_max.nc'
            WRITE(nuout,*) 'KPP : Calling init_output for '
      +        //max_output_file
          CALL init_output(max_output_file,max_ncid_out,
@@ -1310,10 +1310,10 @@ c
      +        zprof_varout_range,.FALSE.,.FALSE.)
          CALL output_open(min_output_file,min_ncid_out)
          CALL output_open(max_output_file,max_ncid_out)
-      ENDIF         
+      ENDIF
 c
 c     Call routine to copy constants and logicals needed for ocean
-c     physics into the kpp_const_fields derived type.  Added for 
+c     physics into the kpp_const_fields derived type.  Added for
 c     compatability with OpenMP DEFAULT(private). NPK 8/2/13
       CALL kpp_const_fields_init(kpp_const_fields)
 c
@@ -1323,9 +1323,9 @@ c
 c     Write out the data from the initial condition
       IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
          DO l=1,N_VAROUTS
-            IF (ndt_varout_inst(l) .gt. 0) 
+            IF (ndt_varout_inst(l) .gt. 0)
      +           CALL output_inst(kpp_3d_fields,kpp_const_fields,
-     +           l,varid_vec(l),zprof_varout_inst(l),ntout_vec_inst(l))            
+     +           l,varid_vec(l),zprof_varout_inst(l),ntout_vec_inst(l))
          ENDDO
          DO l=1,N_SINGOUTS
             IF (ndt_singout_inst(l) .gt. 0)
@@ -1333,8 +1333,8 @@ c     Write out the data from the initial condition
      +           l+N_VAROUTS,varid_sing(l),0,ntout_sing_inst(l))
          ENDDO
       ENDIF
-      
-c     Set the means to zero initially      
+
+c     Set the means to zero initially
       VEC_mean(:,:,:) = 0.
       SCLR_mean(:,:) = 0.
 c     Set ranges to large values
@@ -1342,16 +1342,16 @@ c     Set ranges to large values
       SCLR_range(:,:,1)=2E20
       VEC_range(:,:,:,2)=-2E20
       SCLR_range(:,:,2)=-2E20
-      
+
       CLOSE(75)
       WRITE(6,*) 'Returning from initialise'
-      
+
       RETURN
       END
-      
+
       SUBROUTINE WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +     restart_outfile)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1417,13 +1417,13 @@ c     %Us and %Xs are the largest fields, so they get their own file.
 #include <kpp_3d_type.com>
 c
 c     Inputs
-c     
+c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       CHARACTER(LEN=17) :: restart_infile
-      
+
       WRITE(6,*) 'Total number of points = ',REAL(NPTS)*REAL(NZP1)
-      IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN   
+      IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN
          OPEN(30,FILE=restart_infile,status='unknown',
      +        form='unformatted')
          READ(30) kpp_const_fields%time,kpp_3d_fields%U,
@@ -1450,8 +1450,8 @@ c
          CLOSE(31)
       ENDIF
 
-      IF (abs(kpp_const_fields%time-kpp_const_fields%startt) .GT. 1.e-4) 
-     +     THEN 
+      IF (abs(kpp_const_fields%time-kpp_const_fields%startt) .GT. 1.e-4)
+     +     THEN
          WRITE(nuerr,*) 'Start time doesn''t match the restart record'
          WRITE(nuerr,*) 'Start time in restart record = ',
      +        kpp_const_fields%time
@@ -1495,7 +1495,7 @@ c
 c     Support for stopping with the CFS coupler
 c     Unsure how to stop the model for the GFS - Just stop?
 c     NPK June 2009 - R2
-c     
+c
       STOP
 #endif /*CFS*/
 #endif /*OASIS3*/
@@ -1580,7 +1580,7 @@ c
       ENDDO
 
       write(nuout,*) 'calculated SST0, fcorr and scorr'
-      
+
       RETURN
       END
 
@@ -1618,7 +1618,7 @@ c            SST0(ipoint)=SST_in(ix+ifirst_sst-1,iy+jfirst_sst-1,1)
 
       SUBROUTINE upd_bottom_temp(kpp_3d_fields,kpp_const_fields,
      +     bottom_temp)
-      
+
 c     Written by NPK 10/4/08
 
       IMPLICIT NONE
@@ -1641,7 +1641,7 @@ c     Written by NPK 10/4/08
      +        kpp_3d_fields%rho(ipt,NZP1)*kpp_3d_fields%cp(ipt,NZP1)/
      +        kpp_const_fields%dto
          kpp_3d_fields%X(ipt,NZP1,1) = bottom_temp(ipt)
-      ENDDO      
+      ENDDO
 
       RETURN
       END
@@ -1657,9 +1657,9 @@ c
       IMPLICIT NONE
 #include <kpp_3d_type.com>
       INTEGER ipt,z
-      
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
-      
+
       DO ipt=1,npts
          IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
             DO z=1,NZP1
@@ -1670,18 +1670,18 @@ c
                   kpp_3d_fields%X(ipt,z,1)=-1.8
                   kpp_3d_fields%freeze_flag(ipt)=
      +                 kpp_3d_fields%freeze_flag(ipt)+1.0/REAL(NZP1)
-               ENDIF               
+               ENDIF
             ENDDO
          ENDIF
       ENDDO
-      
+
       RETURN
       END
-     
+
       SUBROUTINE check_isothermal(kpp_3d_fields,kpp_const_fields)
 c
 c     Check whether the temperature difference between the surface
-c     and a user-specified level (presumably deep) is less than a user-specified 
+c     and a user-specified level (presumably deep) is less than a user-specified
 c     threshold (presumably small).  If so, reset the temperature and salinity
 c     profiles to climatological values.  Added to prevent spurious very
 c     deep mixing that creates unrealistic isothermal (and isohaline) layers.
@@ -1712,7 +1712,7 @@ c
                dz_total=dz_total+dz
             ENDDO
             dtdz_total=dtdz_total/dz_total
-c If resetting to climatology because of isothermal layer (rather than because of 
+c If resetting to climatology because of isothermal layer (rather than because of
 c computational instability trap in ocn.f), then set reset_flag to a negative
 c value (-1*number of interations in of semi-implicit integration in ocn.f).
             IF (ABS(dtdz_total).lt.kpp_const_fields%iso_thresh) THEN
@@ -1728,12 +1728,12 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
-#endif 
+#endif
 
       RETURN
       END
-      
-      SUBROUTINE interp_ocnT(kpp_3d_fields,kpp_const_fields)      
+
+      SUBROUTINE interp_ocnT(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
 #include <kpp_3d_type.com>
 #include <relax_3d.com>
@@ -1748,7 +1748,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       true_time=kpp_const_fields%time
       ndays_upd_ocnT=ndtupdocnT*kpp_const_fields%dto/
      +     kpp_const_fields%spd
-      
+
 !     Read ocean temperatures for previous time
       prev_time=FLOOR((true_time+ndays_upd_ocnT/2)/ndays_upd_ocnT)*
      +     ndays_upd_ocnT-ndays_upd_ocnT*0.5
@@ -1798,7 +1798,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       true_time=kpp_const_fields%time
       ndays_upd_sal=ndtupdsal*kpp_const_fields%dto/
      +     kpp_const_fields%spd
-      
+
 !     Read ocean salinity for previous time
       prev_time=FLOOR((true_time+ndays_upd_sal/2)/ndays_upd_sal)*
      +     ndays_upd_sal-ndays_upd_sal*0.5
@@ -1832,4 +1832,3 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       RETURN
       END
-      
