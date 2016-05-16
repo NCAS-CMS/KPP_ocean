@@ -17,7 +17,7 @@ F90=ftn
 CPP=cpp
 
 # Flags for the Fortran compiler
-F90_FLAGS=-I. -eZ -f fixed -O3 -s real64
+F90_FLAGS=-I. -eZ -f fixed -s real64
 
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=
@@ -26,8 +26,8 @@ F90_CPP_FLAG=
 #OASIS2_LIB=/work/n02/n02/pappas/src/oasis/oasis_2.4.1_pathscale/lib/clim/src_MPI1/climmpi1.a
 
 # Oasis 3.2 modules (directory) and shared libraries (directory and -l flags)
-OASIS3_MODDIR=/work/n02/n02/pappas/src/oasis/crayxe6_cce/build/lib/psmile.MPI1
-OASIS3_LIB=-L/work/n02/n02/pappas/src/oasis/crayxe6_cce/lib -lpsmile.MPI1 -lmpp_io
+OASIS3_MODDIR=/work/n02/n02/pappas/src/oasis/crayxe6_cce-20160403/build/lib/psmile.MPI1
+OASIS3_LIB=-L/work/n02/n02/pappas/src/oasis/crayxe6_cce-20160403/lib -lpsmile.MPI1 -lmpp_io
 
 # Oasis 3.3 modules (directory) and shared libraries (directory and -l flags)
 OASIS3_3_MODDIR=/work/n02/n02/pappas/src/oasis/oasis3_3/20110919_para_MxSeg1500/prism/crayxc30_cce/build/lib/psmile.MPI1

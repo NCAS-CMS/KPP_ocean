@@ -177,7 +177,7 @@ c            WRITE(6,*) wz, del
      +           /zref
  125     continue
  126     continue
-c         write(6,*) 'final uref=',uref(ipt),' final vref=',vref(ipt)
+
          Ritop(n) = (zref - kpp_const_fields%zm(n)) * 
      +        (bref - kpp_2d_fields%buoy(n))
 c     NPK Additions (25/9/2008). Prevent Ritop from going negative.
@@ -191,8 +191,6 @@ c     IF (Ritop(ipt,n) .lt. 0) Ritop(ipt,n) = epsln
      +        (kpp_2d_fields%U(n,2)-kpp_2d_fields%U(n+1,2))**2         
  115  continue
 
-c      WRITE(6,*) 'Before kppmix, shsq = ',kpp_2d_fields%shsq,
-c     +     'zm = ',kpp_const_fields%zm
       call kppmix(    
      $     dVsq,
      $     ustar , B0    , B0sol , alphaDT, betaDS ,
@@ -231,8 +229,6 @@ c     done above for LNBFLX.
       enddo
       kpp_2d_fields%ghat(nz) = 0.0
       
-c      WRITE(6,*),kpp_2d_fields%difm
-
       return
       end
 **********************************************************************

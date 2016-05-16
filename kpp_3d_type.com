@@ -41,7 +41,7 @@
      +     Sref(npts),SSref(npts),
      +     sflux(npts,NSFLXS,5,0:NJDT),
      +     dlat(npts),dlon(npts),
-     +     freeze_flag(npts),reset_flag(npts),
+     +     freeze_flag(npts),
      +     dampu_flag(npts),dampv_flag(npts),
      +     U_init(NPTS,NZP1,NVEL)
       logical :: l_ocean(npts),l_initflag(npts)
@@ -49,7 +49,7 @@
      +     new(NPTS),new_pt,
      +     jerlov(NPTS),jerlov_pt,
      +     nmodeadv(NPTS,2),
-     +     modeadv(NPTS,maxmodeadv,2)
+     +     modeadv(NPTS,maxmodeadv,2),reset_flag(npts)
       ENDTYPE kpp_3D_type
       
       TYPE kpp_2D_type
@@ -90,8 +90,8 @@
      +     sflux(NSFLXS,5,0:NJDT),
      +     dlat,dlon,
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
-     +     reset_flag,dampu_flag,dampv_flag
-      integer :: old,new,jerlov,
+     +     dampu_flag,dampv_flag
+      integer :: old,new,jerlov,reset_flag,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
       logical :: l_ocean,l_initflag,comp_flag
       ENDTYPE kpp_2D_type
