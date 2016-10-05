@@ -88,8 +88,8 @@ c Critical depth-integrated RMS difference between old and new profiles
 c for repeating integration, for (/U,V,T,S/). Typical (stable)
 c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
-!      data rmsd_threshold /4,4,1,1/
-      data rmsd_threshold /100,100,100,100/
+      data rmsd_threshold /4,4,1,1/
+!      data rmsd_threshold /100,100,100,100/
       data lambda /0.5/
 
 c Change slab depth for Columbia ITCZ experiments within specified bounds
@@ -345,11 +345,11 @@ c     NPK 16/5/2013
      +           comp_iter_max,' iterations.'
             WRITE(6,*) 'At point lat = ',
      +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
-            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
-            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
-            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
-            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
-            WRITE(6,*) 'hmix = ',hmixn,kmixn
+            !WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+            !WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+            !WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+            !WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
+            !WRITE(6,*) 'hmix = ',hmixn,kmixn
          ENDIF
       ENDDO
 c     End of trapping code.

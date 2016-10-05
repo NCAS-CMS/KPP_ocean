@@ -445,6 +445,18 @@ c            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
 c            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 c         ENDIF
 
+!     If using a slab ocean, enforce constant salinity to prevent large
+!     drifts in long simulations that can affect heat capacity and density.
+!     Could make this controllable from a namelist option, but precise value
+!     used probably doesn't matter too much - just need to prevent highly unrealistic
+!     values developing due to lack of corrections.
+!     NPK 13/09/16
+         IF (kpp_const_fields%L_SLAB) THEN
+!     Values are held as deviations from reference salinity, so set prognostic to zero
+!     to preserve initial conditions.
+            kpp_3d_fields%X(:,1,2) = 0.0
+         ENDIF            
+
 !         WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
 c
 c     Implement more-frequent checkpointing, upon request

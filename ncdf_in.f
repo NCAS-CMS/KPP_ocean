@@ -1025,7 +1025,7 @@ c
       write(nuout,*) 'Flux corrections are being read from position',
      &     start(4)
       status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(4),time_in)
-      
+      WRITE(nuout,*) 'Start = ',start,' Count = ',count
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-fcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -1036,6 +1036,7 @@ c
       ENDIF
       status=NF_GET_VARA_REAL(fcorr_ncid,fcorr_varid,start,count
      &     ,fcorr_in)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       write(nuout,*) 'Flux corrections have been read from position',
      &     start(4)      
 c
@@ -1276,7 +1277,7 @@ c
       write(nuout,*) 'salinity corrections are being read from position'
      &     ,start(4)
       status=NF_GET_VAR1_REAL(sfcorr_ncid,time_varid,start(4),time_in)
-      
+      WRITE(nuout,*) 'Start = ',start,' Count = ',count
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sfcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -1288,7 +1289,7 @@ c
       status=NF_GET_VARA_REAL(sfcorr_ncid,sfcorr_varid,start,count
      &     ,sfcorr_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      write(nuout,*) 'salinity corrections have been read from position'
+      write(nuout,*) 'Salinity corrections have been read from position'
      &     ,start(4)
       
 c
