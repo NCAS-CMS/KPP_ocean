@@ -1,7 +1,7 @@
       SUBROUTINE init_output(filename,ncid,kpp_3d_fields,
      +     kpp_const_fields,dt_vec,dt_sing,vec_varids,sing_varids,
-     +     zprof_vec,L_MEAN,L_INST)
-      
+     +     zprof_vec,extra_time,L_MEAN,L_INST)
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -29,7 +29,7 @@ c      include 'location.com'
       REAL*4, allocatable :: time_out(:)
       INTEGER :: vec_varids(N_VAROUTS),sing_varids(N_SINGOUTS),
      &     dt_vec(N_VAROUTS),dt_sing(N_VAROUTS),n_tdims,n_zdims,n_ddims,
-     &     vert_dimid(N_VAROUTS),dims(4),zflag(N_VAROUTS), ! 1 for z-levels, 0 for d-levels      
+     &     vert_dimid(N_VAROUTS),dims(4),zflag(N_VAROUTS), ! 1 for z-levels, 0 for d-levels
      &     time_dimids(N_VAROUTS+N_SINGOUTS), ! Contains a value for each diagnostic
      &     time_varids(N_VAROUTS+N_SINGOUTS), ! Contains only unique time variables
      &     dt_timeids(N_VAROUTS+N_SINGOUTS),
@@ -40,7 +40,7 @@ c      include 'location.com'
       REAL*4 delta
       LOGICAL tdim_found,zdim_found,L_MEAN,L_INST ! If L_MEAN, time values are output as midpoints
                                                   ! If L_INST, an extra value is added for initial conditions
-                                                  !     if .NOT. L_RESTART.                                              
+                                                  !     if .NOT. L_RESTART.
       DATA varname/'u','v','T','S','B',
      &     'wu','wv','wT','wS','wB',
      &     'wTnt',
@@ -109,7 +109,7 @@ c      include 'location.com'
      &     'solar_in',
      &     'nsolar_in',
      &     'PminusE_in',
-     &     'cplwght', 
+     &     'cplwght',
      &     'freeze_flag',
      &     'comp_flag',
      &     'dampu_flag',
@@ -157,7 +157,7 @@ c      include 'location.com'
      &     'unitless',
      &     'fraction',
      &     'fraction'/
-      
+
       nout=1
       singlong(3:7)=singlong(3:7)//type
 
@@ -192,11 +192,11 @@ c      include 'location.com'
 	 dt_timeids(1)=dt_vec(1)
          CALL MY_NCDF_DEF_DIM(ncid,time_dimids(1),NF_UNLIMITED,
      +        time_varids(1),'time_1','days',delta,' ')
-         j=NZP1         
+         j=NZP1
          IF (zprof_vec(1) .gt. 0) j=zprofs_nvalid(zprof_vec(1))
 c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
          IF (zflag(1).eq.0) THEN
-            n_ddims=1          
+            n_ddims=1
             CALL MY_NCDF_DEF_DIM(ncid,z_dimids(1),
      +           j,d_varids(1),'d_1','m',0.0,'Depth of interfaces')
             zprof_dids(1)=zprof_vec(1)
@@ -207,21 +207,15 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
             zprof_zids(1)=zprof_vec(1)
          ELSE
             WRITE(6,*) 'Incorrect value of zflag for '//longname(k)
-            CALL MIXED_ABORT               
+            CALL MIXED_ABORT
          ENDIF
-      ENDIF         
-      IF (L_INST .AND. .NOT. L_RESTART) THEN
-         ! Add an extra point to time dimensions for initial condition
-         extra_time=1
-      ELSE
-         extra_time=0
       ENDIF
 
       DO j=2,N_VAROUTS
          IF (dt_vec(j) .gt. 0) THEN
             tdim_found=.FALSE.
             zdim_found=.FALSE.
-            DO k=1,j-1 
+            DO k=1,j-1
                IF (dt_vec(j) .eq. dt_vec(k)) THEN
                   tdim_found=.TRUE.
                   time_dimids(j)=time_dimids(k)
@@ -232,11 +226,11 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
                   z_dimids(j)=z_dimids(k)
                ENDIF
             ENDDO
-            IF (.NOT.tdim_found) THEN 
+            IF (.NOT.tdim_found) THEN
                n_tdims=n_tdims+1
                dt_timeids(n_tdims)=dt_vec(j)
                WRITE(time_name,'(A5,I0)') 'time_',n_tdims
-               IF (n_tdims .eq. 1) THEN 
+               IF (n_tdims .eq. 1) THEN
                   CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j),NF_UNLIMITED,
      +                 time_varids(1),'time_1','days',delta,' ')
                ELSE
@@ -279,7 +273,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
                IF (dt_sing(j) .eq. dt_vec(k)) THEN
                   tdim_found=.TRUE.
                   time_dimids(j+N_VAROUTS)=time_dimids(k)
-               ENDIF               
+               ENDIF
             ENDDO
             IF (j .gt. 1 .and. .NOT. tdim_found) THEN
                DO k=1,j-1
@@ -289,7 +283,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
                   ENDIF
                ENDDO
             ENDIF
-            IF (.NOT. tdim_found) THEN 
+            IF (.NOT. tdim_found) THEN
                n_tdims=n_tdims+1
                dt_timeids(n_tdims)=dt_sing(j)
                WRITE(time_name,'(A5,I0)') 'time_',n_tdims
@@ -301,7 +295,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
                   CALL MY_NCDF_DEF_DIM(ncid,time_dimids(j+N_VAROUTS),
      +                 ndt_per_file/dt_sing(j)+extra_time,
      +                 time_varids(n_tdims),time_name,'days',delta,' ')
-               ENDIF               
+               ENDIF
             ENDIF
          ELSE
             time_dimids(j+N_VAROUTS)=0
@@ -318,7 +312,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
      &        ncid,vec_varids(k),4,dims,varname(k),units(k),
      &        longname(k))
       ENDDO
-            
+
       DO k=1,N_SINGOUTS
          dims(3)=time_dimids(N_VAROUTS+k)
          IF (dt_sing(k) .gt. 0)
@@ -326,7 +320,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
      &        ncid,sing_varids(k),3,dims,singname(k),singunits(k),
      &        singlong(k))
       ENDDO
-      
+
       status=NF_ENDDEF(ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -335,7 +329,7 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
 
       status=NF_PUT_VAR_REAL(ncid,lat_id,alat)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       DO j=1,n_zdims
          m=1
          DO k=1,NZP1
@@ -358,20 +352,20 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
          status=NF_PUT_VAR_REAL(ncid,d_varids(j),ZOUT)
          IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       ENDDO
-         
+
       DO k=1,NZP1
          ZOUT(k)=kpp_const_fields%hm(k)
       ENDDO
       status=NF_PUT_VAR_REAL(ncid,h_id,ZOUT)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
-      DO k=1,n_tdims         
+      DO k=1,n_tdims
          allocate(time_out(ndt_per_file/dt_timeids(k)+extra_time))
          DO i=1-extra_time,ndt_per_file/dt_timeids(k)
             time_out(i+extra_time)=i*kpp_const_fields%dto/
      +           kpp_const_fields%spd*dt_timeids(k)+
      +	         kpp_const_fields%time
-            IF (L_MEAN) 
+            IF (L_MEAN)
      +           time_out(i+extra_time)=time_out(i+extra_time)-
      +           0.5*kpp_const_fields%dto/kpp_const_fields%spd*
      +           dt_timeids(k)
@@ -388,16 +382,21 @@ c     +        time_varids(k)
 
       write(nuout,*) 'NCDF output file initialized with name ',
      +      filename
-      
+
       status=NF_CLOSE(ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+
+!     Reset extra_time parameter if set to one, as this
+!     should be used only on the first timestep of a new simulation
+!     to leave enough space to output the initial condition.
+      IF (extra_time .eq. 1) extra_time = 0
 
       RETURN
       END
 
       SUBROUTINE output_inst(kpp_3d_fields,kpp_const_fields,diag_num,
      +     varid,zprof,ntout)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -418,24 +417,24 @@ c     +        time_varids(k)
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
 
-      REAL*4, allocatable :: varout(:,:,:), singout(:,:), 
+      REAL*4, allocatable :: varout(:,:,:), singout(:,:),
      +     temp_2d(:,:),temp_1d(:),temp_zprof(:,:)
       REAL*4 TOUT
-      
+
       INTEGER start(4),count(4),status
       INTEGER i,j,k,ivar,diag_num,varid,ntout
-      INTEGER ix,iy,ipt,zprof    
+      INTEGER ix,iy,ipt,zprof
 
       count(1)=NX
       count(2)=NY
       count(3)=zprofs_nvalid(zprof)
       count(4)=1
-      
+
       start(1)=1
       start(2)=1
       start(3)=1
       start(4)=ntout
-      
+
 !      write(nuout,*) 'Writing output for diagnostic ',diag_num,
 !     + 'to start=',start,'count=',count,'zprof=',zprof
 
@@ -446,8 +445,8 @@ c      call output_open
 c      TOUT=kpp_const_fields%time
 c      status=NF_PUT_VAR1_REAL(ncid_out,time_id,nout,TOUT)
 
-      
-      IF (diag_num .le. N_VAROUTS) THEN 
+
+      IF (diag_num .le. N_VAROUTS) THEN
          allocate(varout(NX,NY,zprofs_nvalid(zprof)))
          allocate(temp_2d(NPTS,NZP1))
          SELECT CASE (diag_num)
@@ -505,9 +504,9 @@ c      status=NF_PUT_VAR1_REAL(ncid_out,time_id,nout,TOUT)
          CASE(23)
             temp_2d(:,:)=kpp_3d_fields%Sinc_fcorr(:,:)
 c         CASE DEFAULT
-c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'            
+c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
          END SELECT
-      
+
          IF (zprof .gt. 0) THEN
             j=1
             allocate(temp_zprof(NPTS,zprofs_nvalid(zprof)))
@@ -519,7 +518,7 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             ENDDO
             CALL REFORMAT_MASK_OUTPUT_2D(temp_zprof,zprofs_nvalid(zprof)
      +           ,kpp_3d_fields%L_OCEAN,missval,varout)
-         ELSE       
+         ELSE
             CALL REFORMAT_MASK_OUTPUT_2D(temp_2d,NZP1,
      +           kpp_3d_fields%L_OCEAN,missval,varout)
          ENDIF
@@ -528,7 +527,7 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
      &        ncid_out,varid,start,count,VAROUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       ELSE
-         allocate(singout(NX,NY))      
+         allocate(singout(NX,NY))
          allocate(temp_1d(NPTS))
          start(3)=start(4)
          count(3)=1
@@ -552,7 +551,7 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
                DO iy=jfirst,jlast
                   ipt=(iy-1)*NX_GLOBE+ix
                   temp_1d((iy-jfirst)*NX+ix-ifirst+1)=
-     +                 kpp_3d_fields%cplwght(ipt)                     
+     +                 kpp_3d_fields%cplwght(ipt)
                ENDDO
             ENDDO
          CASE (9)
@@ -567,16 +566,16 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             WRITE(6,*) 'You need to add more outputs in '//
      +           'OUTPUT_INST'
          END SELECT
-            
+
          CALL REFORMAT_MASK_OUTPUT_1D(temp_1d,kpp_3d_fields%L_OCEAN,
      +        missval,singout)
-         
+
          status=NF_PUT_VARA_REAL(
      &        ncid_out,varid,start,count,SINGOUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       ENDIF
       start(3)=1
-      
+
       ntout=ntout+1
 c     NPK 25/2/08
 c     Stop opening and closing output files with each flush of output.
@@ -631,18 +630,18 @@ c      call output_close
             ENDIF
          ENDDO
       ENDDO
-                  
+
       RETURN
       END SUBROUTINE reformat_mask_output_2d
 
       SUBROUTINE write_means(kpp_3d_fields,kpp_const_fields,
      +     VEC_mean,SCLR_mean,diag_num,varid,zprof,ntout)
       IMPLICIT NONE
-      
+
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'      
+      include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
       include 'output.com'
@@ -665,34 +664,34 @@ c      call output_close
       INTEGER i,j,ivar,ipt,ix,iy,start(4),count(4),k,status,
      +     diag_num,varid,ntout,mean_num,zprof
 
-            
+
 c      TOUT=kpp_const_fields%time-(ndtout_mean*kpp_const_fields%dtsec/
 c     +     (ndtocn*kpp_const_fields%spd))*0.5
 c      status=NF_PUT_VAR1_REAL(mean_ncid_out,time_id,nout_mean,TOUT)
 c      IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
 c      write(nuout,*) 'Writing mean output at timestep ',ntime+nstart,
 c     +     ' Time=',TOUT,' time_id = ',time_id
-      
+
       count(1)=NX
       count(2)=NY
       count(3)=zprofs_nvalid(zprof)
       count(4)=1
-      
+
       start(1)=1
       start(2)=1
       start(3)=1
       start(4)=ntout
-      
-      IF (diag_num .le. N_VAROUTS) THEN 
+
+      IF (diag_num .le. N_VAROUTS) THEN
          allocate(VAROUT(NX,NY,NZP1))
          allocate(temp_2d(NPTS,NZP1))
          mean_num=1
          DO i=1,diag_num-1
-            IF (ndt_varout_mean(i) .gt. 0) 
+            IF (ndt_varout_mean(i) .gt. 0)
      +           mean_num=mean_num+1
          ENDDO
          SELECT CASE (diag_num)
-         CASE (4) 
+         CASE (4)
             DO k=1,NZP1
                temp_2d(:,k)=VEC_mean(:,k,mean_num)+
      +              kpp_3d_fields%Sref(:)
@@ -702,7 +701,7 @@ c     +     ' Time=',TOUT,' time_id = ',time_id
             temp_2d(:,2:NZP1)=VEC_mean(:,2:NZP1,mean_num)
          CASE (18,19)
             temp_2d(:,1:NZ)=VEC_mean(:,1:NZ,mean_num)
-            temp_2d(:,NZP1)=0.               
+            temp_2d(:,NZP1)=0.
          CASE DEFAULT
             temp_2d(:,:)=VEC_mean(:,:,mean_num)
          END SELECT
@@ -721,7 +720,7 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
             ENDDO
             CALL REFORMAT_MASK_OUTPUT_2D(temp_zprof,zprofs_nvalid(zprof)
      +           ,kpp_3d_fields%L_OCEAN,missval,varout)
-         ELSE       
+         ELSE
             CALL REFORMAT_MASK_OUTPUT_2D(temp_2d,NZP1,
      +           kpp_3d_fields%L_OCEAN,missval,varout)
          ENDIF
@@ -733,11 +732,11 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
      &        mean_ncid_out,varid,start,count,VAROUT)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          VEC_mean(:,:,mean_num)=0.
-         i=i+1         
+         i=i+1
       ELSE
-         allocate(SINGOUT(NX,NY))     
+         allocate(SINGOUT(NX,NY))
          start(3)=start(4)
-         count(3)=1     
+         count(3)=1
          mean_num=1
          DO i=1,(diag_num-N_VAROUTS-1)
             IF (ndt_singout_mean(i) .gt. 0)
@@ -750,7 +749,7 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
                IF (kpp_3d_fields%L_OCEAN(ipt))
      &              SINGOUT(ix,iy)=SCLR_mean(ipt,mean_num)
             ENDDO
-         ENDDO            
+         ENDDO
 !         WRITE(nuout,*) 'In write_means for singout, i=',mean_num,
 !     &        'diag_num=',diag_num
          status=NF_PUT_VARA_REAL(
@@ -758,7 +757,7 @@ c         WRITE(6,*) 'Calling reformat_mask_output_2d for i=',mean_num
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          SCLR_mean(:,mean_num)=0.
          i=i+1
-      ENDIF     
+      ENDIF
       start(3)=1
 
 c     Increment counter for time dimension of NetCDF file
@@ -774,7 +773,7 @@ c     Increment counter for time dimension of NetCDF file
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'      
+      include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
       include 'output.com'
@@ -796,29 +795,29 @@ c     Increment counter for time dimension of NetCDF file
 
       INTEGER i,j,ivar,ipt,ix,iy,start(4),count(4),k,status,
      +     diag_num,varid,ntout,range_num,zprof
-      
+
       count(1)=NX
       count(2)=NY
       count(3)=zprofs_nvalid(zprof)
       count(4)=1
-      
+
       start(1)=1
       start(2)=1
       start(3)=1
       start(4)=ntout
-      
+
       allocate(SINGOUT(NX,NY))
       allocate(VAROUT(NX,NY,NZP1))
       allocate(temp_2d(NPTS,NZP1))
       DO j=1,2
-         IF (diag_num .le. N_VAROUTS) THEN 
+         IF (diag_num .le. N_VAROUTS) THEN
             range_num=1
             DO i=1,diag_num-1
-               IF (ndt_varout_range(i) .gt. 0) 
+               IF (ndt_varout_range(i) .gt. 0)
      +              range_num=range_num+1
             ENDDO
             SELECT CASE (diag_num)
-            CASE (4) 
+            CASE (4)
                DO k=1,NZP1
                   temp_2d(:,k)=VEC_range(:,k,range_num,j)+
      +                 kpp_3d_fields%Sref(:)
@@ -828,7 +827,7 @@ c     Increment counter for time dimension of NetCDF file
                temp_2d(:,2:NZP1)=VEC_range(:,2:NZP1,range_num,j)
             CASE (18,19)
                temp_2d(:,1:NZ)=VEC_range(:,1:NZ,range_num,j)
-               temp_2d(:,NZP1)=0.               
+               temp_2d(:,NZP1)=0.
             CASE DEFAULT
                temp_2d(:,:)=VEC_range(:,:,range_num,j)
             END SELECT
@@ -846,12 +845,12 @@ c            WRITE(6,*) 'Calling reformat_mask_output_2d diag=',diag_num
      +              zprofs_nvalid(zprof),kpp_3d_fields%L_OCEAN,
      +              missval,varout)
                deallocate(temp_zprof)
-            ELSE       
+            ELSE
                CALL REFORMAT_MASK_OUTPUT_2D(temp_2d,NZP1,
      +              kpp_3d_fields%L_OCEAN,missval,varout)
-            ENDIF         
+            ENDIF
             SELECT CASE (j)
-            CASE (1)                              
+            CASE (1)
 !               WRITE(6,*) 'Writing to ncid=',min_ncid_out,' varid=',
 !     +              varid,' with start =',start,' and count =',
 !     +              count
@@ -867,11 +866,11 @@ c            WRITE(6,*) 'Calling reformat_mask_output_2d diag=',diag_num
      &              max_ncid_out,varid,start,count,VAROUT)
                IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
                VEC_range(:,:,range_num,j)=-2e20
-            END SELECT                     
-c     i=i+1         
+            END SELECT
+c     i=i+1
          ELSE
             start(3)=start(4)
-            count(3)=1     
+            count(3)=1
             range_num=1
             DO i=1,(diag_num-N_VAROUTS-1)
                IF (ndt_singout_range(i) .gt. 0)
@@ -884,9 +883,9 @@ c     i=i+1
                   IF (kpp_3d_fields%L_OCEAN(ipt))
      &                 SINGOUT(ix,iy)=SCLR_range(ipt,range_num,j)
                ENDDO
-            ENDDO    
+            ENDDO
             SELECT CASE (j)
-            CASE (1)               
+            CASE (1)
                status=NF_PUT_VARA_REAL(
      &              min_ncid_out,varid,start,count,SINGOUT)
                IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -898,7 +897,7 @@ c     i=i+1
                SCLR_range(:,range_num,j)=-2e20
             END SELECT
 c     i=i+1
-         ENDIF     
+         ENDIF
       ENDDO
       start(3)=1
 
@@ -930,7 +929,7 @@ c     Increment counter for time dimension of NetCDF file
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe,upper_limit,lower_limit
-      
+
 !      allocate(field(NPTS,NZP1))
 !      allocate(vec(NPTS))
 
@@ -997,20 +996,20 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j)) THEN
                   DO k=1,NZP1
-                     VEC_mean(j,k,i)=field(j,k) / ndt_varout_mean(ivar) 
+                     VEC_mean(j,k,i)=field(j,k) / ndt_varout_mean(ivar)
      +                    + VEC_mean(j,k,i)
                   ENDDO
                ENDIF
-            ENDDO            
+            ENDDO
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
-#endif         
+#endif
             i=i+1
          ENDIF
       ENDDO
       i=1
-      DO ivar=1,N_SINGOUTS 
+      DO ivar=1,N_SINGOUTS
 !         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
          IF (ndt_singout_mean(ivar) .gt. 0) THEN
             SELECT CASE (ivar)
@@ -1046,7 +1045,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%dampv_flag(:)
             END SELECT
             DO j=1,NPTS
-               IF (kpp_3d_fields%L_OCEAN(j)) 
+               IF (kpp_3d_fields%L_OCEAN(j))
      +              SCLR_mean(j,i)=vec(j)/ndt_singout_mean(ivar)+
      +              SCLR_mean(j,i)
             ENDDO
@@ -1055,7 +1054,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       ENDDO
 !      deallocate(field)
 !      deallocate(vec)
-            
+
       RETURN
       END
 
@@ -1081,7 +1080,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER i,j,k,ivar,ix,iy,ipt,ipt_globe
-      
+
 !      allocate(field(NPTS,NZP1))
 !      allocate(vec(NPTS))
 
@@ -1155,12 +1154,12 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
 #ifdef OPENMP
 !$OMP END DO
 !$OMP END PARALLEL
-#endif         
+#endif
             i=i+1
          ENDIF
       ENDDO
       i=1
-      DO ivar=1,N_SINGOUTS         
+      DO ivar=1,N_SINGOUTS
 !         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
          IF (ndt_singout_mean(ivar) .gt. 0) THEN
             SELECT CASE (ivar)
@@ -1201,19 +1200,19 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
      +                 SCLR_range(j,i,1)=vec(j)
                   IF (vec(j) .gt. SCLR_range(j,i,2))
      +                 SCLR_range(j,i,2)=vec(j)
-               ENDIF                    
+               ENDIF
             ENDDO
          ENDIF
-         i=i+1      
+         i=i+1
       ENDDO
 !      deallocate(field)
 !      deallocate(vec)
-            
+
       RETURN
       END
 
       SUBROUTINE output_close(ncid)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1232,7 +1231,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       END
 
       SUBROUTINE output_open(file,ncid)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1243,11 +1242,10 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
 
       INTEGER status
       INTEGER,intent(out) :: ncid
-      CHARACTER*50,intent(in) :: file      
+      CHARACTER*50,intent(in) :: file
 
       status=NF_OPEN(file,NF_WRITE,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       RETURN
       END
-      

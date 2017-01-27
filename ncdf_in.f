@@ -11,7 +11,7 @@
       include 'initialcon.com'
 c      include 'location.com'
       include 'constants.com'
-      
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
 
@@ -24,9 +24,7 @@ c      include 'location.com'
       INTEGER ix,iy,ipt,count(3),start(3)
       INTEGER kin,k
       REAL deltaz,deltavar,offset_sst
-      
-      allocate(var_in(NX,NY,200))
-      allocate(z_in(200))
+
       allocate(x_in(NX_GLOBE))
       allocate(y_in(NY_GLOBE))
 
@@ -82,6 +80,9 @@ c      include 'location.com'
       start(3)=1
       count(3)=nz_in
 
+      allocate(z_in(nz_in))
+      allocate(var_in(NX,NY,nz_in))
+
       status=NF_INQ_VARID(ncid,'zvel',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR_REAL(ncid,varid,z_in)
@@ -102,7 +103,7 @@ c      include 'location.com'
                      kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,1)
                   ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
                      kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,nz_in)
-                  ELSE               
+                  ELSE
                      DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
                         kin=kin+1
                      ENDDO
@@ -136,7 +137,7 @@ c         U(ipt,:,1)=0.
                      kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,1)
                   ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
                      kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,nz_in)
-                  ELSE               
+                  ELSE
                      DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
                         kin=kin+1
                      ENDDO
@@ -158,13 +159,19 @@ c     Save initial currents in case they are needed to reinitalise
 c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
       kpp_3d_fields%U_init=kpp_3d_fields%U
 
+      deallocate(z_in)
+      deallocate(var_in)
+
       status=NF_INQ_DIMID(ncid,'ztemp',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       start(3)=1
       count(3)=nz_in
-      
+
+      allocate(z_in(nz_in))
+      allocate(var_in(NX,NY,nz_in))
+
       status=NF_INQ_VARID(ncid,'ztemp',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR_REAL(ncid,varid,z_in)
@@ -174,7 +181,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'read_init read temp'
-      
+
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
             DO ix=1,nx
@@ -185,7 +192,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
                      kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,1)
                   ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
                      kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,nz_in)
-                  ELSE               
+                  ELSE
                      DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
                         kin=kin+1
                      ENDDO
@@ -208,12 +215,15 @@ c
       offset_sst = 0.
       DO ix=1,nx
          DO iy=1,ny
-            IF (var_in(ix,iy,1) .gt. 200 .and. 
+            IF (var_in(ix,iy,1) .gt. 200 .and.
      &           var_in(ix,iy,1) .lt. 400)
      &           offset_sst = kpp_const_fields%TK0
-         END DO 
+         END DO
       END DO
       kpp_3d_fields%X(:,:,1) = kpp_3d_fields%X(:,:,1) - offset_sst
+
+      deallocate(z_in)
+      deallocate(var_in)
 
       status=NF_INQ_DIMID(ncid,'zsal',dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -221,6 +231,9 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       start(3)=1
       count(3)=nz_in
+
+      allocate(z_in(nz_in))
+      allocate(var_in(NX,NY,nz_in))
 
       status=NF_INQ_VARID(ncid,'zsal',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -231,18 +244,18 @@ c
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'read_init read sal'
-      
+
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
             DO ix=1,nx
-               ipt=(iy-1)*nx+ix               
+               ipt=(iy-1)*nx+ix
                kin=1
                DO k=1,NZP1
                   IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
                      kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,1)
                   ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
                      kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,nz_in)
-                  ELSE               
+                  ELSE
                      DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
                         kin=kin+1
                      ENDDO
@@ -258,23 +271,23 @@ c
       ELSE
          write(nuerr,*) 'You have to interpolate'
       ENDIF
-      
+
 
       RETURN
       END
 
       SUBROUTINE init_flxdata(fname)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
 #include <netcdf.inc>
 #include <flx_in.com>
-      
+
       CHARACTER*40 fname
       INTEGER status,index(3)
-      
+
       index(1)=1
       index(2)=1
       index(3)=1
@@ -298,15 +311,15 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid_flx,'precip',varin_id(7))
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       status=NF_GET_VAR1_REAL(ncid_flx,
      &     timein_id,index,first_timein)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
-            
+
       RETURN
       END
-      
+
       SUBROUTINE read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,
      +     kpp_3d_fields,kpp_const_fields)
 
@@ -325,13 +338,13 @@ c
      $     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS)
 c      REAL*4 var_in(NX,NY),time_in,time
       REAL*4 time_in,time
-      
+
       INTEGER dimid,varid
       INTEGER ipt,ix,iy,nx_in,ny_in
 
 c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       REAL*4, allocatable :: x_in(:),y_in(:),var_in(:,:)
-      
+
       INTEGER status,start(3),count(3)
 
       allocate(x_in(NX_GLOBE))
@@ -393,14 +406,14 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       write(nuout,*) ' Reading fluxes for time ',time,
      +     kpp_const_fields%time,kpp_const_fields%dtsec,
      +     kpp_const_fields%spd
-c     IF (ndtocn .EQ. 1) THEN 
+c     IF (ndtocn .EQ. 1) THEN
       start(3)=MAX(NINT((time-first_timein)*kpp_const_fields%spd/
      +     kpp_const_fields%dtsec)+1,1)
       WRITE(6,*) 'Reading time from time point ',start(3)
       WRITE(6,*) 'first_timein=',first_timein,'time=',time
       status=NF_GET_VAR1_REAL(ncid_flx,timein_id,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-#ifndef OASIS3      
+#ifndef OASIS3
       IF (abs(time_in-time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
          write(nuerr,*) 'Cannot find time,',time,'in fluxes file'
@@ -415,10 +428,10 @@ c     IF (ndtocn .EQ. 1) THEN
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
-            ipt=(iy-1)*nx+ix            
+            ipt=(iy-1)*nx+ix
             taux(ipt)=var_in(ix,iy)
          ENDDO
-      ENDDO      
+      ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(2),start,count
      $     ,var_in)
       WRITE(6,*) 'Read tauy'
@@ -462,7 +475,7 @@ c     IF (ndtocn .EQ. 1) THEN
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(6),start,count
      $     ,var_in)
       WRITE(6,*) 'Read shf'
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
             ipt=(iy-1)*nx+ix
@@ -486,20 +499,20 @@ c     IF (ndtocn .EQ. 1) THEN
          ENDDO
       ENDDO
       WRITE(6,*) 'Set snow to zero'
-c     ELSE 
+c     ELSE
 c     write(nuerr,*) 'You need some more code'
 c     CALL MIXED_ABORT
 c     ENDIF
 c      WRITE(6,*) 'Setting time equal to dummy_time'
 c      time=dummy_time
-      
+
       WRITE(6,*) 'Finished reading fluxes'
 
       RETURN
       END
 
       SUBROUTINE init_parasfile
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -507,12 +520,12 @@ c      time=dummy_time
       include 'netcdf.inc'
 #include <parameter.inc>
       include 'proc_pars.com'
-      
-      INTEGER status      
+
+      INTEGER status
 
       status=NF_OPEN(paras_file,0,ncid_paras)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
@@ -525,17 +538,17 @@ c      time=dummy_time
       include 'netcdf.inc'
 #include <parameter.inc>
       include 'proc_pars.com'
-      
+
       INTEGER status
 
       status=NF_CLOSE(ncid_paras)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
       SUBROUTINE init_advectfile
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -543,12 +556,12 @@ c      time=dummy_time
       include 'netcdf.inc'
 #include <parameter.inc>
       include 'ocn_advec.com'
-      
-      INTEGER status      
+
+      INTEGER status
 
       status=NF_OPEN(advect_file,0,ncid_advec)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
@@ -561,17 +574,17 @@ c      time=dummy_time
       include 'netcdf.inc'
 #include <parameter.inc>
       include 'ocn_advec.com'
-      
+
       INTEGER status
 
       status=NF_CLOSE(ncid_advec)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
       SUBROUTINE init_landseafile
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -580,12 +593,12 @@ c      time=dummy_time
 #include <parameter.inc>
 #include <landsea.com>
 
-      INTEGER status      
-      
+      INTEGER status
+
       WRITE(nuout,*) 'In init_landseafile'
       status=NF_OPEN(landsea_file,0,ncid_landsea)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
@@ -599,35 +612,35 @@ c      time=dummy_time
 #include <parameter.inc>
 #include <landsea.com>
 
-      
+
       INTEGER status
 
       status=NF_CLOSE(ncid_landsea)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
       SUBROUTINE init_cplwghtfile
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
-      
+
       include 'netcdf.inc'
 #include <parameter.inc>
       include 'couple.com'
 
       INTEGER status
-     
+
       status=NF_OPEN(cplwght_file,0,ncid_cplwght)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       RETURN
       END
-      
+
       SUBROUTINE close_cplwghtfile
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
@@ -640,7 +653,7 @@ c      time=dummy_time
 
       status=NF_CLOSE(ncid_cplwght)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 
@@ -667,7 +680,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
 
       INTEGER start(4),count(4),ix,iy,ipt,ipar,ixx,iyy
       INTEGER status,dimid,varid
-      
+
       allocate(par_in(nx,ny,npars,nt))
       allocate(x_in(NX_GLOBE))
       allocate(y_in(NY_GLOBE))
@@ -681,7 +694,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       ixx=1
       DO WHILE (abs(x_in(ixx)-kpp_3d_fields%dlon(1)) .GT. 1.e-3)
-         ixx=ixx+1         
+         ixx=ixx+1
       ENDDO
       start(1)=ixx
       count(1)=nx
@@ -702,7 +715,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       count(2)=ny
 
       IF (vname .EQ. 'lsm') THEN
-         DO iy=1,ny 
+         DO iy=1,ny
             DO ix=1,nx
                ipt=(iy-1)*nx+ix
                kpp_3d_fields%dlat(ipt)=y_in(iy+iyy-1)
@@ -710,7 +723,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
 C               WRITE(nuout,*) 'ipt=',ipt,'dlat=',dlat(ipt)
 C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
             ENDDO
-         ENDDO      
+         ENDDO
       ENDIF
 
       start(3)=1
@@ -793,7 +806,7 @@ c      include 'location.com'
       status=NF_INQ_VARID(ncid,vname,varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_INT(ncid,varid,start,count,par_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)         
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
             ipt=(iy-1)*nx+ix
@@ -803,7 +816,7 @@ c      include 'location.com'
          ENDDO
       ENDDO
 
-      
+
       RETURN
       END
 
@@ -815,7 +828,7 @@ c      include 'location.com'
      +     time_varid,lat_dimid,lon_dimid,time_dimid,fcorr_ncid,k,
      +     nlat_file,nlon_file,ntime_file
       PARAMETER (nuout=6,nuerr=0)
-      
+
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
@@ -841,22 +854,22 @@ c     NPK 29/06/08
       status = NF_OPEN(fcorrin_file,0,fcorr_ncid)
       IF (status.NE.0) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened flux-correction input file'
-      
+
       count(1)=NX
-      count(2)=NY      
+      count(2)=NY
       count(3)=1
       start(1)=1
       start(2)=1
       start(3)=1
- 
+
       CALL determine_netcdf_boundaries(fcorr_ncid,'flux correction',
      &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
- 
+
       status=NF_INQ_VARID(fcorr_ncid,'fcorr',fcorr_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-       
+
 
       IF (L_UPD_FCORR) THEN
          ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
@@ -865,29 +878,29 @@ c     NPK 29/06/08
      &       (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      +       (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
      &       (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
-         
+
          IF (fcorr_time .gt. last_timein) THEN
-            IF (L_PERIODIC_FCORR) THEN 
+            IF (L_PERIODIC_FCORR) THEN
                DO WHILE (fcorr_time .gt. last_timein)
                   fcorr_time=fcorr_time-fcorr_period
                ENDDO
             ELSE
-               WRITE(nuout,*) 'Time for which to read the flux & 
+               WRITE(nuout,*) 'Time for which to read the flux &
      &corrections exceeds the last time in the netCDF file &
      &and L_PERIODIC_FCORR has not been specified.  &
      &Attempting to read flux corrections will lead to an error, so &
      &aborting now ...'
                CALL MIXED_ABORT
             ENDIF
-         ENDIF 
-         
+         ENDIF
+
          write(nuout,*) 'Reading flux correction for time ',fcorr_time
          start(3)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
      +        (kpp_const_fields%dto*ndtupdfcorr))+1
          write(nuout,*) 'Flux corrections are being read from position',
      &        start(3)
          status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(3),time_in)
-         
+
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          IF (abs(time_in-fcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +        kpp_const_fields%spd) THEN
@@ -901,7 +914,7 @@ c If not updating the flux correction, read from beginning of file
          start(3)=1
          count(3)=1
       ENDIF
-      
+
       status=NF_GET_VARA_REAL(fcorr_ncid,fcorr_varid,start,count
      &     ,fcorr_twod_in)
       write(nuout,*) 'Flux corrections have been read from position',
@@ -910,7 +923,7 @@ c If not updating the flux correction, read from beginning of file
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -923,7 +936,7 @@ c
       END
 
       SUBROUTINE read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr,start(4),count(4)
       INTEGER ix,iy,iz,ipoint,fcorr_varid,status,lat_varid,lon_varid,
@@ -949,12 +962,12 @@ c      include 'location.com'
      +     longitudes(:),latitudes(:),z(:)
 c      COMMON /save_fcorr_withz/ fcorr_withz, Tinc_fcorr
 c
-c     Read in a NetCDF file containing a 
+c     Read in a NetCDF file containing a
 c     time-varying flux correction at every model vertical level.
 c     Frequency of read is controlled by ndtupdfcorr in the namelist
 c
 c     NPK 12/02/08
-c      
+c
       allocate(fcorr_in(NX,NY,NZP1,1))
       allocate(longitudes(NX_GLOBE))
       allocate(latitudes(NY_GLOBE))
@@ -962,12 +975,12 @@ c
       status=NF_OPEN(fcorrin_file,0,fcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened flux-correction input file ',fcorr_ncid
-      
+
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
 
       status=NF_INQ_VARID(fcorr_ncid,'z',z_varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)  
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIMID(fcorr_ncid,'z',z_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(fcorr_ncid,z_dimid,tmp_name,nz_file)
@@ -991,7 +1004,7 @@ c
 
       status=NF_INQ_VARID(fcorr_ncid,'fcorr',fcorr_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
      +     kpp_const_fields%spd
       WRITE(nuout,*) ndays_upd_fcorr,FLOOR(kpp_const_fields%time)*
@@ -1003,9 +1016,9 @@ c
      +     FLOAT(ndtupdfcorr*NINT(kpp_const_fields%dto))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
       WRITE(nuout,*) fcorr_time,last_timein
-      
+
       IF (fcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_FCORR) THEN 
+         IF (L_PERIODIC_FCORR) THEN
             DO WHILE (fcorr_time .gt. last_timein)
                fcorr_time=fcorr_time-fcorr_period
             ENDDO
@@ -1017,7 +1030,7 @@ c
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
 
       write(nuout,*) 'Reading flux correction for time ',fcorr_time
       start(4)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
@@ -1038,11 +1051,11 @@ c
      &     ,fcorr_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       write(nuout,*) 'Flux corrections have been read from position',
-     &     start(4)      
+     &     start(4)
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -1071,7 +1084,7 @@ c
      +     time_varid,lat_dimid,lon_dimid,time_dimid,sfcorr_ncid,k,
      +     nlat_file,nlon_file,ntime_file
       PARAMETER (nuout=6,nuerr=0)
-      
+
       include 'netcdf.inc'
 ! Automatically includes parameter.inc!
 #include <kpp_3d_type.com>
@@ -1098,22 +1111,22 @@ c     NPK 29/06/08
       status = NF_OPEN(sfcorrin_file,0,sfcorr_ncid)
       IF (status.NE.0) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened flux-correction input file'
-      
+
       count(1)=NX
-      count(2)=NY      
+      count(2)=NY
       count(3)=1
       start(1)=1
       start(2)=1
       start(3)=1
- 
+
       CALL determine_netcdf_boundaries(sfcorr_ncid,'flux correction',
      &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
- 
+
       status=NF_INQ_VARID(sfcorr_ncid,'sfcorr',sfcorr_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-       
+
       ndays_upd_sfcorr = ndtupdsfcorr*kpp_const_fields%dto/
      +     kpp_const_fields%spd
       sfcorr_time=(ndays_upd_sfcorr)*
@@ -1122,19 +1135,19 @@ c     NPK 29/06/08
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr)
 
       IF (sfcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SFCORR) THEN 
+         IF (L_PERIODIC_SFCORR) THEN
             DO WHILE (sfcorr_time .gt. last_timein)
                sfcorr_time=sfcorr_time-sfcorr_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux & 
+            WRITE(nuout,*) 'Time for which to read the flux &
      & corrections exceeds the last time in the netCDF file &
      & and L_PERIODIC_SFCORR has not been specified.  &
      & Attempting to read flux corrections will lead to an error, so &
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
 
       write(nuout,*) 'Reading flux correction for time ',sfcorr_time
       start(3)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
@@ -1142,7 +1155,7 @@ c     NPK 29/06/08
       write(nuout,*) 'Flux corrections are being read from position',
      &     start(3)
       status=NF_GET_VAR1_REAL(sfcorr_ncid,time_varid,start(3),time_in)
-      
+
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sfcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -1159,7 +1172,7 @@ c     NPK 29/06/08
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -1174,7 +1187,7 @@ c
 !sfcorr_withz added LH 24/05/2013
 
       SUBROUTINE read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr,start(4),count(4)
       INTEGER ix,iy,iz,ipoint,sfcorr_varid,status,lat_varid,lon_varid,
@@ -1200,12 +1213,12 @@ c      include 'location.com'
       CHARACTER(LEN=30) tmp_name
 c      COMMON /save_sfcorr_withz/ sfcorr_withz
 c
-c     Read in a NetCDF file containing a 
+c     Read in a NetCDF file containing a
 c     time-varying flux correction at every model vertical level.
 c     Frequency of read is controlled by ndtupdsfcorr in the namelist
 c
 c     NPK 12/02/08
-c      
+c
       allocate(sfcorr_in(NX,NY,NZP1,1))
       allocate(latitudes(NX_GLOBE))
       allocate(longitudes(NY_GLOBE))
@@ -1214,12 +1227,12 @@ c
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened salinity-correction input file ',
      +     sfcorr_ncid
-      
+
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
 
       status=NF_INQ_VARID(sfcorr_ncid,'z',z_varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)  
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIMID(sfcorr_ncid,'z',z_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(sfcorr_ncid,z_dimid,tmp_name,nz_file)
@@ -1243,7 +1256,7 @@ c
 
       status=NF_INQ_VARID(sfcorr_ncid,'sfcorr',sfcorr_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       ndays_upd_sfcorr = ndtupdsfcorr*kpp_const_fields%dto/
      +     kpp_const_fields%spd
       WRITE(nuout,*) ndays_upd_sfcorr,FLOOR(kpp_const_fields%time)*
@@ -1255,9 +1268,9 @@ c
      +     FLOAT(ndtupdsfcorr*NINT(kpp_const_fields%dto))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr)
       WRITE(nuout,*) sfcorr_time,last_timein
-      
+
       IF (sfcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SFCORR) THEN 
+         IF (L_PERIODIC_SFCORR) THEN
             DO WHILE (sfcorr_time .gt. last_timein)
                sfcorr_time=sfcorr_time-sfcorr_period
             ENDDO
@@ -1269,7 +1282,7 @@ c
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
 
       write(nuout,*) 'Reading salinity correction for time ',sfcorr_time
       start(4)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
@@ -1291,11 +1304,11 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       write(nuout,*) 'Salinity corrections have been read from position'
      &     ,start(4)
-      
+
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -1306,12 +1319,12 @@ c
       ENDDO
 
       status=NF_CLOSE(sfcorr_ncid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       deallocate(sfcorr_in)
       deallocate(longitudes)
       deallocate(latitudes)
       deallocate(z)
-      
+
       RETURN
       END
 
@@ -1319,7 +1332,7 @@ c
 #ifdef CFS
       SUBROUTINE read_landsea_global
       IMPLICIT NONE
-      
+
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
@@ -1328,15 +1341,15 @@ c
 #include <landsea.com>
       include 'constants.com'
 c      include 'location.com'
-      
+
       INTEGER status,varid,latid,lonid
       REAL*4 var_in(NX_GLOBE,NY_GLOBE),latitudes_in(NY_GLOBE),
      +     longitudes_in(NX_GLOBE)
       INTEGER count(3),start(3),ix,iy
-      
+
       status=NF_OPEN(landsea_file,0,ncid_landsea)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
-      
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+
       count(1)=NX_GLOBE
       count(2)=NY_GLOBE
       count(3)=1
@@ -1344,7 +1357,7 @@ c      include 'location.com'
       start(1)=1
       start(2)=1
       start(3)=1
-      
+
       status=NF_INQ_VARID(ncid_landsea,'latitude',latid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid_landsea,'longitude',lonid)
@@ -1366,7 +1379,7 @@ c      include 'location.com'
 
       status=NF_CLOSE(ncid_landsea)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       RETURN
       END
 #endif
@@ -1452,7 +1465,7 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
 c      WRITE(6,*) kpp_const_fields%time,kpp_const_fields%dto,
 c     +     kpp_const_fields%spd
       IF (sstclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_CLIMSST) THEN 
+         IF (L_PERIODIC_CLIMSST) THEN
             DO WHILE (sstclim_time .gt. last_timein)
                sstclim_time=sstclim_time-climsst_period
             ENDDO
@@ -1463,22 +1476,22 @@ c     +     kpp_const_fields%spd
      &an error, so aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
       write(nuout,*) 'Reading climatological SST for time ',sstclim_time
-      
+
       start(3)=NINT((sstclim_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsst))+1
 c      write(nuout,*) 'SSTs are being read from position',start(3)
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
-      IF (abs(time_in-sstclim_time) .GT. 
+      IF (abs(time_in-sstclim_time) .GT.
      +     0.01*kpp_const_fields%dtsec/kpp_const_fields%spd) THEN
          write(nuerr,*) 'Cannot find time,',sstclim_time,
      &        'in SST climatology file'
          write(nuerr,*) 'The closest I came was',time_in
          CALL MIXED_ABORT
-      ENDIF      
+      ENDIF
 
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      $     ,var_in)
@@ -1492,12 +1505,12 @@ c
       offset_sst=0.
       DO ix=1,sst_nx
          DO iy=1,sst_ny
-            IF (var_in(ix,iy,1) .gt. 200 .and. 
+            IF (var_in(ix,iy,1) .gt. 200 .and.
      &           var_in(ix,iy,1) .lt. 400)
      &           offset_sst = 273.15
          END DO
       END DO
-      
+
       DO ix=1,sst_nx
          DO iy=1,sst_ny
 
@@ -1509,8 +1522,8 @@ c     ice_in(ix,iy)=sst_in(ix,iy,1)
 c     usf_in(ix,iy)=0.0
 c     vsf_in(ix,iy)=0.0
 c     ELSE
-c     sst_in(ix,iy,1)=var_in(ix,iy,1)            
-            sst_in(ix,iy,1)=var_in(ix,iy,1)-offset_sst          
+c     sst_in(ix,iy,1)=var_in(ix,iy,1)
+            sst_in(ix,iy,1)=var_in(ix,iy,1)-offset_sst
             IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
             IF (.NOT. L_CLIMCURR) THEN
                usf_in(ix,iy)=0.0
@@ -1525,14 +1538,14 @@ c     ENDIF
       END
 
       SUBROUTINE read_icein(kpp_3d_fields,kpp_const_fields)
-      
+
 c     Read in ice concentrations from a user-provided netCDF file.
 c     Called _only_ if L_CLIMICE is TRUE in 3D_ocn.nml.
 c     Called every time the climatological SST is updated.
 c     Probably only necessary when coupling the model to an atmosphere
 c     that requires realistic ice concentrations.
 c     Written by Nick Klingaman, 11/01/08.
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -1544,9 +1557,9 @@ c     Written by Nick Klingaman, 11/01/08.
       include 'couple.com'
       include 'times.com'
       include 'timocn.com'
-      include 'sstclim.com'      
+      include 'sstclim.com'
 c      include 'location.com'
-      
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER ice_nx,ice_ny
@@ -1554,7 +1567,7 @@ c      include 'location.com'
       PARAMETER(ice_nx=NX_GLOBE,ice_ny=NY_GLOBE)
 #else
       PARAMETER(ice_nx=NX,ice_ny=NY)
-#endif     
+#endif
       REAL sst_in(ice_nx,ice_ny,1),ice_in(ice_nx,ice_ny,1),
      &     icedepth_in(ice_nx,ice_ny,1),snowdepth_in(ice_nx,ice_ny,1),
      &     usf_in(ice_nx,ice_ny),vsf_in(ice_nx,ice_ny),
@@ -1569,7 +1582,7 @@ c      include 'location.com'
 
       COMMON /save_sstin/ sst_in,ice_in,icedepth_in,snowdepth_in,
      &     usf_in,vsf_in
-      
+
 c     Set start and count to read a global field if coupled,
 c     or a regional field if not coupled.
       count(1)=ice_nx
@@ -1604,14 +1617,14 @@ c     longitude and time.
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
-#endif      
+#endif
 
       status=NF_INQ_VARID(ncid,'iceconc',varid)
       iceclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
-     +     kpp_const_fields%spd*ndtupdice     
-     
+     +     kpp_const_fields%spd*ndtupdice
+
       IF (iceclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_CLIMICE) THEN 
+         IF (L_PERIODIC_CLIMICE) THEN
             DO WHILE (iceclim_time .gt. last_timein)
                iceclim_time=iceclim_time-climice_period
             ENDDO
@@ -1622,15 +1635,15 @@ c     longitude and time.
      &an error, so aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
-      
+      ENDIF
+
       write(nuout,*) 'Reading climatological ICECONC for time ',
      &     iceclim_time
       start(3)=NINT((iceclim_time-first_timein)*kpp_const_fields%spd/
-     +     (kpp_const_fields%dto*ndtupdice))+1      
+     +     (kpp_const_fields%dto*ndtupdice))+1
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      IF (abs(time_in-iceclim_time) .GT. 
+      IF (abs(time_in-iceclim_time) .GT.
      +     0.01*kpp_const_fields%dtsec/kpp_const_fields%spd) THEN
          write(nuerr,*) 'Cannot find time,',iceclim_time,
      &        'in ice concentration climatology file'
@@ -1656,16 +1669,16 @@ c     longitude and time.
          ENDDO
       ENDDO
 
-      IF (L_CLIM_ICE_DEPTH) THEN 
+      IF (L_CLIM_ICE_DEPTH) THEN
          status=NF_INQ_VARID(ncid,'icedepth',varid)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          WRITE(nuout,*) 'Reading climatological ICEDEPTH for time ',
-     &        iceclim_time         
+     &        iceclim_time
          WRITE(nuout,*) 'Ice depths are being read from ',
      &        'position', start(3)
          WRITE(nuout,*) 'Start = ',start,'Count = ',count
          status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
          DO ix=1,ice_nx
             DO iy=1,ice_ny
@@ -1684,14 +1697,14 @@ c     longitude and time.
          WRITE(nuout,*) 'Start = ',start,'Count = ',count
          status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-         
+
          DO ix=1,ice_nx
             DO iy=1,ice_ny
                snowdepth_in(ix,iy,1)=var_in(ix,iy,1)
             ENDDO
          ENDDO
       ENDIF
-      
+
       status=NF_CLOSE(ncid)
 
       RETURN
@@ -1717,13 +1730,13 @@ c#include <location.com>
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      
+
       INTEGER curr_nx,curr_ny
 #ifdef COUPLE
       PARAMETER(curr_nx=NX_GLOBE,curr_ny=NY_GLOBE)
 #else
       PARAMETER(curr_nx=NX,curr_ny=NY)
-#endif     
+#endif
       REAL sst_in(curr_nx,curr_ny,1),ice_in(curr_nx,curr_ny,1),
      &     icedepth_in(curr_nx,curr_ny,1),
      &     snowdepth_in(curr_nx,curr_ny,1),
@@ -1737,7 +1750,7 @@ c#include <location.com>
 
       COMMON /save_sstin/ sst_in,ice_in,icedepth_in,snowdepth_in,
      &     usf_in,vsf_in
-            
+
 c     Set start and count to read a global field if coupled,
 c     or a regional field if not coupled.
       count(1)=curr_nx
@@ -1769,12 +1782,12 @@ c     Open the netCDF file and find the correct time.
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
-#endif      
+#endif
 
       currclim_time=time+0.5*dto/spd*ndtupdsst
       write(nuout,*) 'Reading climatological USF for time ',
      &     currclim_time
-      start(3)=NINT((currclim_time-first_timein)*spd/(dto*ndtupdcurr))+1      
+      start(3)=NINT((currclim_time-first_timein)*spd/(dto*ndtupdcurr))+1
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-currclim_time) .GT. 0.01*kpp_const_fields%dtsec/
@@ -1815,7 +1828,7 @@ c     Open the netCDF file and find the correct time.
             vsf_in(ix,iy)=var_in(ix,iy)
          ENDDO
       ENDDO
-  
+
       status=NF_CLOSE(ncid)
 
       RETURN
@@ -1844,7 +1857,7 @@ c#include <location.com>
       INTEGER status,ncid
       REAL bottom_temp(NPTS),offset_temp
       REAL*4 var_in(NX,NY,1),time_in,
-     & first_timein, bottomclim_time,latitudes(NY_GLOBE), 
+     & first_timein, bottomclim_time,latitudes(NY_GLOBE),
      & longitudes(NX_GLOBE), last_timein
       INTEGER varid,time_varid,lat_varid,lon_varid,time_dimid,lat_dimid,
      &     lon_dimid,nlat_file,nlon_file,ntime_file
@@ -1861,11 +1874,11 @@ c     Set start and count to read a regional field.
       start(2)=1
       start(3)=1
 
-c     Open the netCDF file and find the latitude and longitude 
+c     Open the netCDF file and find the latitude and longitude
 c     boundaries in the input file.
       status=NF_OPEN(bottomin_file,0,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       status=NF_INQ_VARID(ncid,'T',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -1877,7 +1890,7 @@ c     boundaries in the input file.
       bottomclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
      +     kpp_const_fields%spd*ndtupdbottom
       IF (bottomclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_BOTTOM_TEMP) THEN 
+         IF (L_PERIODIC_BOTTOM_TEMP) THEN
             DO WHILE (bottomclim_time .gt. last_timein)
                bottomclim_time=bottomclim_time-bottom_temp_period
             ENDDO
@@ -1889,8 +1902,8 @@ c     boundaries in the input file.
      &now...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
- 
+      ENDIF
+
       write(nuout,*) 'Reading climatological bottom temp for time ',
      &     bottomclim_time
       start(3)=NINT((bottomclim_time-first_timein)*kpp_const_fields%spd/
@@ -1915,17 +1928,17 @@ c     boundaries in the input file.
       WRITE(nuout,*) 'First column of bottom temperatures: ',
      +     var_in(1,:,1)
 c
-c     KPP expects temperatures in CELSIUS.  If climatological bottom 
+c     KPP expects temperatures in CELSIUS.  If climatological bottom
 c     temperatures are in Kelvin, subtract 273.15.
-c     
+c
       offset_temp=0.
       ix=1
       iy=1
       DO WHILE (offset_temp.EQ.0.AND.ix.LE.NX)
          DO iy=1,NY
-            IF (var_in(ix,iy,1) .gt. 200 .and. 
+            IF (var_in(ix,iy,1) .gt. 200 .and.
      &           var_in(ix,iy,1) .lt. 400)
-     &           offset_temp = 273.15         
+     &           offset_temp = 273.15
          END DO
          ix=ix+1
       ENDDO
@@ -1936,7 +1949,7 @@ c
             bottom_temp(ipoint) = var_in(ix,iy,1)
 c            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
          ENDDO
-      ENDDO     
+      ENDDO
 
       status=NF_CLOSE(ncid)
 
@@ -1944,7 +1957,7 @@ c            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
       END
 
       SUBROUTINE read_salinity(kpp_3d_fields,kpp_const_fields)
-      
+
       IMPLICIT NONE
       INTEGER nuout,nuerr,start(4),count(4)
       INTEGER ix,iy,iz,ipoint,sal_varid,status,lat_varid,lon_varid,
@@ -1961,7 +1974,7 @@ c#include <location.com>
 #include <timocn.com>
 #include <constants.com>
 #include <ocn_paras.com>
-      
+
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       REAL*4 ixx,jyy,first_timein,time_in,
@@ -1971,12 +1984,12 @@ c#include <location.com>
      +     z(:)
 c      COMMON /save_sal/ sal_clim
 c
-c     Read in a NetCDF file containing a 
+c     Read in a NetCDF file containing a
 c     time-varying salinity field at every model vertical level.
 c     Frequency of read is controlled by ndtupdsal in the namelist
 c
 c     NPK 12/02/08
-c      
+c
       allocate(sal_in(NX,NY,NZP1,1))
       allocate(longitudes(NX_GLOBE))
       allocate(latitudes(NY_GLOBE))
@@ -1986,12 +1999,12 @@ c
       status=NF_OPEN(sal_file,0,sal_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened salinity input file ',sal_ncid
-      
+
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
 
       status=NF_INQ_VARID(sal_ncid,'z',z_varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)  
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIMID(sal_ncid,'z',z_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(sal_ncid,z_dimid,tmp_name,nz_file)
@@ -2016,7 +2029,7 @@ c
 
       status=NF_INQ_VARID(sal_ncid,'salinity',sal_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       ndays_upd_sal = ndtupdsal*kpp_const_fields%dto/
      +     kpp_const_fields%spd
 c      WRITE(nuout,*) ndays_upd_sal,FLOOR(time)*NINT(kpp_const_fields%spd),
@@ -2026,9 +2039,9 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
      +     (ndtupdsal*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsal)
       WRITE(nuout,*) sal_time,last_timein
-      
+
       IF (sal_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SAL) THEN 
+         IF (L_PERIODIC_SAL) THEN
             DO WHILE (sal_time .gt. last_timein)
                sal_time=sal_time-sal_period
             ENDDO
@@ -2040,7 +2053,7 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
 
       write(nuout,*) 'Reading salinity for time ',sal_time
       start(4)=NINT((sal_time-first_timein)*kpp_const_fields%spd/
@@ -2048,7 +2061,7 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
       write(nuout,*) 'Salinity values are being read from position',
      &     start(4)
       status=NF_GET_VAR1_REAL(sal_ncid,time_varid,start(4),time_in)
-      
+
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sal_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -2061,11 +2074,11 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
      &     ,sal_in)
       write(nuout,*) 'Salinity climatology data have been read from '//
      &     'position',start(4)
-      
+
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -2073,7 +2086,7 @@ c
 c
 c     Subtract reference salinity from climatology, for compatability with
 c     salinity values stored in main model.
-c               
+c
                kpp_3d_fields%sal_clim(ipoint,k)=sal_in(ix,iy,k,1)-
      +              kpp_3d_fields%Sref(ipoint)
             ENDDO
@@ -2119,12 +2132,12 @@ c
       status=NF_OPEN(ocnT_file,0,ocnT_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Opened ocean temperature input file ',ocnT_ncid
-      
+
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
 
       status=NF_INQ_VARID(ocnT_ncid,'z',z_varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)  
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIMID(ocnT_ncid,'z',z_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ocnT_ncid,z_dimid,tmp_name,nz_file)
@@ -2149,7 +2162,7 @@ c
 
       status=NF_INQ_VARID(ocnT_ncid,'temperature',ocnT_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      
+
       ndays_upd_ocnT = ndtupdocnT*kpp_const_fields%dto/
      +     kpp_const_fields%spd
       ocnT_time=(ndays_upd_ocnT)*
@@ -2157,9 +2170,9 @@ c
      &     (ndtupdocnT*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdocnT)
       WRITE(nuout,*) ocnT_time,last_timein
-      
+
       IF (ocnT_time .gt. last_timein) THEN
-         IF (L_PERIODIC_OCNT) THEN 
+         IF (L_PERIODIC_OCNT) THEN
             DO WHILE (ocnT_time .gt. last_timein)
                ocnT_time=ocnT_time-ocnT_period
             ENDDO
@@ -2171,7 +2184,7 @@ c
      & aborting now ...'
             CALL MIXED_ABORT
          ENDIF
-      ENDIF               
+      ENDIF
 
       write(nuout,*) 'Reading ocean temperature for time ',ocnT_time
       start(4)=NINT((ocnT_time-first_timein)*kpp_const_fields%spd/
@@ -2180,7 +2193,7 @@ c
       write(nuout,*) 'Ocean temperature values are being read from ',
      &     'position',start(4)
       status=NF_GET_VAR1_REAL(ocnT_ncid,time_varid,start(4),time_in)
-      
+
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-ocnT_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -2193,11 +2206,11 @@ c
      &     ,ocnT_in)
       write(nuout,*) 'Ocean temperature climatology data have been '//
      &     'read from position',start(4)
-      
+
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -2212,7 +2225,7 @@ c
       deallocate(longitudes)
       deallocate(latitudes)
       deallocate(z)
-      
+
       RETURN
       END
 
@@ -2221,7 +2234,7 @@ c
      &     offset_lon,offset_lat,first_time,last_time,time_varid)
 
       IMPLICIT NONE
-      
+
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
@@ -2230,18 +2243,18 @@ c
 
       INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
      &     lat_dimid,lat_varid,time_dimid,time_varid,ix,iy
-      REAL start_lon,start_lat,first_time,last_time      
+      REAL start_lon,start_lat,first_time,last_time
       CHARACTER(*) file_description,latitude_name,longitude_name,
      &     time_name
       CHARACTER(LEN=30) tmp_name
 
       INTEGER nlat_file,nlon_file,ntime_file,status
       REAL*4 longitudes(NX_GLOBE),latitudes(NY_GLOBE)
-      
+
       status=NF_INQ_DIMID(ncid,latitude_name,lat_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ncid,lat_dimid,tmp_name,nlat_file)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,latitude_name,lat_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Inquired on '//latitude_name,lat_varid
@@ -2249,7 +2262,7 @@ c
       status=NF_INQ_DIMID(ncid,longitude_name,lon_dimid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_DIM(ncid,lon_dimid,tmp_name,nlon_file)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)      
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,longitude_name,lon_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       WRITE(nuout,*) 'Inquired on '//longitude_name,lon_varid
@@ -2271,7 +2284,7 @@ c
          ix=ix+1
       ENDDO
       offset_lon=ix
-       
+
       iy=1
       DO WHILE (abs(latitudes(iy)-start_lat) .GT. 1.e-3)
          IF (iy .gt. nlat_file) THEN

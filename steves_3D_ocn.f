@@ -55,7 +55,7 @@ c      USE kpp_type_mod
       REAL,allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),bottom_temp(:),
      +     VEC_range(:,:,:,:),SCLR_range(:,:,:)
 
-      INTEGER j,k,nflx,nstep,ix,iy,ipt_globe
+      INTEGER j,k,nflx,nstep,ix,iy,ipt_globe,extra_time
 
 c Initialize the 3D KPP model
 c Setup the constants, read the namelists, setup the initial conditions
@@ -102,7 +102,7 @@ c into the main program.  NPK 17/08/10 - R3
 
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
-     +     VEC_mean,SCLR_mean,VEC_range,SCLR_range)
+     +     VEC_mean,SCLR_mean,VEC_range,SCLR_range,extra_time)
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',0)
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 
@@ -455,7 +455,7 @@ c         ENDIF
 !     Values are held as deviations from reference salinity, so set prognostic to zero
 !     to preserve initial conditions.
             kpp_3d_fields%X(:,1,2) = 0.0
-         ENDIF            
+         ENDIF
 
 !         WRITE(nuout,*) 'KPP: Finished ocnstep loop, ntime=',ntime
 c
@@ -592,8 +592,8 @@ c     then close the current files and create new ones.
 c     Updated to take advantage of new ndt_per_file option.
 c     NPK 10/6/09 - R2
 c
-         IF (kpp_const_fields%time .GE. float(day_out) .AND. ntime
-     +        .NE. nend*ndtocn) THEN
+         IF (MOD(ntime,ndt_per_file) .eq.0 .AND. 
+     +      ntime.NE.nend*ndtocn)THEN
             day_out=day_out+NINT(kpp_const_fields%dtsec/FLOAT(ndtocn)
      +           *FLOAT(ndt_per_file)/kpp_const_fields%spd)
             !WRITE(nuout,*) 'day_out=',day_out
@@ -602,12 +602,12 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                write(output_file(flen+2:flen+6),'(i5.5)') day_out
                CALL output_close(ncid_out)
-	       ntout_vec_inst(:)=1
-	       ntout_sing_inst(:)=1
+	             ntout_vec_inst(:)=1
+	             ntout_sing_inst(:)=1
                CALL init_output(output_file,ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_inst,
      +              ndt_singout_inst,varid_vec,varid_sing,
-     +              zprof_varout_inst,.FALSE.,.TRUE.)
+     +              zprof_varout_inst,extra_time,.FALSE.,.TRUE.)
                CALL output_open(output_file,ncid_out)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
@@ -618,12 +618,12 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                CALL output_close(mean_ncid_out)
-	       ntout_vec_mean(:)=1
-	       ntout_sing_mean(:)=1
+	              ntout_vec_mean(:)=1
+	              ntout_sing_mean(:)=1
                CALL init_output(mean_output_file,mean_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_mean,
      +              ndt_singout_mean,varid_vec_mean,varid_sing_mean,
-     +              zprof_varout_mean,.TRUE.,.FALSE.)
+     +              zprof_varout_mean,extra_time,.TRUE.,.FALSE.)
                CALL output_open(mean_output_file,mean_ncid_out)
                nout_mean=1
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
@@ -638,16 +638,16 @@ c
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',1)
                CALL output_close(min_ncid_out)
                CALL output_close(max_ncid_out)
-	       ntout_vec_range(:)=1
-	       ntout_sing_range(:)=1
+	             ntout_vec_range(:)=1
+	             ntout_sing_range(:)=1
                CALL init_output(min_output_file,min_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +              ndt_singout_range,varid_vec_range,varid_sing_range,
-     +              zprof_varout_range,.FALSE.,.FALSE.)
+     +              zprof_varout_range,extra_time,.FALSE.,.FALSE.)
                CALL init_output(max_output_file,max_ncid_out,
      +              kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +              ndt_singout_range,varid_vec_range,varid_sing_range,
-     +              zprof_varout_range,.FALSE.,.FALSE.)
+     +              zprof_varout_range,extra_time,.FALSE.,.FALSE.)
                CALL output_open(min_output_file,min_ncid_out)
                CALL output_open(max_output_file,max_ncid_out)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing output',0)
@@ -787,7 +787,7 @@ c     For MPI, should do STOP 0 to return an exit code of 0
       END
 
       SUBROUTINE initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
-     +     VEC_mean,SCLR_mean,VEC_range,SCLR_range)
+     +     VEC_mean,SCLR_mean,VEC_range,SCLR_range,extra_time)
 
 ************************************************************************
 *     Subroutine to initialize the model, some of the output is passed
@@ -839,7 +839,7 @@ c     +     bottom_temp(:)
 * Local Variablies, including some read in from name lists
       REAL dscale ! (neg)lambda parameter for defining the stretch
       REAL alat,alon,delta_lat,delta_lon
-      INTEGER i,j,k,l,ipt,ix,iy
+      INTEGER i,j,k,l,ipt,ix,iy,extra_time
       CHARACTER*40 forcing_file
 
       NAMELIST/NAME_CONSTANTS/grav,vonk,sbc,twopi,onepi,TK0,spd,dpy,
@@ -1025,14 +1025,14 @@ c     Initialize and read the times namelist
       nend=int((kpp_const_fields%finalt-kpp_const_fields%startt)/
      +     kpp_const_fields%dtsec)
       nstart=nint(kpp_const_fields%startt)/kpp_const_fields%dto
-      IF (float(nend*ndtocn) .NE. (kpp_const_fields%finalt-
+      IF ( nend*ndtocn .NE. (kpp_const_fields%finalt-
      +     kpp_const_fields%startt)/kpp_const_fields%dto) THEN
-         WRITE(nuerr,*) 'KPP : The integration length is not ',
-     +        'a multiple of the ocean timestep'
-         WRITE(nuerr,*) 'dto=',kpp_const_fields%dto
-         WRITE(nuerr,*) 'finalt=',kpp_const_fields%finalt
-         WRITE(nuerr,*) 'startt=',kpp_const_fields%startt
-         CALL MIXED_ABORT
+         WRITE(nuout,*) 'KPP : WARNING: The integration length'//
+     +  'is not a multiple of the ocean timestep.'
+         WRITE(nuout,*) 'KPP : KPP will run ',nend*ndtocn,' timesteps'
+         WRITE(nuout,*) 'KPP : The last timestep will be time ',
+     +   startt+(nend*ndtocn/24.0)
+         WRITE(nuout,*) kpp_const_fields%startt,(nend*ndtocn/24.0)
       ENDIF
       kpp_const_fields%startt=kpp_const_fields%startt/
      +     kpp_const_fields%spd
@@ -1278,10 +1278,12 @@ c
       write(output_file(flen+7:flen+9),'(3A)') '.nc'
 c
       dtout=kpp_const_fields%dto/kpp_const_fields%spd
+      extra_time=0
       IF (L_OUTPUT_INST) THEN
+         IF (.NOT. L_RESTART) extra_time=1
          CALL init_output(output_file,ncid_out,kpp_3d_fields,
      +        kpp_const_fields,ndt_varout_inst,ndt_singout_inst,
-     +        varid_vec,varid_sing,zprof_varout_inst,
+     +        varid_vec,varid_sing,zprof_varout_inst,extra_time,
      +        .FALSE.,.TRUE.)
          CALL output_open(output_file,ncid_out)
       ENDIF
@@ -1296,7 +1298,7 @@ c
          CALL init_output(mean_output_file,mean_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_mean,
      +        ndt_singout_mean,varid_vec_mean,varid_sing_mean,
-     +        zprof_varout_mean,.TRUE.,.FALSE.)
+     +        zprof_varout_mean,extra_time,.TRUE.,.FALSE.)
          CALL output_open(mean_output_file,mean_ncid_out)
       ENDIF
 
@@ -1310,7 +1312,7 @@ c
          CALL init_output(min_output_file,min_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +        ndt_singout_range,varid_vec_range,varid_sing_range,
-     +        zprof_varout_range,.FALSE.,.FALSE.)
+     +        zprof_varout_range,extra_time,.FALSE.,.FALSE.)
          write(max_output_file(flen+1:flen+1),'(a)') '_'
          write(max_output_file(flen+2:flen+6),'(i5.5)') day_out
          write(max_output_file(flen+7:flen+13),'(7A)') '_max.nc'
@@ -1319,7 +1321,7 @@ c
          CALL init_output(max_output_file,max_ncid_out,
      +        kpp_3d_fields,kpp_const_fields,ndt_varout_range,
      +        ndt_singout_range,varid_vec_range,varid_sing_range,
-     +        zprof_varout_range,.FALSE.,.FALSE.)
+     +        zprof_varout_range,extra_time,.FALSE.,.FALSE.)
          CALL output_open(min_output_file,min_ncid_out)
          CALL output_open(max_output_file,max_ncid_out)
       ENDIF
