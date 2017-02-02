@@ -43,13 +43,15 @@
      +     dlat(npts),dlon(npts),
      +     freeze_flag(npts),
      +     dampu_flag(npts),dampv_flag(npts),
-     +     U_init(NPTS,NZP1,NVEL)
+     +     U_init(NPTS,NZP1,NVEL),fcorr_nsol_coeff(NPTS),
+     +     fcorr_nsol(NPTS),reset_flag(npts)
+	
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
      +     jerlov(NPTS),jerlov_pt,
      +     nmodeadv(NPTS,2),
-     +     modeadv(NPTS,maxmodeadv,2),reset_flag(npts)
+     +     modeadv(NPTS,maxmodeadv,2)
       ENDTYPE kpp_3D_type
       
       TYPE kpp_2D_type
@@ -90,8 +92,8 @@
      +     sflux(NSFLXS,5,0:NJDT),
      +     dlat,dlon,
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
-     +     dampu_flag,dampv_flag
-      integer :: old,new,jerlov,reset_flag,
+     +     dampu_flag,dampv_flag,reset_flag
+      integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
       logical :: l_ocean,l_initflag,comp_flag
       ENDTYPE kpp_2D_type
@@ -116,7 +118,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_FCORR_WITHZ,L_RESTART,
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,
-     +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND
+     +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

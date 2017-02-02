@@ -1,5 +1,5 @@
       INTEGER N_VAROUTS,N_SINGOUTS,N_ZPROFS_MAX
-      PARAMETER (N_VAROUTS=23,N_SINGOUTS=12,N_ZPROFS_MAX=5)
+      PARAMETER (N_VAROUTS=23,N_SINGOUTS=13,N_ZPROFS_MAX=5)
       INTEGER ndt_varout_inst(N_VAROUTS),ndt_singout_inst(N_SINGOUTS),
      +     ndt_varout_mean(N_VAROUTS),ndt_singout_mean(N_SINGOUTS),
      +     ndt_varout_range(N_VAROUTS),ndt_singout_range(N_SINGOUTS),
@@ -60,6 +60,7 @@
 *    10 = isotherm_flag (unitless)  : 1/0 for whether T/S profile was reset to climatology because of isothermal detection routine
 *    11 = dampu_flag (unitless) : flag for Ui in damping of currents (ocn.f), U**2/r < alpha*U =1, U**2/r > alpha*U =-1. output is total of all levels. If dampu_flag =NZ all levels U**2/r<alpha*U (alpha = 0.99, r=tau*(86400/dto), tau=360). 
 *    12 = dampv_flag (unitless) : as for dampu_flag but for v.
+*    13 = fcorr_nsol (W/m^2) : non-solar heat-flux restoring term, computed as fcorr_nsol_coeff * (SST_model - SST_clim)
 ************************************************************************
       INTEGER ncid_out,mean_ncid_out,min_ncid_out,max_ncid_out,
      +     day_out,flen,ndt_per_file

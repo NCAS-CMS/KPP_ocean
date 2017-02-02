@@ -128,7 +128,7 @@ c Force recomputation of tridiagonal matrix coefficients
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
       kpp_2d_fields%comp_flag=.TRUE.
-      kpp_2d_fields%reset_flag=0
+      kpp_2d_fields%reset_flag=0.0
 
 !      WRITE(6,*) 'Beginning of timestep:'
 !      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
@@ -301,7 +301,7 @@ c     NPK 16/5/2013
      +           ABS(kpp_2d_fields%U(k,2)).ge.10) THEN
                 kpp_2d_fields%comp_flag=.TRUE.
                 kpp_2d_fields%f=kpp_2d_fields%f*
-     +	           (1.01+MOD(kpp_2d_fields%reset_flag,2)*(-0.02))
+     +	           (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
               ENDIF
             ELSE
               IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
@@ -310,7 +310,7 @@ c     NPK 16/5/2013
      +            .ge. 10) THEN
                 kpp_2d_fields%comp_flag=.TRUE.
                 kpp_2d_fields%f=kpp_2d_fields%f*
-     +			       (1.01+MOD(kpp_2d_fields%reset_flag,2)*(-0.02))
+     +			       (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
               ENDIF
             ENDIF
          END DO
@@ -711,7 +711,7 @@ c     flux corrections at depth (NPK 12/02/08).
      +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
          ENDDO
       ENDIF
-
+      
 c     Relax the temperature at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of ocean temperatures via subroutine

@@ -306,8 +306,8 @@ c     values from the 2D variable.
       i=kpp_fields_2d%new
       kpp_fields_3d%new(point)=i
 
-      i=kpp_fields_2d%reset_flag
-      kpp_fields_3d%reset_flag(point)=i
+      temp=kpp_fields_2d%reset_flag
+      kpp_fields_3d%reset_flag(point)=temp
 
       temp=kpp_fields_2d%dampu_flag
       kpp_fields_3d%dampu_flag(point)=temp
@@ -388,6 +388,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_DAMP_CURR=L_DAMP_CURR
       kpp_const_fields%L_SLAB=L_SLAB
       kpp_const_fields%L_COLUMBIA_LAND=L_COLUMBIA_LAND
+      kpp_const_fields%L_FCORR_NSOL=L_FCORR_NSOL
 
       RETURN
       END

@@ -29,7 +29,14 @@
       REAL taux(NPTS),tauy(NPTS),
      $     swf(NPTS),lwf(NPTS),lhf(NPTS),shf(NPTS),
      $     rain(NPTS),snow(NPTS)
+      REAL SST_in(NX_GLOBE,NY_GLOBE,1),ICE_in(NX_GLOBE,NY_GLOBE,1),
+     +     icedepth_in(NX_GLOBE,NY_GLOBE,1),vsf_in(NX_GLOBE,NY_GLOBE),
+     +     snowdepth_in(NX_GLOBE,NY_GLOBE,1),usf_in(NX_GLOBE,NY_GLOBE)
       CHARACTER(LEN=19) :: trans_timer_name
+      COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
+     +     usf_in,vsf_in
+      INTEGER ipt,ix,jy,ipt_globe
+      
 #ifdef OPENMP
       INTEGER tid,OMP_GET_THREAD_NUM      
 #endif
@@ -43,12 +50,9 @@
       CALL read_gfs_forcing(swf,lwf,rain,taux,tauy)
 #else
 #ifdef OASIS3
-!     IF (ntime .NE. nend*ndtocn) THEN
 !     Normal coupling - no writing to or reading from netCDF files
       CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,kpp_const_fields)
-!     ELSE
-!     CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,.TRUE.)
-!     ENDIF
+
       ! HadGEM3 passes zeros at the first timestep for a new run (i.e., NRUN)
       ! Thus, if this is NOT a restart run, we need to provide a file
       ! of fluxes for KPP for the first coupling timestep.      
@@ -172,6 +176,30 @@ c      WRITE(6,*) 'L_REST=',L_REST
 !$OMP END PARALLEL
 #endif
 #endif /*COUPLE*/
+
+!     If L_FCORR_NSOL is enabled, modify the non-solar heat flux by
+!     a factor proportional to the SST bias against a user-specified
+!     climatology.
+      IF (kpp_const_fields%L_FCORR_NSOL) THEN
+         DO ix=ifirst,ilast
+            DO jy=jfirst,jlast
+               ipt=(jy-jfirst)*nx+(ix-ifirst)+1
+               ipt_globe=(jy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
+     &              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
+                  kpp_3d_fields%fcorr_nsol(ipt) = 
+     &                 kpp_3d_fields%fcorr_nsol_coeff(ipt)*
+     &                 (kpp_3d_fields%X(ipt,1,1)-SST_in(ix,jy,1))
+                  kpp_3d_fields%sflux(ipt,4,5,0) = 
+     &                 kpp_3d_fields%sflux(ipt,4,5,0) + 
+     &                 kpp_3d_fields%fcorr_nsol(ipt)
+               ELSE
+                  kpp_3d_fields%fcorr_nsol(ipt)=1e20
+               ENDIF               
+            ENDDO
+         ENDDO
+      ENDIF
+
       RETURN
       END
 

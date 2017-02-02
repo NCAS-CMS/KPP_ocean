@@ -380,14 +380,14 @@ c     NPK 17/5/13.
                      kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
                      !WRITE(6,*) 'U = ',kpp_3d_fields%U_init(ipt,:,1)
                      !WRITE(6,*) 'V = ',kpp_3d_fields%U_init(ipt,:,2)
-                     kpp_2d_fields%reset_flag=999
+                     kpp_2d_fields%reset_flag=999.
                   ELSE IF (kpp_2d_fields%comp_flag) THEN
                      WRITE(6,*) 'Cannot reset pt to T,S climatology '//
      +                    'as either ocean T or S data '//
      +                    'not provided.  Will reset U,V to initial'//
      +                    'conditions and keep going.'
                      kpp_2d_fields%U=kpp_3d_fields%U_init(ipt,:,:)
-                     kpp_2d_fields%reset_flag=999
+                     kpp_2d_fields%reset_flag=999.
                   ENDIF
                   CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,0)
                   CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
@@ -872,7 +872,9 @@ c     +     bottom_temp(:)
      &     sal_period,ndtupdsal,ocnt_file,L_UPD_OCNT,L_PERIODIC_OCNT,
      &     ocnt_period,ndtupdocnt,L_NO_FREEZE,L_NO_ISOTHERM,
      &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp,
-     &     L_INTERP_OCNT,ndt_interp_ocnt,L_INTERP_SAL,ndt_interp_sal
+     &     L_INTERP_OCNT,ndt_interp_ocnt,L_INTERP_SAL,ndt_interp_sal,
+     &     L_FCORR_NSOL,L_FCORR_NSOL_FILE,fcorr_nsol_file,
+     &     fcorr_nsol_coeff
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -981,6 +983,14 @@ c     Initialize and read the landsea name list
      +        ' specify a land-sea mask file from which to read',
      +        ' the locations of the gridpoints in the horizontal.'
       ENDIF
+
+! Set initial values for flags in kpp_3d_fields, which otherwise
+! might never be set if points are not coupled.
+      kpp_3d_fields%dampu_flag(:)=0.
+      kpp_3d_fields%dampv_flag(:)=0.
+      kpp_3d_fields%freeze_flag(:)=0.
+      kpp_3d_fields%reset_flag(:)=0.
+
 c
 c     If coupling to the GFS, also read in the global land/sea mask on the GFS grid.
 c     This allows KPP to get the global latitudes and longitudes, which it needs
@@ -1118,6 +1128,10 @@ c     Initialize and read the forcing namelist
       L_NO_FREEZE=.FALSE.
       L_NO_ISOTHERM=.FALSE.
       L_DAMP_CURR=.FALSE.
+      L_FCORR_NSOL=.FALSE.
+      L_FCORR_NSOL_FILE=.FALSE.
+      fcorr_nsol_coeff=0.0
+      fcorr_nsol_file='none'
       forcing_file='1D_ocean_forcing.nc'
       ocnT_file='none'
       READ(75,NAME_FORCING)
@@ -1137,6 +1151,39 @@ c     Initialize and read the forcing namelist
          WRITE(nuerr,*) 'KPP : L_FCORR_WITHZ and L_RELAX_SST are '
      &        //'mutually exclusive.  Choose one or neither.'
          CALL MIXED_ABORT
+      ENDIF
+      IF (L_FCORR_NSOL_FILE .AND. fcorr_nsol_coeff .ne. 0) THEN
+         WRITE(nuerr,*) 'KPP: If you set L_FCORR_NSOL_FILE to TRUE '
+     &        //'you must not set a global value for the correction '
+     &        //'coefficient via fcorr_nsol_coeff.'
+         CALL MIXED_ABORT
+      ENDIF
+      IF (L_FCORR_NSOL .AND. .NOT. L_FCORR_NSOL_FILE) THEN
+         IF (fcorr_nsol_coeff .eq. 0) THEN
+            WRITE(nuerr,*) 'KPP: If you set L_FCORR_NSOL to TRUE '
+     &           //'but do not specify a file to read the coefficients '
+     &           //'(using L_FCORR_NSOL_FILE), you must set a non-zero '
+     &           //'value for the coefficient using (fcorr_nsol_coeff).'
+            CALL MIXED_ABORT
+         ELSE
+!     Set value of fcorr_nsol at all points to the specified value of 
+!     fcorr_nsol_coeff.
+            kpp_3d_fields%fcorr_nsol_coeff(:)=fcorr_nsol_coeff
+         ENDIF
+      ENDIF
+      IF (L_RELAX_SST .AND. L_FCORR_NSOL) THEN
+         WRITE(nuerr,*) 'KPP: Relaxing SST directly (L_RELAX_SST) and '
+     &        //'relaxing SST through adjusting the non-solar heat '
+     &        //'flux (L_FCORR_NSOL) are incompatible. Choose one or '
+     &        //'neither.'
+         CALL MIXED_ABORT
+      ENDIF
+      
+      IF (L_FCORR_NSOL .AND. .NOT. L_CLIMSST) THEN
+         WRITE(nuerr,*) 'KPP: If you use relax SST by constraining '
+     &        //'the non-solar heat flux (L_FCORR_NSOL), you must '
+     &        //'specify an SST climatology to which to relax '
+     &        //'L_CLIMSST.'
       ENDIF
 c      IF (L_SFCORR_WITHZ .AND. L_RELAX_SAL) THEN
 c         WRITE(nuerr,*) 'KPP : L_SFCORR_WITHZ and L_RELAX_SAL are '
@@ -1167,6 +1214,8 @@ c      ENDIF
       IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
+      IF (L_FCORR_NSOL_FILE) CALL read_fcorr_nsol(kpp_3d_fields,
+     +     kpp_const_fields)
       IF (L_SFCORR_WITHZ)
      +     CALL read_sfcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_SFCORR) CALL read_sfcorr(kpp_3d_fields,kpp_const_fields)
@@ -1732,11 +1781,11 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
             IF (ABS(dtdz_total).lt.kpp_const_fields%iso_thresh) THEN
                kpp_3d_fields%X(ipt,:,1)=kpp_3d_fields%ocnT_clim(ipt,:)
                kpp_3d_fields%X(ipt,:,2)=kpp_3d_fields%sal_clim(ipt,:)
-               kpp_3d_fields%reset_flag(ipt)=(-1.)*
+               kpp_3d_fields%reset_flag(ipt)=(-1.0)*
      +              kpp_3d_fields%reset_flag(ipt)
             ENDIF
          ELSE
-            kpp_3d_fields%reset_flag(ipt)=0
+            kpp_3d_fields%reset_flag(ipt)=0.0
          ENDIF
       ENDDO
 #ifdef OPENMP

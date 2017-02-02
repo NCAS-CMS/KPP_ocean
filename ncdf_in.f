@@ -1074,6 +1074,71 @@ c
       RETURN
       END
 
+      SUBROUTINE read_fcorr_nsol(kpp_3d_fields,kpp_const_fields)
+
+!     Read a two-dimensional file specifying a relaxation coefficient
+!     to use at each gridpoint.  The coefficients (in W/m^2/K) are used
+!     to adjust the non-solar heat flux by the SST bias against a
+!     user-specified climatology.
+!     Currently, these coefficients *cannot* vary in time.
+
+      IMPLICIT NONE
+      INTEGER nuout,nuerr,start(2),count(2)
+      INTEGER ix,iy,ipoint,fcorr_varid,status,lat_varid,lon_varid,
+     &     lat_dimid,lon_dimid,fcorr_ncid,nlat_file,nlon_file
+      PARAMETER (nuout=6,nuerr=0)
+
+      include 'netcdf.inc'
+! Automatically includes parameter.inc!
+#include <kpp_3d_type.com>
+c     include 'location.com'
+      include 'fcorr_in.com'
+      include 'constants.com'
+
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      REAL*4 ixx,jyy,fcorr_nsol_in(NX,NY),latitudes(NY),
+     +     longitudes(NX)
+      CHARACTER(LEN=30) tmp_name
+
+      status = NF_OPEN(fcorr_nsol_file,0,fcorr_ncid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'Opened non-solar correction coefficients file'
+
+      count(1)=NX
+      count(2)=NY
+      start(1)=1
+      start(2)=1
+
+      CA LL determine_netcdf_boundaries_2d(fcorr_ncid,
+     &     'non-solar flux correction coefficients','latitude',
+     &     'longitude',kpp_3d_fields%dlon(1),kpp_3d_fields%dlat(1),
+     &     start(1),start(2))
+      status=NF_INQ_VARID(fcorr_ncid,'fcorr_nsol_coeff',fcorr_varid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+
+      status=NF_GET_VARA_REAL(fcorr_ncid,fcorr_varid,start,count
+     &     ,fcorr_nsol_in)
+      IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
+      write(nuout,*) 'Correction coefficients have been read.'
+c
+c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
+c     into one long array with dimension NPTS.
+c         
+      DO ix=1,NX
+         DO iy=1,NY
+            ipoint=(iy-1)*nx+ix
+            kpp_3d_fields%fcorr_nsol_coeff(ipoint)=fcorr_nsol_in(ix,iy)
+         ENDDO
+      ENDDO
+
+      status=NF_CLOSE(fcorr_ncid)
+
+      RETURN
+      END
+
+      
+
 !sfcorr added LH 24/05/2013
 
       SUBROUTINE read_sfcorr(kpp_3d_fields,kpp_const_fields)
@@ -1119,8 +1184,8 @@ c     NPK 29/06/08
       start(2)=1
       start(3)=1
 
-      CALL determine_netcdf_boundaries(sfcorr_ncid,'flux correction',
-     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
+      CALL determine_netcdf_boundaries(sfcorr_ncid,'salinity correction'
+     &     ,'latitude','longitude','t',kpp_3d_fields%dlon(1),
      +     kpp_3d_fields%dlat(1),start(1),
      &     start(2),first_timein,last_timein,time_varid)
 
@@ -1166,6 +1231,7 @@ c     NPK 29/06/08
       ENDIF
       status=NF_GET_VARA_REAL(sfcorr_ncid,sfcorr_varid,start,count
      &     ,sfcorr_twod_in)
+      IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
       write(nuout,*) 'Flux corrections have been read from position',
      &     start(3)
 
@@ -2229,23 +2295,22 @@ c
       RETURN
       END
 
-      SUBROUTINE determine_netcdf_boundaries(ncid,file_description,
-     &     latitude_name,longitude_name,time_name,start_lon,start_lat,
-     &     offset_lon,offset_lat,first_time,last_time,time_varid)
+      SUBROUTINE determine_netcdf_boundaries_2d(ncid,file_description,
+     &     latitude_name,longitude_name,start_lon,start_lat,offset_lon,
+     &     offset_lat)
 
       IMPLICIT NONE
 
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-
+      
 #include <parameter.inc>
 #include <netcdf.inc>
 
       INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
-     &     lat_dimid,lat_varid,time_dimid,time_varid,ix,iy
-      REAL start_lon,start_lat,first_time,last_time
-      CHARACTER(*) file_description,latitude_name,longitude_name,
-     &     time_name
+     &     lat_dimid,lat_varid,ix,iy
+      REAL start_lon,start_lat
+      CHARACTER(*) file_description,latitude_name,longitude_name
       CHARACTER(LEN=30) tmp_name
 
       INTEGER nlat_file,nlon_file,ntime_file,status
@@ -2295,6 +2360,34 @@ c
          iy=iy+1
       ENDDO
       offset_lat=iy
+     
+      RETURN 
+      END
+      
+
+      SUBROUTINE determine_netcdf_boundaries(ncid,file_description,
+     &     latitude_name,longitude_name,time_name,start_lon,start_lat,
+     &     offset_lon,offset_lat,first_time,last_time,time_varid)
+
+      IMPLICIT NONE
+      
+      INTEGER nuout,nuerr
+      PARAMETER (nuout=6,nuerr=0)
+
+#include <parameter.inc>
+#include <netcdf.inc>
+
+      INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
+     &     lat_dimid,lat_varid,time_dimid,time_varid,ix,iy,status,
+     &     ntime_file
+      REAL start_lon,start_lat,first_time,last_time      
+      CHARACTER(*) file_description,latitude_name,longitude_name,
+     &     time_name
+      CHARACTER(LEN=30) tmp_name
+
+      CALL determine_netcdf_boundaries_2d(ncid,file_description,
+     &     latitude_name,longitude_name,start_lon,start_lat,offset_lon,
+     &     offset_lat)
 
 c     Find the first time and last time
       status=NF_INQ_VARID(ncid,time_name,time_varid)

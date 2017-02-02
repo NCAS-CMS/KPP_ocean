@@ -113,7 +113,8 @@ c      include 'location.com'
      &     'freeze_flag',
      &     'comp_flag',
      &     'dampu_flag',
-     &     'dampv_flag'/
+     &     'dampv_flag',
+     &     'fcorr_nsol' /
 #ifdef COUPLE
 #ifdef OASIS2
       DATA type /'OASIS2'/
@@ -142,7 +143,8 @@ c      include 'location.com'
      &     'Fraction of levels below freezing',
      &     'Number of integrations (<0 = isothermal reset)',
      &     'Fraction of levels with ui~u**2',
-     &     'Fraction of levels with vi~v**2'/
+     &     'Fraction of levels with vi~v**2',
+     &     'Non-solar heat flux restoring term'/
 
       DATA singunits/
      &     'm',
@@ -156,7 +158,8 @@ c      include 'location.com'
      &     'fraction',
      &     'unitless',
      &     'fraction',
-     &     'fraction'/
+     &     'fraction',
+     &     'W/m^2' /
 
       nout=1
       singlong(3:7)=singlong(3:7)//type
@@ -562,6 +565,8 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             temp_1d(:)=kpp_3d_fields%dampu_flag(:)
          CASE (12)
             temp_1d(:)=kpp_3d_fields%dampv_flag(:)
+         CASE (13)
+            temp_1d(:)=kpp_3d_fields%fcorr_nsol(:)
          CASE DEFAULT
             WRITE(6,*) 'You need to add more outputs in '//
      +           'OUTPUT_INST'
@@ -1043,6 +1048,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%dampu_flag(:)
             CASE(12)
                vec(:)=kpp_3d_fields%dampv_flag(:)
+            CASE(13)
+               vec(:)=kpp_3d_fields%fcorr_nsol(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j))
@@ -1161,7 +1168,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       i=1
       DO ivar=1,N_SINGOUTS
 !         WRITE(6,*) 'Means with ivar=',ivar,'i=',i
-         IF (ndt_singout_mean(ivar) .gt. 0) THEN
+         IF (ndt_singout_range(ivar) .gt. 0) THEN
             SELECT CASE (ivar)
             CASE(1)
                vec(:)=kpp_3d_fields%hmix(:)
@@ -1193,6 +1200,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%dampu_flag(:)
             CASE(12)
                vec(:)=kpp_3d_fields%dampv_flag(:)
+            CASE(13)
+               vec(:)=kpp_3d_fields%fcorr_nsol(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j)) THEN
