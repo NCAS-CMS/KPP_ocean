@@ -35,7 +35,7 @@
       CHARACTER(LEN=19) :: trans_timer_name
       COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
      +     usf_in,vsf_in
-      INTEGER ipt,ix,jy,ipt_globe
+      INTEGER ix,jy,ipt_globe
       
 #ifdef OPENMP
       INTEGER tid,OMP_GET_THREAD_NUM      
