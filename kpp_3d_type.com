@@ -117,7 +117,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_RELAX_CALCONLY,L_FCORR,
      +     L_FCORR_WITHZ,L_RESTART,
      +     L_SFCORR,L_SFCORR_WITHZ,
-     +     L_RELAX_SAL,L_RELAX_OCNT,
+     +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL
       ENDTYPE kpp_const_type
 

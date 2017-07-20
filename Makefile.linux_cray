@@ -33,6 +33,10 @@ OASIS3_LIB=-L/work/n02/n02/pappas/src/oasis/crayxe6_cce-20160403/lib -lpsmile.MP
 OASIS3_3_MODDIR=/work/n02/n02/pappas/src/oasis/oasis3_3/20110919_para_MxSeg1500/prism/crayxc30_cce/build/lib/psmile.MPI1
 OASIS3_3_LIB=-L/work/n02/n02/pappas/src/oasis/oasis3_3/20110919_para_MxSeg1500/prism/crayxc30_cce/lib -lpsmile.MPI1 -lmpp_io
 
+# OASIS3-MCT dynamic libraries (paths not required on ARCHER; use `module load GC3-PrgEnv` instead)
+OASIS3_MCT_LIB=-L${OASIS_LIB} -lpsmile.MPI1 -lmct -lmpeu -lscrip
+OASIS3_MCT_MODDIR=${OASIS_ROOT}/build/lib/psmile.MPI1
+
 # NetCDF dynamic libraries (not required on ARCHER; use `module load netcdf` instead)
 #NCDF_LIB=-L/opt/lib/netcdf-gfortran/lib -L/opt/lib -lnetcdf -lnetcdff
 # NetCDF include files (not required on HECToR ; use `module load netcdf` instead)
@@ -67,6 +71,7 @@ FORCED_LINK = $(F90) $(FORCED_OBJS) -o ${EXECUTABLE} ${NCDF_INC} ${NCDF_LIB}
 OASIS2_COUPLED_LINK = $(F90) $(OASIS2_COUPLED_OBJS) ${OASIS2_LIB} -o ${EXECUTABLE} ${MPI_LIB} ${MPI_INC} ${NCDF_INC} ${NCDF_LIB}
 OASIS3_COUPLED_LINK = $(F90) $(OASIS3_COUPLED_OBJS) ${OASIS3_LIB} -o ${EXECUTABLE} ${MPI_LIB} ${MPI_INC} ${NCDF_INC} ${NCDF_LIB}
 OASIS3_3_COUPLED_LINK = $(F90) $(OASIS3_COUPLED_OBJS) $(OASIS3_3_LIB) -o $(EXECUTABLE) $(MPI_LIB) $(MPI_INC) $(NCDF_INC) $(NCDF_LIB)
+OASIS3_MCT_COUPLED_LINK = $(F90) $(OASIS3_COUPLED_OBJS) $(OASIS3_MCT_LIB) -o $(EXECUTABLE) $(MPI_LIB) $(MPI_INC) $(NCDF_INC) $(NCDF_LIB)
 CFS_COUPLED_LINK = $(F90) $(CFS_COUPLED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_INC) $(NCDF_LIB)
 GFS_FORCED_LINK = $(F90) $(GFS_FORCED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_INC) $(NCDF_LIB)		
 
@@ -109,6 +114,11 @@ um85_coupled : CPP_FLAGS=$(F90_CPP_FLAG)-DOASIS3 $(F90_CPP_FLAG)-DCOUPLE $(F90_C
 um85_coupled : OASIS3_MOD_FLAG=-I$(OASIS3_3_MODDIR)
 um85_coupled : $(OASIS3_COUPLED_OBJS)
 	$(OASIS3_3_COUPLED_LINK)
+
+um10_coupled : CPP_FLAGS=$(F90_CPP_FLAG)-DOASIS3 -DOASIS3_MCT $(F90_CPP_FLAG)-DCOUPLE $(F90_CPP_FLAG)-DOPENMP $(F90_CPP_FLAG)-DUM85
+um10_coupled : OASIS3_MOD_FLAG=-I$(OASIS3_MCT_MODDIR)
+um10_coupled : $(OASIS3_COUPLED_OBJS)
+	$(OASIS3_MCT_COUPLED_LINK)
 
 clean : 
 	rm -rf *.o $(EXECUTABLE)

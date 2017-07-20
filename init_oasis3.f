@@ -1,23 +1,29 @@
 #ifdef COUPLE
 #ifdef OASIS3
-      SUBROUTINE mpi1_oasis3_init
+      SUBROUTINE mpi1_oasis3_init(kpp_const_fields)
 c
 c     Initialize the MPI environment for the model.
 c     NPK 13/09/09 - Updated 2/10/09 to support UM 7.1
 c     which exchanges 2D fields, whereas the toyclim model
 c     exchanges 1D fields.
 c
+#ifdef OASIS3_MCT
+      USE mod_prism
+#else
       USE mod_kinds_model
       USE mod_prism_proto
       USE mod_prism_def_partition_proto
       USE mod_prism_put_proto
       USE mod_prism_get_proto
       USE mod_prism_grids_writing
+#endif
 
       IMPLICIT NONE
 #include <netcdf.inc>
-#include <parameter.inc>
+#include <kpp_3d_type.com>
 #include <kpp_oasis3.inc>
+
+      TYPE(kpp_const_type) :: kpp_const_fields
       
       INTEGER nuout,nuerr                 ! KPP output files
       PARAMETER(nuout=6,nuerr=0)
@@ -37,7 +43,7 @@ c
       INTEGER il_var_shape(4)             ! Minimum and maximum array indices for the 
                                           ! coupling fields (see code below)
 #endif
-      INTEGER i
+      INTEGER i,my_jpfldin
 
       CHARACTER*6 cp_modnam               ! Name for this model
       CHARACTER*8 choceout                ! Name for the log file for OASIS messages
@@ -160,16 +166,33 @@ c
 #ifdef UM85
       cl_read(1)='HEATFLUX'
       cl_read(2)='PEN_SOL'
-      cl_read(3)='TRAIN'
-      cl_read(4)='TSNOW'
-      cl_read(5)='EVAP2D'
-      cl_read(6)='TMLT01'
-      cl_read(7)='BMLT01'
-      cl_read(8)='TAUX'
-      cl_read(9)='TAUY'
+      IF (kpp_const_fields%L_DIST_RUNOFF) THEN
+         cl_read(3)='RUNOFF'
+         cl_read(4)='TRAIN'
+         cl_read(5)='TSNOW'
+         cl_read(6)='EVAP2D'
+         cl_read(7)='TMLT01'
+         cl_read(8)='BMLT01'
+         cl_read(9)='TAUX'
+         cl_read(10)='TAUY'
+      ELSE
+         cl_read(3)='TRAIN'
+         cl_read(4)='TSNOW'
+         cl_read(5)='EVAP2D'
+         cl_read(6)='TMLT01'
+         cl_read(7)='BMLT01'
+         cl_read(8)='TAUX'
+         cl_read(9)='TAUY'
+      ENDIF
 #endif
-
-      DO i=1,jpfldin
+! If not passing river runoff, need to reduce number of input
+! fields by one
+      IF (.NOT. kpp_const_fields%L_DIST_RUNOFF) THEN
+         my_jpfldin=jpfldin-1
+      ELSE
+         my_jpfldin=jpfldin
+      ENDIF
+      DO i=1,my_jpfldin
          CALL prism_def_var_proto(il_var_id_in(i),cl_read(i),
      +        il_part_id,il_var_nodims,PRISM_In,il_var_shape,
      +        PRISM_Real,ierror)

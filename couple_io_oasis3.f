@@ -1,7 +1,7 @@
 #ifdef COUPLE
 #ifdef OASIS3
       SUBROUTINE mpi1_oasis3_input(solar,non_solar,PminusE,ustress,
-     +     vstress,kpp_const_fields)
+     +     vstress,kpp_3d_fields,kpp_const_fields)
 c
 c     Facilitate the exchange of coupled fields via the OASIS3 coupler.
 c     NPK 18/09/09 for the OASIS3 toy model - completed 28/09/09 - R3
@@ -9,12 +9,16 @@ c
 c     Use OASIS3 (PRISM) modules - the compiler must be able to find
 c     these via the Makefile.
 c
+#ifdef OASIS3_MCT
+      USE mod_prism
+#else
       USE mod_kinds_model
       USE mod_prism_proto
       USE mod_prism_def_partition_proto
       USE mod_prism_put_proto
       USE mod_prism_get_proto
       USE mod_prism_grids_writing
+#endif
 c
       IMPLICIT NONE
 c
@@ -27,6 +31,7 @@ c
 #include <times.com>
 #include <constants.com>
       TYPE(kpp_const_type) :: kpp_const_fields
+      TYPE(kpp_3d_type) :: kpp_3d_fields
 c
 c     Output variables on the KPP regional grid - returned to
 c     the calling routine (usually <fluxes>).
@@ -51,8 +56,8 @@ c
 #else
       REAL(KIND=ip_realwp_p) temporary(NX_GLOBE,NY_GLOBE)
 #endif
-      REAL rain(NPTS),evap(NPTS)
-      INTEGER i,j,ierror
+      REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean
+      INTEGER i,j,ierror,npts_ocean,my_jpfldin
       INTEGER time_in_seconds
 c
 c     OASIS3 expects the time_in_seconds
@@ -69,7 +74,16 @@ c     Get the coupled fields from the OASIS coupler.  Note that you
 c     can discard any fields you do not want by simply not defining
 c     a CASE for them.
 c
-      DO i=1,jpfldin
+
+      ! If not passing river runoff, need to reduce number of input
+      ! fields by one
+      IF (.NOT. kpp_const_fields%L_DIST_RUNOFF) THEN
+         my_jpfldin=jpfldin-1
+      ELSE
+         my_jpfldin=jpfldin
+      ENDIF
+      
+      DO i=1,my_jpfldin
          CALL prism_get_proto(il_var_id_in(i),
      +        time_in_seconds,temporary,ierror)
          IF (ierror.NE.PRISM_Ok .and. ierror .LT. PRISM_Recvd) THEN
@@ -129,14 +143,29 @@ c
 #else
                CALL TWOD_GLOBAL_ONED_REGIONAL(temporary,evap)
 #endif
+            CASE ('RUNOFF')
+#ifdef TOYCLIM
+               CALL ONED_GLOBAL_ONED_REGIONAL(temporary,runoff)
+#else
+               CALL TWOD_GLOBAL_ONED_REGIONAL(temporary,runoff)
+#endif
+
             CASE DEFAULT
                WRITE(il_mparout,*) 'KPP: Discarding field ',
      +              cl_read(i)
             END SELECT
          ENDIF
       ENDDO
+      IF (kpp_const_fields%L_DIST_RUNOFF) THEN
+         runoff_mean = SUM(runoff,mask=kpp_3d_fields%L_OCEAN)
+         npts_ocean = COUNT(kpp_3d_fields%cplwght .gt. 0)
+         WRITE(6,*) 'runoff_mean = ',runoff_mean/FLOAT(npts_ocean)
+      ELSE
+         runoff(:)=0
+         runoff_mean=0
+      ENDIF
       DO i=1,NPTS
-         PminusE(i)=rain(i)-evap(i)
+         PminusE(i)=rain(i)+runoff_mean-evap(i)
       ENDDO
 
 c      IF (READ_FROM_NETCDF)
@@ -159,12 +188,16 @@ c
 c     Use OASIS3 (PRISM) modules - the compiler must be able to find
 c     these via the Makefile.
 c
+#ifdef OASIS3_MCT
+      USE mod_prism
+#else
       USE mod_kinds_model
       USE mod_prism_proto
       USE mod_prism_def_partition_proto
       USE mod_prism_put_proto
       USE mod_prism_get_proto
       USE mod_prism_grids_writing
+#endif
 c      
       IMPLICIT NONE
 c
@@ -282,12 +315,12 @@ c     Point is inside the coupling domain; set to weighted value
 c
 c     If the user does not provide a climatological ice depth,
 c     then set the ice depth to be 2 metres.  Note that we set
-c     the depth to be 2 * the ice concentration because HadGEM3-A
+c     the depth to be 2 * the ice concentration ** 2 because HadGEM3-A
 c     divides the provided depth by the ice concentration to obtain
 c     the mean depth over the ice-covered portion of the gridbox, 
 c     assuming that the ocean model provides the mean depth over the
 c     the entire gridbox.
-c     
+c
 c     The previous, erroneous behaviour of setting our icedepth
 c     variable to 2m can be restored by setting L_BAD_ICE_DEPTH.
 c            
@@ -296,7 +329,10 @@ c
             IF (.NOT. L_CLIM_ICE_DEPTH) THEN
                IF (ice(ipoint_globe) .GE. 0) THEN
                   IF (.NOT. L_BAD_ICE_DEPTH) THEN
-                     icedepth(ipoint_globe)=2.00*ice(ipoint_globe)
+                     ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
+                     icedepth(ipoint_globe)=2.*ice(ipoint_globe)**2                     
+                     IF (icedepth(ipoint_globe) .gt. 2)
+     +                    icedepth(ipoint_globe) = 2.00                        
                   ELSE
                      icedepth(ipoint_globe)=2.
                   ENDIF
@@ -415,8 +451,12 @@ c
 c     Use OASIS3 (PRISM) modules - the compiler must be able to find
 c     these via the Makefile.
 c      
+#ifdef OASIS3_MCT
+      USE mod_prism
+#else
       USE mod_kinds_model 
       USE mod_prism_proto
+#endif
 c
       IMPLICIT NONE
 c

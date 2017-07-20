@@ -347,6 +347,7 @@ c     values from the 2D variable.
 #include <ocn_advec.com>
 #include <relax_3d.com>
 #include <currclim.com>
+#include <couple.com>
 
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
 
@@ -389,6 +390,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_SLAB=L_SLAB
       kpp_const_fields%L_COLUMBIA_LAND=L_COLUMBIA_LAND
       kpp_const_fields%L_FCORR_NSOL=L_FCORR_NSOL
+      kpp_const_fields%L_DIST_RUNOFF=L_DIST_RUNOFF
 
       RETURN
       END

@@ -51,7 +51,8 @@
 #else
 #ifdef OASIS3
 !     Normal coupling - no writing to or reading from netCDF files
-      CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,kpp_const_fields)
+      CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,kpp_3d_fields,
+     +     kpp_const_fields)
 
       ! HadGEM3 passes zeros at the first timestep for a new run (i.e., NRUN)
       ! Thus, if this is NOT a restart run, we need to provide a file

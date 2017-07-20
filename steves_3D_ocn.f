@@ -15,6 +15,9 @@
 **************************************************************************
 
 c      USE kpp_type_mod
+#ifdef OASIS3_MCT
+      USE mod_prism
+#endif /*OASIS3_MCT*/
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -24,12 +27,15 @@ c      USE kpp_type_mod
 #include <landsea.com>
 
 #ifdef COUPLE
+
 #ifdef OASIS2
 #include <param.h>
 #endif /*OASIS2*/
+
 #ifdef OASIS3
 #include <kpp_oasis3.inc>
 #endif /*OASIS3*/
+
 #endif /*COUPLE*/
 
 #include <bottomclim.com>
@@ -136,7 +142,7 @@ c     Initialize the OASIS2 coupling interface
 #ifdef OASIS3
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
       CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 initialization',1)
-      CALL mpi1_oasis3_init()
+      CALL mpi1_oasis3_init(kpp_const_fields)
       CALL KPP_TIMER_TIME(kpp_timer,'OASIS3 initialization',0)
       CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 c
@@ -881,7 +887,7 @@ c     +     bottom_temp(:)
      &     L_CLIM_ICE_DEPTH,L_CLIM_SNOW_ON_ICE,L_OUTKELVIN,
      &     L_COUPLE_CURRENTS,currin_file,L_CLIMCURR,L_UPD_CLIMCURR,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
-     &     climsst_period,climice_period
+     &     climsst_period,climice_period,L_DIST_RUNOFF
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1064,6 +1070,7 @@ c     Initialize and read the times namelist
       L_CLIMSST=.FALSE.
       L_CLIMCURR=.FALSE.
       L_BAD_ICE_DEPTH=.FALSE.
+      L_DIST_RUNOFF=.FALSE.
       ifirst=1
       ilast=nx
       jfirst=1
