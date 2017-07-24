@@ -402,6 +402,10 @@ c     &                hri
             
          ENDIF                  !kbl
          
+!     Save hekman for use with Ekman pumping code in ocn.f
+!         IF (kpp_const_fields%L_EKMAN_PUMP) 
+!     c        kpp_2d_fields%hekman = hekman
+
          ksave = ka
          ka    = ku
          ku    = ksave

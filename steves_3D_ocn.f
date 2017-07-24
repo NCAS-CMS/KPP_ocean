@@ -54,7 +54,7 @@ c      USE kpp_type_mod
 #include <ocn_advec.com>
 
 * Local variables
-      TYPE(kpp_3d_type),allocatable :: kpp_3d_fields
+      TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_timer_type) :: kpp_timer
@@ -104,7 +104,7 @@ c into the main program.  NPK 17/08/10 - R3
       allocate(kpp_const_fields%wmt(0:891,0:49))
       allocate(kpp_const_fields%wst(0:891,0:49))
       allocate(kpp_const_fields%tri(0:NZtmax,0:1,NGRID))
-      allocate(kpp_3d_fields)
+      !allocate(kpp_3d_fields)
 
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
@@ -851,7 +851,7 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_CONSTANTS/grav,vonk,sbc,twopi,onepi,TK0,spd,dpy,
      &     epsw,albocn,EL,SL,FL,FLSN
       NAMELIST/NAME_PROCSWIT/LKPP,LRI,LDD,LICE,
-     &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref
+     &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref,L_EKMAN_PUMP
       NAMELIST/NAME_DOMAIN/DMAX,alon,alat,delta_lat,delta_lon,
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
      &     L_SLAB,L_COLUMBIA_LAND,slab_depth
@@ -880,7 +880,7 @@ c     +     bottom_temp(:)
      &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp,
      &     L_INTERP_OCNT,ndt_interp_ocnt,L_INTERP_SAL,ndt_interp_sal,
      &     L_FCORR_NSOL,L_FCORR_NSOL_FILE,fcorr_nsol_file,
-     &     fcorr_nsol_coeff
+     &     fcorr_nsol_coeff,max_ekman_depth,max_ekadv_depth
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -933,6 +933,7 @@ c     Initialize and read the processes namelist
       LNBFLX=.FALSE.
       LRHS=.FALSE.
       L_SSref=.TRUE.
+      L_EKMAN_PUMP=.TRUE.
       READ(75,NAME_PROCSWIT)
       WRITE(nuout,*) 'KPP : Read Namelist PROCSWIT'
 c
@@ -1141,6 +1142,8 @@ c     Initialize and read the forcing namelist
       fcorr_nsol_file='none'
       forcing_file='1D_ocean_forcing.nc'
       ocnT_file='none'
+      max_ekman_depth=0.0
+      max_ekadv_depth=0.0
       READ(75,NAME_FORCING)
       write(nuout,*) 'KPP : Read Namelist FORCING'
       WRITE(6,*) 'L_REST=',L_REST,'after namelist'
@@ -1254,16 +1257,7 @@ c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
 c     before the first time in the input file.
       IF (L_INTERP_OCNT) L_PERIODIC_OCNT=.TRUE.
       IF (L_INTERP_SAL) L_PERIODIC_SAL=.TRUE.
-c
-c     We need to initialize the forcing file (for atmospheric fluxes)
-c     only if KPP is not coupled to an atmospheric model.
-c     NPK June 2009 - R2
-c
-#ifndef COUPLE
-      IF (L_FLUXDATA) THEN
-         CALL init_flxdata(forcing_file)
-      ENDIF
-#endif
+
 c     Initialize and read the output name list
       ndt_varout_inst(:)=0
       ndt_varout_mean(:)=0
@@ -1387,22 +1381,38 @@ c     physics into the kpp_const_fields derived type.  Added for
 c     compatability with OpenMP DEFAULT(private). NPK 8/2/13
       CALL kpp_const_fields_init(kpp_const_fields)
 c
+c     We need to initialize the forcing file (for atmospheric fluxes)
+c     only if KPP is not coupled to an atmospheric model.
+c     NPK June 2009 - R2
+c
+#ifndef COUPLE
+      IF (L_FLUXDATA) THEN
+         CALL init_flxdata(forcing_file,kpp_const_fields)
+      ENDIF
+#endif
+c
+c
       kpp_const_fields%ntime=0
       CALL wm_ws_lookup(kpp_const_fields)
+      WRITE(6,*) 'After wm_ws_lookup'
       CALL init_ocn(kpp_3d_fields,kpp_const_fields)
+      WRITE(6,*) 'After init_ocn'
 c     Write out the data from the initial condition
       IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
          DO l=1,N_VAROUTS
+            WRITE(6,*) l
             IF (ndt_varout_inst(l) .gt. 0)
      +           CALL output_inst(kpp_3d_fields,kpp_const_fields,
      +           l,varid_vec(l),zprof_varout_inst(l),ntout_vec_inst(l))
          ENDDO
          DO l=1,N_SINGOUTS
+            WRITE(6,*) l
             IF (ndt_singout_inst(l) .gt. 0)
      +           CALL output_inst(kpp_3d_fields,kpp_const_fields,
      +           l+N_VAROUTS,varid_sing(l),0,ntout_sing_inst(l))
          ENDDO
       ENDIF
+      WRITE(6,*) 'After output_inst'
 
 c     Set the means to zero initially
       VEC_mean(:,:,:) = 0.

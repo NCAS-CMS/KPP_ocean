@@ -276,15 +276,16 @@ c
       RETURN
       END
 
-      SUBROUTINE init_flxdata(fname)
+      SUBROUTINE init_flxdata(fname,kpp_const_fields)
 
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-
+#include <kpp_3d_type.com>
 #include <netcdf.inc>
 #include <flx_in.com>
 
+      TYPE(kpp_const_type) :: kpp_const_fields
       CHARACTER*40 fname
       INTEGER status,index(3)
 
@@ -311,6 +312,12 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid_flx,'precip',varin_id(7))
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      IF (kpp_const_fields%L_EKMAN_PUMP) THEN
+         status=NF_INQ_VARID(ncid_flx,'curl_tau',varin_id(8))
+         IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
+      ELSE
+         varin_id(8)=-999
+      ENDIF
 
       status=NF_GET_VAR1_REAL(ncid_flx,
      &     timein_id,index,first_timein)
@@ -321,7 +328,7 @@ c
       END
 
       SUBROUTINE read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,
-     +     kpp_3d_fields,kpp_const_fields)
+     +     curl_tau,kpp_3d_fields,kpp_const_fields)
 
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -335,7 +342,8 @@ c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       REAL taux(NPTS),tauy(NPTS),swf(NPTS),lwf(NPTS),
-     $     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS)
+     $     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS),
+     $     curl_tau(NPTS)
 c      REAL*4 var_in(NX,NY),time_in,time
       REAL*4 time_in,time
 
@@ -499,6 +507,20 @@ c     IF (ndtocn .EQ. 1) THEN
          ENDDO
       ENDDO
       WRITE(6,*) 'Set snow to zero'
+      IF (kpp_const_fields%L_EKMAN_PUMP) THEN
+         status=NF_GET_VARA_REAL(ncid_flx,varin_id(8),start,count
+     $        ,var_in)
+         WRITE(6,*) 'Read curl_tau'
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         DO iy=1,ny
+            DO ix=1,nx
+               ipt=(iy-1)*nx+ix
+               curl_tau(ipt)=var_in(ix,iy)
+            ENDDO
+         ENDDO
+      ELSE
+         curl_tau(:)=0.0
+      ENDIF
 c     ELSE
 c     write(nuerr,*) 'You need some more code'
 c     CALL MIXED_ABORT

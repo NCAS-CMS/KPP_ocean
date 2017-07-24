@@ -533,7 +533,8 @@ c Local
      +     cc (NZtmax), ! central ...     (k  ) ..
      +     cl (NZtmax), ! lower .....     (k-1) ..
      +     rhs(NZtmax)  ! right-hand-side terms
-      real diff(0:NZtmax),gcap(NZtmax),ntflx(0:NZtmax,NSCLR)
+      real diff(0:NZtmax),gcap(NZtmax),ntflx(0:NZtmax,NSCLR),
+     +     weight_hek,ekvel_max,dist_hek
 c More local variables to make implicit none
       integer kmixe,i,npd,imode,n,k
       real ftemp,ghatflux,sturflux
@@ -735,11 +736,60 @@ c     L_FCORR_WITHZ (see above).
      +        kpp_const_fields%dto
       ENDDO
 
-c      WRITE(6,*) 'Before tridmat on temp, sst = ',kpp_2d_fields%X(1,1)
-c      WRITE(6,*) 'cu=',cu,'cc=',cc,'cl=',cl,'rhs=',rhs,'Xo=',Xo(:,1),
-c     + 'NZ=',NZ
+c     ---
+c     Ekman pumping 
+c     Vertical advection of temperature and salinity following Lu et al.
+c     (2017, Ocean Dynamics, doi:10.1007/s10236-016-1029-9).
+c
+c     1. Compute Ekman depth from surface wind stress 
+c     2. If depth is shallower than a user-prescribed maximum depth
+c        (ekmax; max_ekman_depth in NAME_FORCING), then advect.
+c     3. Advection by Ekman pumping is assumed to decay sinusoidally from the 
+c        Ekman depth to the surface and to a user-prescribed maximum depth,
+c        (ekadv_max; max_ekadv_depth in NAME_FORCING).  Advection uses
+c        a centred difference in the vertical.  Follows reference above.
+c     
+c     Curl of the wind stress must be provided in surface forcing data.
+c     Positive curl = upwelling.
+c     NPK 24/7/17.
+c     ---
+      kpp_2d_fields%ekvel(:)=0.0
+      kpp_2d_fields%ekadv(:,:)=0.0
+      kpp_2d_fields%hekman = 0.4*SQRT((
+     +     SQRT(kpp_2d_fields%sflux(1,5,0)**2 + 
+     +     kpp_2d_fields%sflux(2,5,0)**2))
+     +     / (kpp_2d_fields%rho(1)*kpp_2d_fields%f**2)) + 1e-16
+      IF (kpp_const_fields%L_EKMAN_PUMP .and.
+     +     kpp_2d_fields%hekman .lt. kpp_const_fields%ekmax) THEN
+         ekvel_max = 1/(kpp_2d_fields%rho(1)*kpp_2d_fields%f)*
+     +     kpp_2d_fields%sflux(7,5,0)
+         DO k=2,NZ
+            IF (ABS(kpp_const_fields%zm(k)) .lt. 
+     +           kpp_const_fields%ekadv_max) THEN
+               dist_hek = kpp_2d_fields%hekman-
+     +              ABS(kpp_const_fields%zm(k))
+               ! If below Ekman depth, compute distance to bottom of Ekman layer
+               IF (ABS(kpp_const_fields%zm(k))
+     +              .ge.kpp_2d_fields%hekman) THEN
+                  weight_hek = SIN((kpp_const_fields%ekadv_max-
+     +                 kpp_2d_fields%hekman-
+     +                 ABS(dist_hek))*3.14159/2.0/
+     +                 (200-kpp_2d_fields%hekman))
+               ELSE
+               ! If above Ekman depth, compute distance to surface                  
+                  weight_hek = SIN((kpp_2d_fields%hekman-dist_hek)/
+     +                 kpp_2d_fields%hekman*3.14159/2.0)
+               ENDIF
+               kpp_2d_fields%ekvel(k)=weight_hek*ekvel_max
+               kpp_2d_fields%ekadv(k,1) = kpp_2d_fields%ekvel(k) * 
+     +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
+     +              (kpp_2d_fields%X(k+1,1)-kpp_2d_fields%X(k-1,1))/2.0
+               rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,1)
+            ENDIF
+         ENDDO         
+      ENDIF
+
       call tridmat(cu,cc,cl,rhs,Xo(:,1),NZ,kpp_2d_fields%X(:,1))
-c      WRITE(6,*) 'After tridmat on temp, sst = ',kpp_2d_fields%X(1,1)
 
 c     Salinity and other scalars
       DO k=0,NZtmax
@@ -765,6 +815,15 @@ c     modify rhs for advections
      +           kpp_const_fields%dm(kmixe),
      +           NZ,rhs,kpp_2d_fields,kpp_const_fields)
          enddo
+
+         IF (kpp_const_fields%L_EKMAN_PUMP) THEN
+            DO k=2,NZ
+               kpp_2d_fields%ekadv(k,n) = kpp_2d_fields%ekvel(k) * 
+     +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
+     +              (kpp_2d_fields%X(k+1,n)-kpp_2d_fields%X(k-1,n))/2.0
+               rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,n)
+            ENDDO
+         ENDIF
 
 c     -----Added by LH (28/05/2013) modified NPK (4/7/13)
 
@@ -800,24 +859,9 @@ c     the correct units to be input as a flux correction via
 c     L_SFCORR_WITHZ (see above).
                kpp_2d_fields%scorr(k)=kpp_2d_fields%sinc_fcorr(k)/
      +              kpp_const_fields%dto
-            ENDDO
+            ENDDO                    
          ENDIF
-c     -----end of Added LH 28/05/2013
 
-
-c     removed LH 28/05/2013
-c     IF (n .eq. 2 .and. kpp_const_fields%L_RELAX_SAL) THEN
-c     IF (kpp_2d_fields%relax_sal .GT. 1.e-10) THEN
-c     DO k=1,NZP1
-c     kpp_2d_fields%scorr(k)=kpp_2d_fields%relax_sal*
-c     +                 (kpp_2d_fields%sal_clim(k)-Xo(k,2))
-c     rhs(k)=rhs(k)+
-c     +                 kpp_const_fields%dto*kpp_2d_fields%scorr(k)
-c     ENDDO
-c     ELSE
-c     kpp_2d_fields%scorr(:)=0.0
-c     ENDIF
-c     ENDIF
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
  200  continue
       return

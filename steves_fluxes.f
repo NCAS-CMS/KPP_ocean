@@ -28,7 +28,7 @@
 
       REAL taux(NPTS),tauy(NPTS),
      $     swf(NPTS),lwf(NPTS),lhf(NPTS),shf(NPTS),
-     $     rain(NPTS),snow(NPTS)
+     $     rain(NPTS),snow(NPTS),curl_tau(NPTS)
       REAL SST_in(NX_GLOBE,NY_GLOBE,1),ICE_in(NX_GLOBE,NY_GLOBE,1),
      +     icedepth_in(NX_GLOBE,NY_GLOBE,1),vsf_in(NX_GLOBE,NY_GLOBE),
      +     snowdepth_in(NX_GLOBE,NY_GLOBE,1),usf_in(NX_GLOBE,NY_GLOBE)
@@ -63,7 +63,7 @@
       ! as HadGEM3 does pass good fields for a restart run (i.e., CRUN)
       IF (kpp_const_fields%ntime .EQ. 1 .AND. .NOT. L_RESTART) THEN 
          CALL init_flxdata('kpp_initfluxes.nc')
-         CALL read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,
+         CALL read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,curl_tau,
      +        kpp_3d_fields,kpp_const_fields)
 ! Convert to variables expected for a coupled model
          DO ipt=1,npts
@@ -100,6 +100,11 @@ c        WRITE(6,*) 'ipt=',ipt,'lwf=',lwf(ipt)
             kpp_3d_fields%sflux(ipt,4,5,0)=lwf(ipt) 
             kpp_3d_fields%sflux(ipt,5,5,0)=0.0 ! Melting of sea-ice = 0.0               
             kpp_3d_fields%sflux(ipt,6,5,0)=rain(ipt) ! assuming rain = P-E
+            IF (kpp_const_fields%L_EKMAN_PUMP) THEN
+               kpp_3d_fields%sflux(ipt,7,5,0)=curl_tau(ipt)
+            ELSE
+               kpp_3d_fields%sflux(ipt,7,5,0)=0.0
+            ENDIF
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields) 
             call ntflx(kpp_2d_fields,kpp_const_fields)
             CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
@@ -136,7 +141,7 @@ c     +        kpp_3d_fields%X(ipt,1,1)
 !$OMP END PARALLEL
 #endif
       ELSE
-         call read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,
+         call read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,curl_tau,
      +        kpp_3d_fields,kpp_const_fields)
       ENDIF
       
@@ -159,6 +164,11 @@ c      WRITE(6,*) 'L_REST=',L_REST
                kpp_3d_fields%sflux(ipt,6,5,0)=(rain(ipt)+snow(ipt)+
      +              (lhf(ipt)/EL))
                kpp_3d_fields%sflux(ipt,5,5,0)=1e-10 ! Melting of sea-ice = 0.0
+               IF (kpp_const_fields%L_EKMAN_PUMP) THEN
+                  kpp_3d_fields%sflux(ipt,7,5,0)=curl_tau(ipt)
+               ELSE
+                  kpp_3d_fields%sflux(ipt,7,5,0)=0.0
+               ENDIF
             ELSE
                kpp_3d_fields%sflux(ipt,1,5,0)=1.e-10
                kpp_3d_fields%sflux(ipt,2,5,0)=0.00
@@ -166,6 +176,7 @@ c      WRITE(6,*) 'L_REST=',L_REST
                kpp_3d_fields%sflux(ipt,4,5,0)=-300.00
                kpp_3d_fields%sflux(ipt,5,5,0)=0.00
                kpp_3d_fields%sflux(ipt,6,5,0)=0.00
+               kpp_3d_fields%sflux(ipt,7,5,0)=0.0
             ENDIF
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
             call ntflx(kpp_2d_fields,kpp_const_fields)

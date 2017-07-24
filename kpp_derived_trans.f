@@ -134,7 +134,7 @@ c     at a specified point.
       logical_temp=kpp_fields_3d%L_INITFLAG(point)
       kpp_fields_2d%L_INITFLAG=logical_temp
       temp=kpp_fields_3d%f(point) !Not updated within physics
-      kpp_fields_2d%f=temp      
+      kpp_fields_2d%f=temp
 
       temp=kpp_fields_3d%relax_sst(point) !Not updated within physics
       kpp_fields_2d%relax_sst=temp
@@ -236,6 +236,10 @@ c     values from the 2D variable.
             temp=kpp_fields_2d%dbloc(i)
             kpp_fields_3d%dbloc(point,i)=temp
          ENDIF
+         temp=kpp_fields_2d%ekadv(i,1)
+         kpp_fields_3d%tinc_ekadv(point,i)=temp
+         temp=kpp_fields_2d%ekadv(i,2)
+         kpp_fields_3d%sinc_ekadv(point,i)=temp
       ENDDO
       DO i=0,1
          temp=kpp_fields_2d%hmixd(i)
@@ -313,6 +317,8 @@ c     values from the 2D variable.
       kpp_fields_3d%dampu_flag(point)=temp
       temp=kpp_fields_2d%dampv_flag
       kpp_fields_3d%dampv_flag(point)=temp
+      temp=kpp_fields_2d%hekman
+      kpp_fields_3d%hekman(point)=temp
 
       RETURN
       END
@@ -338,6 +344,7 @@ c     values from the 2D variable.
 #include <ocn_state.com>
 #include <ocn_paras.com>
 #include <ice_paras.com>
+#include <proc_pars.com>
 #include <proc_swit.com>
 #include <vert_pgrid.com>
 #include <timocn.com>
@@ -367,6 +374,8 @@ c     values from the 2D variable.
       kpp_const_fields%FL=FL
       kpp_const_fields%FLSN=FLSN
       kpp_const_fields%slab_depth=slab_depth
+      kpp_const_fields%ekmax=max_ekman_depth
+      kpp_const_fields%ekadv_max=max_ekadv_depth
 
       kpp_const_fields%LKPP=LKPP
       kpp_const_fields%LRI=LRI
@@ -391,6 +400,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_COLUMBIA_LAND=L_COLUMBIA_LAND
       kpp_const_fields%L_FCORR_NSOL=L_FCORR_NSOL
       kpp_const_fields%L_DIST_RUNOFF=L_DIST_RUNOFF
+      kpp_const_fields%L_EKMAN_PUMP=L_EKMAN_PUMP
 
       RETURN
       END

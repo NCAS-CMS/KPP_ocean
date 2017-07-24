@@ -46,13 +46,13 @@ c      include 'location.com'
      &     'wTnt',
      &     'difm','dift','difs',
      &     'rho','cp','scorr','Rig','dbloc','Shsq','tinc_fcorr',
-     &     'fcorr_z','sinc_fcorr'/
+     &     'fcorr_z','sinc_fcorr','tinc_ekadv','sinc_ekadv'/
       DATA zflag/1,1,1,1,1,
      &     0,0,0,0,0,
      &     0,
      &     0,0,0,
      &     1,1,1,1,1,1,1,
-     &     1,1/
+     &     1,1,1,1/
       DATA longname/
      &     'Zonal velocity',
      &     'Meridional velocity',
@@ -76,7 +76,9 @@ c      include 'location.com'
      &     'Local shear-squared term in kpp.f',
      &     'Temperature increment flux correction',
      &     'Heat correction as flux (dT/dt*rho*cp)',
-     &     'Salinity increment flux correction'/
+     &     'Salinity increment flux correction',
+     &     'Temperature increment from Ekman pumping',
+     &     'Salinity increment from Ekman pumping'/
       DATA units/
      &     'm/s',
      &     'm/s',
@@ -100,6 +102,8 @@ c      include 'location.com'
      &     'm^2/s^2',
      &     'K/timestep',
      &     'W/m^3',
+     &     'o/oo/timestep',
+     &     'K/timestep',
      &     'o/oo/timestep'/
       DATA singname/
      &     'hmix',
@@ -114,7 +118,8 @@ c      include 'location.com'
      &     'comp_flag',
      &     'dampu_flag',
      &     'dampv_flag',
-     &     'fcorr_nsol' /
+     &     'fcorr_nsol',
+     &     'hekman'/
 #ifdef COUPLE
 #ifdef OASIS2
       DATA type /'OASIS2'/
@@ -144,8 +149,8 @@ c      include 'location.com'
      &     'Number of integrations (<0 = isothermal reset)',
      &     'Fraction of levels with ui~u**2',
      &     'Fraction of levels with vi~v**2',
-     &     'Non-solar heat flux restoring term'/
-
+     &     'Non-solar heat flux restoring term',
+     &     'Depth of Ekman layer'/
       DATA singunits/
      &     'm',
      &     'W/m^2',
@@ -159,7 +164,8 @@ c      include 'location.com'
      &     'unitless',
      &     'fraction',
      &     'fraction',
-     &     'W/m^2' /
+     &     'W/m^2',
+     &     'm'/
 
       nout=1
       singlong(3:7)=singlong(3:7)//type
@@ -506,6 +512,10 @@ c      status=NF_PUT_VAR1_REAL(ncid_out,time_id,nout,TOUT)
             temp_2d(:,:)=kpp_3d_fields%ocnTcorr(:,:)
          CASE(23)
             temp_2d(:,:)=kpp_3d_fields%Sinc_fcorr(:,:)
+         CASE(24)
+            temp_2d(:,:)=kpp_3d_fields%Tinc_ekadv(:,:)
+         CASE(25)
+            temp_2d(:,:)=kpp_3d_fields%Sinc_ekadv(:,:)
 c         CASE DEFAULT
 c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
          END SELECT
@@ -567,6 +577,8 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             temp_1d(:)=kpp_3d_fields%dampv_flag(:)
          CASE (13)
             temp_1d(:)=kpp_3d_fields%fcorr_nsol(:)
+         CASE (14)
+            temp_1d(:)=kpp_3d_fields%hekman(:)
          CASE DEFAULT
             WRITE(6,*) 'You need to add more outputs in '//
      +           'OUTPUT_INST'
@@ -992,6 +1004,10 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                field(:,:)=kpp_3d_fields%ocnTcorr(:,:)
             CASE(23)
                field(:,:)=kpp_3d_fields%sinc_fcorr(:,:)
+            CASE(24)
+               field(:,:)=kpp_3d_fields%Tinc_ekadv(:,:)
+            CASE(25)
+               field(:,:)=kpp_3d_fields%Sinc_ekadv(:,:)
             END SELECT
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields,ndt_varout_mean)
@@ -1050,6 +1066,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%dampv_flag(:)
             CASE(13)
                vec(:)=kpp_3d_fields%fcorr_nsol(:)
+            CASE(14)
+               vec(:)=kpp_3d_fields%hekman(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j))
@@ -1142,6 +1160,10 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                field(:,:)=kpp_3d_fields%ocnTcorr(:,:)
             CASE(23)
                field(:,:)=kpp_3d_fields%sinc_fcorr(:,:)
+            CASE(24)
+               field(:,:)=kpp_3d_fields%tinc_fcorr(:,:)
+            CASE(25)
+               field(:,:)=kpp_3d_fields%sinc_fcorr(:,:)
             END SELECT
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(private) SHARED(kpp_3d_fields)
@@ -1202,6 +1224,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%dampv_flag(:)
             CASE(13)
                vec(:)=kpp_3d_fields%fcorr_nsol(:)
+            CASE(14)
+               vec(:)=kpp_3d_fields%hekman(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j)) THEN

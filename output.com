@@ -1,5 +1,5 @@
       INTEGER N_VAROUTS,N_SINGOUTS,N_ZPROFS_MAX
-      PARAMETER (N_VAROUTS=23,N_SINGOUTS=13,N_ZPROFS_MAX=5)
+      PARAMETER (N_VAROUTS=25,N_SINGOUTS=14,N_ZPROFS_MAX=5)
       INTEGER ndt_varout_inst(N_VAROUTS),ndt_singout_inst(N_SINGOUTS),
      +     ndt_varout_mean(N_VAROUTS),ndt_singout_mean(N_SINGOUTS),
      +     ndt_varout_range(N_VAROUTS),ndt_singout_range(N_SINGOUTS),
@@ -47,6 +47,8 @@
 *     21   =    tinc_fcorr  (temperature increment from flux corrections with depth, K)
 *     22   =    ocnTcorr    (K/s)
 *     23   =    sinc_fcorr  (salinity increment from flux corrections with depth,o/oo)
+*     24   =    tinc_ekadv  (temperature increment from Ekman pumping vertical advection, K)
+*     25   =    sinc_ekadv  (salinity increment from Ekman pumping vertical advection, o/oo)
 *
 *     SINGOUTS
 *     1 = hmix     (m)  : single level field.
@@ -61,6 +63,7 @@
 *    11 = dampu_flag (unitless) : flag for Ui in damping of currents (ocn.f), U**2/r < alpha*U =1, U**2/r > alpha*U =-1. output is total of all levels. If dampu_flag =NZ all levels U**2/r<alpha*U (alpha = 0.99, r=tau*(86400/dto), tau=360). 
 *    12 = dampv_flag (unitless) : as for dampu_flag but for v.
 *    13 = fcorr_nsol (W/m^2) : non-solar heat-flux restoring term, computed as fcorr_nsol_coeff * (SST_model - SST_clim)
+*    14 = hekman (m) : diagnosed depth of Ekman layer
 ************************************************************************
       INTEGER ncid_out,mean_ncid_out,min_ncid_out,max_ncid_out,
      +     day_out,flen,ndt_per_file

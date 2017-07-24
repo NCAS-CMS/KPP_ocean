@@ -44,8 +44,8 @@
      +     freeze_flag(npts),
      +     dampu_flag(npts),dampv_flag(npts),
      +     U_init(NPTS,NZP1,NVEL),fcorr_nsol_coeff(NPTS),
-     +     fcorr_nsol(NPTS),reset_flag(npts)
-	
+     +     fcorr_nsol(NPTS),reset_flag(npts),hekman(NPTS),
+     +	   tinc_ekadv(NPTS,NZP1),sinc_ekadv(NPTS,NZP1)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
@@ -86,13 +86,13 @@
      +     advection(maxmodeadv,2),
      +     relax_sal,scorr(NZP1),relax_ocnT,ocnTcorr(NZP1),
      +     sal_clim(NZP1),ocnT_clim(NZP1),
-     +     hmix,kmix,Tref,
+     +     hmix,kmix,Tref,hekman,
      +     uref,vref,Ssurf,
      +     Sref,SSref,
      +     sflux(NSFLXS,5,0:NJDT),
      +     dlat,dlon,
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
-     +     dampu_flag,dampv_flag,reset_flag
+     +     dampu_flag,dampv_flag,reset_flag,ekvel(NZP1),ekadv(NZP1,2)
       integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
       logical :: l_ocean,l_initflag,comp_flag
@@ -110,7 +110,7 @@
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
 	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
-      integer :: ntime,iso_bot,dt_uvdamp
+      integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,
@@ -118,7 +118,8 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_FCORR_WITHZ,L_RESTART,
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
-     +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL
+     +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
+     +	   L_EKMAN_PUMP
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type
