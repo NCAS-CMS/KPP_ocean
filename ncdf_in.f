@@ -1569,7 +1569,7 @@ c     +     kpp_const_fields%spd
 
       start(3)=NINT((sstclim_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsst))+1
-c      write(nuout,*) 'SSTs are being read from position',start(3)
+      write(nuout,*) 'SSTs are being read from position',start(3)
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -1688,12 +1688,12 @@ c     longitude and time.
 
       WRITE(nuout,*) 'In read_icein'
 
-#ifndef COUPLE
-      CALL determine_netcdf_boundaries(ncid,'ice climatology',
-     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
-     +     kpp_3d_fields%dlat(1),start(1),
-     &     start(2),first_timein,last_timein,time_varid)
-#else
+!#ifndef COUPLE
+!      CALL determine_netcdf_boundaries(ncid,'ice climatology',
+!     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
+!     +     kpp_3d_fields%dlat(1),start(1),
+!     &     start(2),first_timein,last_timein,time_varid)
+!#else
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'t',time_varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
@@ -1705,7 +1705,7 @@ c     longitude and time.
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
-#endif
+!#endif
 
       status=NF_INQ_VARID(ncid,'iceconc',varid)
       iceclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
