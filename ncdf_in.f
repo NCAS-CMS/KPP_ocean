@@ -1548,8 +1548,13 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
 !#endif
-      sstclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
-     +     kpp_const_fields%spd*ndtupdsst
+      WRITE(6,*) kpp_const_fields%time
+      IF (L_UPD_CLIMSST) THEN
+         sstclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
+     +        kpp_const_fields%spd*ndtupdsst
+      ELSE
+         sstclim_time=kpp_const_fields%time
+      ENDIF
 c      WRITE(6,*) kpp_const_fields%time,kpp_const_fields%dto,
 c     +     kpp_const_fields%spd
       IF (sstclim_time .gt. last_timein) THEN
@@ -1708,8 +1713,12 @@ c     longitude and time.
 !#endif
 
       status=NF_INQ_VARID(ncid,'iceconc',varid)
-      iceclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
-     +     kpp_const_fields%spd*ndtupdice
+      IF (L_UPD_CLIMICE) THEN
+         iceclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
+     +        kpp_const_fields%spd*ndtupdice
+      ELSE
+         iceclim_time=kpp_const_fields%time
+      ENDIF
 
       IF (iceclim_time .gt. last_timein) THEN
          IF (L_PERIODIC_CLIMICE) THEN
