@@ -342,8 +342,8 @@ c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       REAL taux(NPTS),tauy(NPTS),swf(NPTS),lwf(NPTS),
-     $     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS),
-     $     curl_tau(NPTS)
+     +     lhf(NPTS),shf(NPTS),rain(NPTS),snow(NPTS),
+     +     curl_tau(NPTS)
 c      REAL*4 var_in(NX,NY),time_in,time
       REAL*4 time_in,time
 

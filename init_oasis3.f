@@ -172,17 +172,15 @@ c
          cl_read(5)='TSNOW'
          cl_read(6)='EVAP2D'
          cl_read(7)='TMLT01'
-         cl_read(8)='BMLT01'
-         cl_read(9)='TAUX'
-         cl_read(10)='TAUY'
+         cl_read(8)='TAUX'
+         cl_read(9)='TAUY'
       ELSE
          cl_read(3)='TRAIN'
          cl_read(4)='TSNOW'
          cl_read(5)='EVAP2D'
-         cl_read(6)='TMLT01'
-         cl_read(7)='BMLT01'
-         cl_read(8)='TAUX'
-         cl_read(9)='TAUY'
+         cl_read(6)='TMLT01'         
+         cl_read(7)='TAUX'
+         cl_read(8)='TAUY'
       ENDIF
 #endif
 ! If not passing river runoff, need to reduce number of input

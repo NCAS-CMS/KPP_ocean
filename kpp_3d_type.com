@@ -45,7 +45,8 @@
      +     dampu_flag(npts),dampv_flag(npts),
      +     U_init(NPTS,NZP1,NVEL),fcorr_nsol_coeff(NPTS),
      +     fcorr_nsol(NPTS),reset_flag(npts),hekman(NPTS),
-     +	   tinc_ekadv(NPTS,NZP1),sinc_ekadv(NPTS,NZP1)
+     +	   tinc_ekadv(NPTS,NZP1),sinc_ekadv(NPTS,NZP1),
+     +     runoff_incr(NPTS)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,

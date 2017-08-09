@@ -119,7 +119,8 @@ c      include 'location.com'
      &     'dampu_flag',
      &     'dampv_flag',
      &     'fcorr_nsol',
-     &     'hekman'/
+     &     'hekman',
+     &     'runoff_incr'/
 #ifdef COUPLE
 #ifdef OASIS2
       DATA type /'OASIS2'/
@@ -150,7 +151,8 @@ c      include 'location.com'
      &     'Fraction of levels with ui~u**2',
      &     'Fraction of levels with vi~v**2',
      &     'Non-solar heat flux restoring term',
-     &     'Depth of Ekman layer'/
+     &     'Depth of Ekman layer',
+     &     'Increment to freshwater flux from river runoff'/
       DATA singunits/
      &     'm',
      &     'W/m^2',
@@ -165,7 +167,8 @@ c      include 'location.com'
      &     'fraction',
      &     'fraction',
      &     'W/m^2',
-     &     'm'/
+     &     'm',
+     &     'kg/m^2/s' /
 
       nout=1
       singlong(3:7)=singlong(3:7)//type
@@ -579,6 +582,8 @@ c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
             temp_1d(:)=kpp_3d_fields%fcorr_nsol(:)
          CASE (14)
             temp_1d(:)=kpp_3d_fields%hekman(:)
+         CASE (15)
+            temp_1d(:)=kpp_3d_fields%runoff_incr(:)
          CASE DEFAULT
             WRITE(6,*) 'You need to add more outputs in '//
      +           'OUTPUT_INST'
@@ -1068,6 +1073,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%fcorr_nsol(:)
             CASE(14)
                vec(:)=kpp_3d_fields%hekman(:)
+            CASE(15)
+               vec(:)=kpp_3d_fields%runoff_incr(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j))
@@ -1226,6 +1233,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
                vec(:)=kpp_3d_fields%fcorr_nsol(:)
             CASE(14)
                vec(:)=kpp_3d_fields%hekman(:)
+            CASE(15)
+               vec(:)=kpp_3d_fields%runoff_incr(:)
             END SELECT
             DO j=1,NPTS
                IF (kpp_3d_fields%L_OCEAN(j)) THEN

@@ -1,7 +1,7 @@
 #ifdef COUPLE
 #ifdef OASIS3
       SUBROUTINE mpi1_oasis3_input(solar,non_solar,PminusE,ustress,
-     +     vstress,kpp_3d_fields,kpp_const_fields)
+     +     vstress,curl_tau,kpp_3d_fields,kpp_const_fields)
 c
 c     Facilitate the exchange of coupled fields via the OASIS3 coupler.
 c     NPK 18/09/09 for the OASIS3 toy model - completed 28/09/09 - R3
@@ -41,6 +41,7 @@ c
       REAL PminusE(NPTS)
       REAL ustress(NPTS)
       REAL vstress(NPTS)
+      REAL curl_tau(NPTS)
 c
 c     Local variables
 c     
@@ -56,7 +57,8 @@ c
 #else
       REAL(KIND=ip_realwp_p) temporary(NX_GLOBE,NY_GLOBE)
 #endif
-      REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean
+      REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean,
+     +     weights(NPTS)
       INTEGER i,j,ierror,npts_ocean,my_jpfldin
       INTEGER time_in_seconds
 c
@@ -67,13 +69,20 @@ c
 c     NPK 21/12/09
 c
       time_in_seconds=kpp_const_fields%spd*(kpp_const_fields%time-
-     +     kpp_const_fields%startt)
-                  
+     +     kpp_const_fields%startt)               
 c      
 c     Get the coupled fields from the OASIS coupler.  Note that you
 c     can discard any fields you do not want by simply not defining
 c     a CASE for them.
 c
+
+      ! Initialise all coupled inputs to zero.
+      solar(:)=0.0
+      non_solar(:)=0.0
+      PminusE(:)=0.0
+      ustress(:)=0.0
+      vstress(:)=0.0
+      curl_tau(:)=0.0
 
       ! If not passing river runoff, need to reduce number of input
       ! fields by one
@@ -86,6 +95,10 @@ c
       DO i=1,my_jpfldin
          CALL prism_get_proto(il_var_id_in(i),
      +        time_in_seconds,temporary,ierror)
+         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
+     +        ' received ierror = ',ierror
+         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
+     +        ' unweighted global sum = ',SUM(temporary)
          IF (ierror.NE.PRISM_Ok .and. ierror .LT. PRISM_Recvd) THEN
             WRITE(il_mparout) 'KPP: Received error from ',
      +           'PRISM_Get_Proto =',ierror,' receiving variable ',
@@ -157,16 +170,33 @@ c
          ENDIF
       ENDDO
       IF (kpp_const_fields%L_DIST_RUNOFF) THEN
-         runoff_mean = SUM(runoff,mask=kpp_3d_fields%L_OCEAN)
-         npts_ocean = COUNT(kpp_3d_fields%cplwght .gt. 0)
-         WRITE(6,*) 'runoff_mean = ',runoff_mean/FLOAT(npts_ocean)
+         weights(:) = 0.
+         DO i=1,NPTS
+            IF (kpp_3d_fields%L_OCEAN(i))
+     +           weights(i) = COS(kpp_3d_fields%dlat(i)*3.14159/180.)     
+         ENDDO
+         weights = weights/SUM(weights)
+         runoff_mean = SUM(runoff*weights)
+         WRITE(6,*) 'KPP: Domain-mean freshwater flux river '//
+     +        ' runoff at time ',time_in_seconds,' seconds = ',
+     +        runoff_mean,' mm/s'
+         kpp_3d_fields%runoff_incr = runoff_mean
+         runoff_mean = SUM(kpp_3d_fields%runoff_incr*weights)
+         WRITE(6,*) 'KPP: Domain-mean increment to P minus E '//
+     +        ' at time ',time_in_seconds,' seconds = ',
+     +        runoff_mean,' mm/s'
       ELSE
-         runoff(:)=0
+         kpp_3d_fields%runoff_incr(:)=0
          runoff_mean=0
       ENDIF
       DO i=1,NPTS
-         PminusE(i)=rain(i)+runoff_mean-evap(i)
+         PminusE(i)=rain(i)+kpp_3d_fields%runoff_incr(i)-evap(i)
       ENDDO
+
+!     Set curl of wind stress to zero for now.  Need to add
+!     code for computing curl from input taux and tauy.
+      curl_tau(:)=0.0
+      
 
 c      IF (READ_FROM_NETCDF)
 c     +     CALL mpi1_oasis3_read_netcdf(solar,non_solar,PminusE,

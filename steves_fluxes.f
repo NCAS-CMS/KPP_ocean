@@ -51,8 +51,8 @@
 #else
 #ifdef OASIS3
 !     Normal coupling - no writing to or reading from netCDF files
-      CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,kpp_3d_fields,
-     +     kpp_const_fields)
+      CALL mpi1_oasis3_input(swf,lwf,rain,taux,tauy,curl_tau,
+     +     kpp_3d_fields,kpp_const_fields)
 
       ! HadGEM3 passes zeros at the first timestep for a new run (i.e., NRUN)
       ! Thus, if this is NOT a restart run, we need to provide a file
@@ -62,7 +62,8 @@
       ! NPK 15/10/09, revised 6/11/09 to specify .NOT. L_RESTART
       ! as HadGEM3 does pass good fields for a restart run (i.e., CRUN)
       IF (kpp_const_fields%ntime .EQ. 1 .AND. .NOT. L_RESTART) THEN 
-         CALL init_flxdata('kpp_initfluxes.nc')
+         WRITE(6,*) 'KPP: Reading initial fluxes from netCDF file'
+         CALL init_flxdata('kpp_initfluxes.nc',kpp_const_fields)
          CALL read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,curl_tau,
      +        kpp_3d_fields,kpp_const_fields)
 ! Convert to variables expected for a coupled model

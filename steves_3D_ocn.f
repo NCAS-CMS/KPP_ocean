@@ -54,7 +54,7 @@ c      USE kpp_type_mod
 #include <ocn_advec.com>
 
 * Local variables
-      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_3d_type),allocatable :: kpp_3d_fields
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_timer_type) :: kpp_timer
@@ -104,7 +104,7 @@ c into the main program.  NPK 17/08/10 - R3
       allocate(kpp_const_fields%wmt(0:891,0:49))
       allocate(kpp_const_fields%wst(0:891,0:49))
       allocate(kpp_const_fields%tri(0:NZtmax,0:1,NGRID))
-      !allocate(kpp_3d_fields)
+      allocate(kpp_3d_fields)
 
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
@@ -169,7 +169,7 @@ c
       DO ntime=1,nend*ndtocn
          kpp_const_fields%ntime=ntime
          IF (MOD(kpp_const_fields%ntime-1,ndtocn) .EQ. 0) THEN
-!            WRITE(6,*) 'Calling fluxes'
+            WRITE(6,*) 'Calling fluxes'
 #ifdef COUPLE
 #ifdef OASIS2
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
@@ -192,7 +192,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #endif /*COUPLE*/
-!            WRITE(6,*) 'Called fluxes'
+            WRITE(6,*) 'KPP: Called fluxes'
          ENDIF
 c
 c     Re-writing update logic to allow user to choose independently whether to
@@ -933,7 +933,7 @@ c     Initialize and read the processes namelist
       LNBFLX=.FALSE.
       LRHS=.FALSE.
       L_SSref=.TRUE.
-      L_EKMAN_PUMP=.TRUE.
+      L_EKMAN_PUMP=.FALSE.
       READ(75,NAME_PROCSWIT)
       WRITE(nuout,*) 'KPP : Read Namelist PROCSWIT'
 c
