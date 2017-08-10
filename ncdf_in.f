@@ -1589,7 +1589,7 @@ c     +     kpp_const_fields%spd
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      $     ,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-c      WRITE(nuout,*) 'SSTs have been read from position',start(3)
+      WRITE(nuout,*) 'SSTs have been read from position',start(3)
       status=NF_CLOSE(ncid)
 c
 c     KPP expects temperatures in CELSIUS.  If climatological SSTs are
@@ -1803,7 +1803,8 @@ c     longitude and time.
       ENDIF
 
       status=NF_CLOSE(ncid)
-
+      WRITE(nuout,*) 'Finished read_icein'
+      
       RETURN
       END
 

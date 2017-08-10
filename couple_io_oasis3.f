@@ -508,6 +508,7 @@ c
       ENDIF
       WRITE(il_mparout,*) '---- End of the KPP integration ----'
       CLOSE(il_mparout)
+      STOP
 c     
 c     End
 c
