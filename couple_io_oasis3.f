@@ -308,7 +308,7 @@ c     back to the coupler.
 c     N.B. : We want to do this whether or not the user has specified
 c     coupling weights.  Cplwght is automatically set IF (.NOT. L_CPLWGHT)
 c      
-      WRITE(nuout,*) ' Entering loop to weight SSTs'
+      WRITE(nuout,*) 'KPP: Creating coupled output fields'
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
             ipoint_globe = (jy-1)*NX_GLOBE+ix
@@ -384,8 +384,8 @@ c
          ENDDO
       ENDDO
       IF (L_OUTKELVIN) SST = SST+TK0
-      WRITE(il_mparout,*) 'KPP: Finished creating coupling outputs'
-      WRITE(nuout,*) 'KPP: Finished creating coupling outputs'
+      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
+      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
 
       DO i=1,jpfldout
 c     
@@ -444,7 +444,7 @@ c     The user should never see this - if they do, it means that the model
 c     is exporting a field that is not defined here (and likely not defined
 c     in the "namcouple" file either).
 c
-            WRITE(nuout,*) 'Unexpected CASE DEFAULT for i=',i
+            WRITE(nuout,*) 'KPP: Unexpected CASE DEFAULT for i=',i
          END SELECT
          WRITE(nuout,*) 'KPP: Calling PRISM_Put_Proto ',
      +        'for variable ',cl_writ(i)         

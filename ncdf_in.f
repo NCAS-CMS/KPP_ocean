@@ -25,6 +25,12 @@ c      include 'location.com'
       INTEGER kin,k
       REAL deltaz,deltavar,offset_sst
 
+      REAL, dimension(NX_GLOBE,NY_GLOBE,1) :: SST_in,ICE_in,icedepth_in,
+     +     snowdepth_in
+      REAL, dimension(NX_GLOBE,NY_GLOBE) :: usf_in,vsf_in
+      COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
+     +     usf_in,vsf_in
+
       allocate(x_in(NX_GLOBE))
       allocate(y_in(NY_GLOBE))
 
@@ -271,7 +277,22 @@ c
       ELSE
          write(nuerr,*) 'You have to interpolate'
       ENDIF
-
+      
+!     Read a global SST field and persist that as the climatological SST
+!     through the simulation
+      IF (L_PERSIST_SST) THEN
+         deallocate(var_in)
+         allocate(var_in(NX_GLOBE,NY_GLOBE,1))
+         start(:) = 1
+         count(1) = NX_GLOBE
+         count(2) = NY_GLOBE
+         count(3) = 1
+         status = NF_INQ_VARID(ncid,'temp',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         SST_in = var_in - offset_sst
+      ENDIF
 
       RETURN
       END

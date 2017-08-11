@@ -863,7 +863,7 @@ c     +     bottom_temp(:)
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
      &     L_SLAB,L_COLUMBIA_LAND,slab_depth
       NAMELIST/NAME_START/ L_INITDATA,initdata_file,L_INTERPINIT,
-     &     L_RESTART,restart_infile
+     &     L_RESTART,restart_infile,L_PERSIST_SST
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
