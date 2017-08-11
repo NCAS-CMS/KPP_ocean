@@ -83,9 +83,16 @@ c into the main program.  NPK 17/08/10 - R3
 !$OMP END PARALLEL
       WRITE(6,*) 'Initialising ',nthreads,'timers'
       IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN
-         WRITE(6,*) 'nthreads = 0, resetting nthreads = 24'
-         nthreads=24
-         CALL OMP_SET_NUM_THREADS(24)
+#ifdef NEXCS
+#define omp_nthreads 36
+#elif defined ARCHER
+#define omp_nthreads 24
+#else 
+#define omp_nthreads 24
+#endif
+         nthreads=omp_nthreads
+         WRITE(6,*) 'setting nthreads = ',nthreads
+         CALL OMP_SET_NUM_THREADS(nthreads)
       ENDIF
       DO k=0,nthreads-1
         WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',k

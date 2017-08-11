@@ -79,7 +79,7 @@ GFS_FORCED_LINK = $(F90) $(GFS_FORCED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_I
 .SUFFIXES: .f .o
 
 .f.o :
-	$(F90) $(F90_FLAGS) $(CPP_FLAGS) $(OASIS3_MOD_FLAG) $(NCDF_INC) $(MPI_INC) -c $< -o ${<:.f=.o}
+	$(F90) $(F90_FLAGS) $(CPP_FLAGS) $(F90_CPP_FLAG)-DNEXCS $(OASIS3_MOD_FLAG) $(NCDF_INC) $(MPI_INC) -c $< -o ${<:.f=.o}
 
 forced : CPP_FLAGS=$(F90_CPP_FLAG)-DOPENMP
 forced : $(FORCED_OBJS)

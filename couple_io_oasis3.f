@@ -60,16 +60,18 @@ c
       REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean,
      +     weights(NPTS)
       INTEGER i,j,ierror,npts_ocean,my_jpfldin
-      INTEGER time_in_seconds
+      INTEGER(KIND=4) time_in_seconds
+      INTEGER nuout,nuerr
+      PARAMETER (nuout=6,nuerr=0)
 c
-c     OASIS3 expects the time_in_seconds
-c     to be the time since the start of *this particular run*,
-c     not the time since the beginning of the initial run.
-c     
-c     NPK 21/12/09
+c     Note - time in seconds for receive should be the end of the
+c     previous timestep, not the end of this timestep.  Subtract 1
+c     timestep.
 c
-      time_in_seconds=kpp_const_fields%spd*(kpp_const_fields%time-
-     +     kpp_const_fields%startt)               
+      time_in_seconds=NINT((kpp_const_fields%ntime-1)*
+     +     kpp_const_fields%dto)
+      WRITE(nuout,*) 'KPP: Time for coupling in is ',
+     +     time_in_seconds,' seconds'
 c      
 c     Get the coupled fields from the OASIS coupler.  Note that you
 c     can discard any fields you do not want by simply not defining
@@ -287,22 +289,17 @@ c     Note: "time_in_seconds" must be INTEGER to agree with the
 c     definition in OASIS3.
 c
       INTEGER i,ix,jy,ipoint_globe,ipoint,ierror
-      INTEGER time_in_seconds
+      INTEGER(KIND=4) time_in_seconds
 c
 c     COMMON block for SST_in and ICE_in
 c
       COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
      +     usf_in,vsf_in
 c
-c     If this is a restart run, we must correct for the
-c     non-zero start time.  OASIS3 expects the time_in_seconds
-c     to be the time since the start of *this particular run*,
-c     not the time since the beginning of the initial run.
+c     Note: the time in the send needs to be the time at the end
+c     of this timestep.
 c     
-c     NPK 21/12/09
-c
-      time_in_seconds=kpp_const_fields%spd*(kpp_const_fields%time-
-     +     kpp_const_fields%startt)         
+      time_in_seconds=NINT(kpp_const_fields%ntime*kpp_const_fields%dto)
       WRITE(nuout,*) 'KPP: Time for coupling out is ',
      +     time_in_seconds,' seconds'
 c

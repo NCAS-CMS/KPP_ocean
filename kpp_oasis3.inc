@@ -3,7 +3,7 @@
 #ifdef UM78
       PARAMETER(jpfldin=11,jpfldout=6)
 #endif
-#ifdef UM85
+#ifdef UM85 
       PARAMETER(jpfldin=9,jpfldout=6)
 #endif
       INTEGER il_var_id_out(jpfldout)     ! IDs for the outgoing fields

@@ -43,8 +43,8 @@ c      include 'location.com'
       DO WHILE (abs(x_in(ix)-kpp_3d_fields%dlon(1)) .GT. 1.e-3)
          ix=ix+1
          IF (ix .GE. nx_in) THEN
-            write(nuerr,*) 'Error reading initial conditions'
-            write(nuerr,*) 'Can''t find longitude ',
+            write(nuerr,*) 'KPP: Error reading initial conditions'
+            write(nuerr,*) 'KPP: Can''t find longitude ',
      +           kpp_3d_fields%dlon(1),' in range ',x_in(1),x_in(nx_in)
             CALL MIXED_ABORT
          ENDIF
@@ -91,7 +91,7 @@ c      include 'location.com'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      write(nuout,*) 'read_init read u'
+      write(nuout,*) 'KPP: read_init read initial u current'
 
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
@@ -120,12 +120,12 @@ c         U(ipt,:,1)=0.
       ELSE
          write(nuerr,*) 'You have to interpolate'
       ENDIF
-      write(6,*) 'read_init interpolated u'
+
       status=NF_INQ_VARID(ncid,'v',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'read_init read v'
+      WRITE(nuout,*) 'KPP: read_init read initial v current'
 
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
@@ -180,7 +180,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'read_init read temp'
+      WRITE(nuout,*) 'KPP: read_init read initial temperature'      
 
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
@@ -206,7 +206,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
             ENDDO
          ENDDO
       ELSE
-         write(nuerr,*) 'You have to interpolate'
+         write(nuerr,*) 'KPP: You have to interpolate'
       ENDIF
 c
 c     KPP requires temperatures in CELSIUS.  If initial conditions
@@ -243,7 +243,7 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'read_init read sal'
+      WRITE(nuout,*) 'KPP: read_init read initial salinity'
 
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
@@ -293,7 +293,8 @@ c
       index(2)=1
       index(3)=1
 
-      status=NF_OPEN(fname,0,ncid_flx)
+      WRITE(6,*) 'KPP: Trying to open flux file ',TRIM(fname)
+      status=NF_OPEN(TRIM(fname),0,ncid_flx)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       status=NF_INQ_VARID(ncid_flx,'time',timein_id)
@@ -415,24 +416,26 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
      +     kpp_const_fields%time,kpp_const_fields%dtsec,
      +     kpp_const_fields%spd
 c     IF (ndtocn .EQ. 1) THEN
+#ifdef OASIS3
+      start(3)=1
+#else
       start(3)=MAX(NINT((time-first_timein)*kpp_const_fields%spd/
      +     kpp_const_fields%dtsec)+1,1)
-      WRITE(6,*) 'Reading time from time point ',start(3)
-      WRITE(6,*) 'first_timein=',first_timein,'time=',time
+      WRITE(6,*) 'KPP: Reading time from time point ',start(3)
+c      WRITE(6,*) 'first_timein=',first_timein,'time=',time
       status=NF_GET_VAR1_REAL(ncid_flx,timein_id,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-#ifndef OASIS3
       IF (abs(time_in-time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time,',time,'in fluxes file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: Cannot find time,',time,'in fluxes file'
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
 #endif
-      WRITE(6,*) 'Reading fluxes from time point ',start(3)
+      WRITE(6,*) 'KPP: Reading fluxes from time point ',start(3)
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(1),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read taux'
+      WRITE(6,*) 'KPP: Read taux'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -442,7 +445,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(2),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read tauy'
+      WRITE(6,*) 'KPP: Read tauy'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -452,7 +455,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(3),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read swf'
+      WRITE(6,*) 'KPP: Read swf'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -462,7 +465,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(4),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read lwf'
+      WRITE(6,*) 'KPP: Read lwf'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -472,7 +475,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(5),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read lhf'
+      WRITE(6,*) 'KPP: Read lhf'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -482,7 +485,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(6),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read shf'
+      WRITE(6,*) 'KPP: Read shf'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -492,7 +495,7 @@ c     IF (ndtocn .EQ. 1) THEN
       ENDDO
       status=NF_GET_VARA_REAL(ncid_flx,varin_id(7),start,count
      $     ,var_in)
-      WRITE(6,*) 'Read rain'
+      WRITE(6,*) 'KPP: Read rain'
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       DO iy=1,ny
          DO ix=1,nx
@@ -506,11 +509,11 @@ c     IF (ndtocn .EQ. 1) THEN
             snow(ipt)=0.0
          ENDDO
       ENDDO
-      WRITE(6,*) 'Set snow to zero'
+      WRITE(6,*) 'KPP: Set snow to zero'
       IF (kpp_const_fields%L_EKMAN_PUMP) THEN
          status=NF_GET_VARA_REAL(ncid_flx,varin_id(8),start,count
      $        ,var_in)
-         WRITE(6,*) 'Read curl_tau'
+         WRITE(6,*) 'KPP: Read curl_tau'
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          DO iy=1,ny
             DO ix=1,nx
@@ -528,7 +531,7 @@ c     ENDIF
 c      WRITE(6,*) 'Setting time equal to dummy_time'
 c      time=dummy_time
 
-      WRITE(6,*) 'Finished reading fluxes'
+      WRITE(6,*) 'KPP: Finished reading fluxes'
 
       RETURN
       END
@@ -617,7 +620,6 @@ c      time=dummy_time
 
       INTEGER status
 
-      WRITE(nuout,*) 'In init_landseafile'
       status=NF_OPEN(landsea_file,0,ncid_landsea)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -711,7 +713,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'longitude',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(6,*) 'Routine read_par is reading longitude'
+      WRITE(6,*) 'KPP: Routine read_par is reading longitude'
       status=NF_GET_VAR_REAL(ncid,varid,x_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       ixx=1
@@ -725,7 +727,7 @@ c      REAL*4 x_in(NX_GLOBE),y_in(NY_GLOBE)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_INQ_VARID(ncid,'latitude',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(6,*) 'Routine read_par is reading latitude'
+      WRITE(6,*) 'KPP: Routine read_par is reading latitude'
       status=NF_GET_VAR_REAL(ncid,varid,y_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       iyy=1
@@ -754,8 +756,8 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       count(4)=1
 
       status=NF_INQ_VARID(ncid,vname,varid)
-      WRITE(6,*) 'Routine read_par is reading variable ',vname
-      WRITE(6,*) 'start=',start,'count=',count
+      WRITE(6,*) 'KPP: Routine read_par is reading variable ',vname
+      WRITE(6,*) 'KPP: start=',start,'count=',count
       status=NF_GET_VARA_REAL(ncid,varid,start,count,par_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -875,7 +877,7 @@ c     NPK 29/06/08
 
       status = NF_OPEN(fcorrin_file,0,fcorr_ncid)
       IF (status.NE.0) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened flux-correction input file'
+      WRITE(nuout,*) 'KPP: Opened flux-correction input file'
 
       count(1)=NX
       count(2)=NY
@@ -907,7 +909,7 @@ c     NPK 29/06/08
                   fcorr_time=fcorr_time-fcorr_period
                ENDDO
             ELSE
-               WRITE(nuout,*) 'Time for which to read the flux &
+               WRITE(nuout,*) 'KPP: Time for which to read the flux &
      &corrections exceeds the last time in the netCDF file &
      &and L_PERIODIC_FCORR has not been specified.  &
      &Attempting to read flux corrections will lead to an error, so &
@@ -996,7 +998,7 @@ c
       allocate(z(NZP1))
       status=NF_OPEN(fcorrin_file,0,fcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened flux-correction input file ',fcorr_ncid
+      WRITE(nuout,*) 'KPP: Opened flux-correction file ',fcorr_ncid
 
       count=(/NX,NY,NZP1,1/)
       start=(/1,1,1,1/)
@@ -1008,14 +1010,14 @@ c
       status=NF_INQ_DIM(fcorr_ncid,z_dimid,tmp_name,nz_file)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (NZP1.ne.nz_file) THEN
-         WRITE(nuout,*) 'Input file for flux corrections does ',
+         WRITE(nuout,*) 'KPP: File for flux corrections does ',
      &        'not have the correct number of vertical levels. ',
      &        'It should have ',NZP1,' but instead has ',nz_file
          CALL MIXED_ABORT
       ELSE
          status=NF_GET_VAR_REAL(fcorr_ncid,z_varid,z)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Read in depths from the flux-correction ',
+         WRITE(nuout,*) 'KPP: Read in depths from the flux-correction ',
      &        'input file'
       ENDIF
 
@@ -1029,15 +1031,15 @@ c
 
       ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
      +     kpp_const_fields%spd
-      WRITE(nuout,*) ndays_upd_fcorr,FLOOR(kpp_const_fields%time)*
-     +     NINT(kpp_const_fields%spd),
-     &     ndtupdfcorr*NINT(kpp_const_fields%dto),
-     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr
+!      WRITE(nuout,*) ndays_upd_fcorr,FLOOR(kpp_const_fields%time)*
+!     +     NINT(kpp_const_fields%spd),
+!     &     ndtupdfcorr*NINT(kpp_const_fields%dto),
+!     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr
       fcorr_time=(ndays_upd_fcorr)*
      &     FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      +     FLOAT(ndtupdfcorr*NINT(kpp_const_fields%dto))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
-      WRITE(nuout,*) fcorr_time,last_timein
+!      WRITE(nuout,*) fcorr_time,last_timein
 
       IF (fcorr_time .gt. last_timein) THEN
          IF (L_PERIODIC_FCORR) THEN
@@ -1045,7 +1047,7 @@ c
                fcorr_time=fcorr_time-fcorr_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux
+            WRITE(nuout,*) 'KPP: Time for which to read the flux
      & corrections exceeds the last time in the netCDF file
      & and L_PERIODIC_FCORR has not been specified.
      & Attempting to read flux corrections will lead to an error, so
@@ -1054,13 +1056,13 @@ c
          ENDIF
       ENDIF
 
-      write(nuout,*) 'Reading flux correction for time ',fcorr_time
+      write(nuout,*) 'KPP: Reading flux correction for time ',fcorr_time
       start(4)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdfcorr))+1
-      write(nuout,*) 'Flux corrections are being read from position',
+      write(nuout,*) 'KPP: REading flux correction from position',
      &     start(4)
       status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(4),time_in)
-      WRITE(nuout,*) 'Start = ',start,' Count = ',count
+      WRITE(nuout,*) 'KPP: Start = ',start,' Count = ',count
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-fcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
@@ -1125,7 +1127,7 @@ c     include 'location.com'
 
       status = NF_OPEN(fcorr_nsol_file,0,fcorr_ncid)
       IF (status.NE.0) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened non-solar correction coefficients file'
+      WRITE(nuout,*) 'KPP: Opened non-solar coefficients file'
 
       count(1)=NX
       count(2)=NY
@@ -1197,7 +1199,7 @@ c     NPK 29/06/08
 
       status = NF_OPEN(sfcorrin_file,0,sfcorr_ncid)
       IF (status.NE.0) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened flux-correction input file'
+      WRITE(nuout,*) 'KPP: Opened flux-correction input file'
 
       count(1)=NX
       count(2)=NY
@@ -1227,7 +1229,7 @@ c     NPK 29/06/08
                sfcorr_time=sfcorr_time-sfcorr_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux &
+            WRITE(nuout,*) 'KPP: Time for which to read the flux &
      & corrections exceeds the last time in the netCDF file &
      & and L_PERIODIC_SFCORR has not been specified.  &
      & Attempting to read flux corrections will lead to an error, so &
@@ -1313,7 +1315,7 @@ c
       allocate(z(NZP1))
       status=NF_OPEN(sfcorrin_file,0,sfcorr_ncid)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Opened salinity-correction input file ',
+      WRITE(nuout,*) 'KPP: Opened salinity-correction input file ',
      +     sfcorr_ncid
 
       count=(/NX,NY,NZP1,1/)
@@ -1326,14 +1328,14 @@ c
       status=NF_INQ_DIM(sfcorr_ncid,z_dimid,tmp_name,nz_file)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (NZP1.ne.nz_file) THEN
-         WRITE(nuout,*) 'Input file for salinity corrections does ',
+         WRITE(nuout,*) 'KPP: File for salinity corrections does ',
      &        'not have the correct number of vertical levels. ',
      &        'It should have ',NZP1,' but instead has ',nz_file
          CALL MIXED_ABORT
       ELSE
          status=NF_GET_VAR_REAL(sfcorr_ncid,z_varid,z)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Read in depths from the salinity-correction ',
+         WRITE(nuout,*) 'KPP: Read depths from salinity-correction ',
      &        'input file'
       ENDIF
 
@@ -1347,15 +1349,15 @@ c
 
       ndays_upd_sfcorr = ndtupdsfcorr*kpp_const_fields%dto/
      +     kpp_const_fields%spd
-      WRITE(nuout,*) ndays_upd_sfcorr,FLOOR(kpp_const_fields%time)*
-     +     NINT(kpp_const_fields%spd),
-     &     ndtupdsfcorr*NINT(kpp_const_fields%dto),
-     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr
+!      WRITE(nuout,*) ndays_upd_sfcorr,FLOOR(kpp_const_fields%time)*
+!     +     NINT(kpp_const_fields%spd),
+!     &     ndtupdsfcorr*NINT(kpp_const_fields%dto),
+!     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr
       sfcorr_time=(ndays_upd_sfcorr)*
      &     FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      +     FLOAT(ndtupdsfcorr*NINT(kpp_const_fields%dto))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr)
-      WRITE(nuout,*) sfcorr_time,last_timein
+!      WRITE(nuout,*) sfcorr_time,last_timein
 
       IF (sfcorr_time .gt. last_timein) THEN
          IF (L_PERIODIC_SFCORR) THEN
@@ -1363,7 +1365,7 @@ c
                sfcorr_time=sfcorr_time-sfcorr_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the flux
+            WRITE(nuout,*) 'KPP: Time for which to read the flux
      & corrections exceeds the last time in the netCDF file
      & and L_PERIODIC_SFCORR has not been specified.
      & Attempting to read salinity corrections will lead to an error, so
@@ -1372,25 +1374,26 @@ c
          ENDIF
       ENDIF
 
-      write(nuout,*) 'Reading salinity correction for time ',sfcorr_time
+      WRITE(nuout,*) 'KPP: Reading salinity correction for time ',
+     +     sfcorr_time
       start(4)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsfcorr))+1
-      write(nuout,*) 'salinity corrections are being read from position'
-     &     ,start(4)
+      write(nuout,*) 'KPP: Reading salinity corrections from position',
+     +     start(4)
       status=NF_GET_VAR1_REAL(sfcorr_ncid,time_varid,start(4),time_in)
-      WRITE(nuout,*) 'Start = ',start,' Count = ',count
+!      WRITE(nuout,*) 'Start = ',start,' Count = ',count
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sfcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time',sfcorr_time,
+         write(nuerr,*) 'KPP: Cannot find time',sfcorr_time,
      &        'in flux-correction input file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
       status=NF_GET_VARA_REAL(sfcorr_ncid,sfcorr_varid,start,count
      &     ,sfcorr_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      write(nuout,*) 'Salinity corrections have been read from position'
+      write(nuout,*) 'KPP: Salinity corrections read from position'
      &     ,start(4)
 
 c
@@ -1548,7 +1551,7 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       status=NF_GET_VAR1_REAL(ncid,
      &     time_varid,ntime_file,last_timein)
 !#endif
-      WRITE(6,*) kpp_const_fields%time
+!      WRITE(6,*) kpp_const_fields%time
       IF (L_UPD_CLIMSST) THEN
          sstclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
      +        kpp_const_fields%spd*ndtupdsst
@@ -1563,7 +1566,7 @@ c     +     kpp_const_fields%spd
                sstclim_time=sstclim_time-climsst_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read SST exceeds
+            WRITE(nuout,*) 'KPP: Time for which to read SST exceeds
      &the last time in the netCDF file and L_PERIODIC_CLIMSST has
      &not been specified.  Attempting to read SST will lead to
      &an error, so aborting now ...'
@@ -1589,7 +1592,7 @@ c     +     kpp_const_fields%spd
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      $     ,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'SSTs have been read from position',start(3)
+      WRITE(nuout,*) 'KPP: SSTs have been read from position',start(3)
       status=NF_CLOSE(ncid)
 c
 c     KPP expects temperatures in CELSIUS.  If climatological SSTs are
@@ -1626,7 +1629,7 @@ c     ENDIF
          ENDDO
       ENDDO
 
-      WRITE(nuout,*) 'Finished read_sstin'
+      WRITE(nuout,*) 'KPP: Finished read_sstin'
 
       END
 
@@ -1687,11 +1690,9 @@ c     or a regional field if not coupled.
 
 c     Open the netCDF file and find the correct latitude,
 c     longitude and time.
-      WRITE(nuout,*) 'Opening ice input file'
+      WRITE(nuout,*) 'KPP: Opening ice input file'
       status=NF_OPEN(icein_file,0,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-
-      WRITE(nuout,*) 'In read_icein'
 
 !#ifndef COUPLE
 !      CALL determine_netcdf_boundaries(ncid,'ice climatology',
@@ -1726,7 +1727,7 @@ c     longitude and time.
                iceclim_time=iceclim_time-climice_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read ice exceeds
+            WRITE(nuout,*) 'KPP: Time for which to read ice exceeds
      &the last time in the netCDF file and L_PERIODIC_CLIMICE has
      &not been specified.  Attempting to read ice will lead to
      &an error, so aborting now ...'
@@ -1747,13 +1748,13 @@ c     longitude and time.
          write(nuerr,*) 'The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
-      write(nuout,*) 'Ice concentrations are being read from position',
+      write(nuout,*) 'KPP: Reading ice concentrations from position',
      &     start(3)
-      WRITE(nuout,*) 'Start = ',start,'Count = ',count
+!      WRITE(nuout,*) 'KPP: Start = ',start,'Count = ',count
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      &     ,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Ice concentrations have been read from position',
+      WRITE(nuout,*) 'KPP: Ice concentrations read from position',
      &     start(3)
 
       max_ice = -1000.
@@ -1769,11 +1770,11 @@ c     longitude and time.
       IF (L_CLIM_ICE_DEPTH) THEN
          status=NF_INQ_VARID(ncid,'icedepth',varid)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Reading climatological ICEDEPTH for time ',
+         WRITE(nuout,*) 'KPP: Reading clim icedepth for time ',
      &        iceclim_time
-         WRITE(nuout,*) 'Ice depths are being read from ',
+         WRITE(nuout,*) 'KPP: Ice depths are being read from ',
      &        'position', start(3)
-         WRITE(nuout,*) 'Start = ',start,'Count = ',count
+!         WRITE(nuout,*) 'Start = ',start,'Count = ',count
          status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -1787,11 +1788,11 @@ c     longitude and time.
       IF (L_CLIM_SNOW_ON_ICE) THEN
          status=NF_INQ_VARID(ncid,'snowdepth',varid)
          IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Reading climatological SNOWDEPTH for time ',
+         WRITE(nuout,*) 'KPP: Reading clim SNOWDEPTH for time ',
      &        iceclim_time
-         WRITE(nuout,*) 'Snow depths on sea ice are being read from ',
+         WRITE(nuout,*) 'KPP: Reading snow depths on sea ice from ',
      &        'position', start(3)
-         WRITE(nuout,*) 'Start = ',start,'Count = ',count
+!         WRITE(nuout,*) 'Start = ',start,'Count = ',count
          status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
 
@@ -1803,7 +1804,7 @@ c     longitude and time.
       ENDIF
 
       status=NF_CLOSE(ncid)
-      WRITE(nuout,*) 'Finished read_icein'
+      WRITE(nuout,*) 'KPP: Finished read_icein'
       
       RETURN
       END
@@ -1883,25 +1884,25 @@ c     Open the netCDF file and find the correct time.
 #endif
 
       currclim_time=time+0.5*dto/spd*ndtupdsst
-      write(nuout,*) 'Reading climatological USF for time ',
+      write(nuout,*) 'KPP: Reading climatological USF for time ',
      &     currclim_time
       start(3)=NINT((currclim_time-first_timein)*spd/(dto*ndtupdcurr))+1
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-currclim_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time,',currclim_time,
+         write(nuerr,*) 'KPP: Cannot find time,',currclim_time,
      &        'in curr concentration climatology file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
-      write(nuout,*) 'Zonal currents are being read from position',
+      write(nuout,*) 'KPP: Reading zonal currents from position',
      &     start(3)
-      WRITE(nuout,*) 'Start = ',start,'Count = ',count
+!      WRITE(nuout,*) 'Start = ',start,'Count = ',count
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      &     ,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Zonal currents have been read from position',
+      WRITE(nuout,*) 'KPP: Zonal currents read from position',
      &     start(3)
 
       DO ix=1,curr_nx
@@ -1912,13 +1913,13 @@ c     Open the netCDF file and find the correct time.
 
       status=NF_INQ_VARID(ncid,'vcurr',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Reading climatological VSF for time ',
+      WRITE(nuout,*) 'KPP: Reading climatological VSF for time ',
      &     currclim_time
-      WRITE(nuout,*) 'Meridional currents are being read from position',
+      WRITE(nuout,*) 'KPP: Reading meridional currents from position',
      &     start(3)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Meridional currents have been read from position',
+      WRITE(nuout,*) 'KPP: Meridional currents read from position',
      &     start(3)
 
       DO ix=1,curr_nx
@@ -1993,7 +1994,7 @@ c     boundaries in the input file.
                bottomclim_time=bottomclim_time-bottom_temp_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read bottom temperature
+            WRITE(nuout,*) 'KPP: Time for which to read bottom temperature
      &exceeds the last time in the netCDF file and
      &L_PERIODIC_BOTTOM_TEMP has not been specified.  Attempting to
      &read bottom temperature will lead to an error, so aborting
@@ -2002,28 +2003,28 @@ c     boundaries in the input file.
          ENDIF
       ENDIF
 
-      write(nuout,*) 'Reading climatological bottom temp for time ',
+      write(nuout,*) 'KPP: Reading clim bottom temp for time ',
      &     bottomclim_time
       start(3)=NINT((bottomclim_time-first_timein)*kpp_const_fields%spd/
      &     (kpp_const_fields%dto*ndtupdbottom))+1
-      write(nuout,*) 'Bottom temperatures are being read from position',
+      write(nuout,*) 'KPP: Reading bottom temperatures from position',
      &     start(3)
 
       status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-bottomclim_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     spd) THEN
-         write(nuerr,*) 'Cannot find time',bottomclim_time,
+         write(nuerr,*) 'KPP: Cannot find time',bottomclim_time,
      &        'in bottom temperature climatology file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
       status=NF_GET_VARA_REAL(ncid,varid,start,count
      &     ,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'Bottom temperatures have been read from position',
+      WRITE(nuout,*) 'KPP: Bottom temperatures read from position',
      &     start(3)
-      WRITE(nuout,*) 'First column of bottom temperatures: ',
+      WRITE(nuout,*) 'KPP: First column of bottom temperatures: ',
      +     var_in(1,:,1)
 c
 c     KPP expects temperatures in CELSIUS.  If climatological bottom
@@ -2108,14 +2109,14 @@ c
       status=NF_INQ_DIM(sal_ncid,z_dimid,tmp_name,nz_file)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (NZP1.ne.nz_file) THEN
-         WRITE(nuout,*) 'Input file for salinity climatology does ',
-     &        'not have the correct number of vertical levels. ',
+         WRITE(nuout,*) 'KPP: File for salinity climatology ',
+     &        'does not have the correct number of vertical levels. ',
      &        'It should have ',NZP1,' but instead has ',nz_file
          CALL MIXED_ABORT
       ELSE
          status=NF_GET_VAR_REAL(sal_ncid,z_varid,z)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Read in depths from the salinity climatology ',
+         WRITE(nuout,*) 'KPP: Read depths from salinity climatology ',
      &        'input file'
       ENDIF
 
@@ -2144,7 +2145,7 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
                sal_time=sal_time-sal_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the salinity
+            WRITE(nuout,*) 'KPP: Time for which to read the salinity
      & climatology exceeds the last time in the netCDF file
      & and L_PERIODIC_SAL has not been specified.
      & Attempting to read salinity climatology will lead to an error, so
@@ -2153,24 +2154,23 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
          ENDIF
       ENDIF
 
-      write(nuout,*) 'Reading salinity for time ',sal_time
+      write(nuout,*) 'KPP: Reading salinity for time ',sal_time
       start(4)=NINT((sal_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsal))+1
-      write(nuout,*) 'Salinity values are being read from position',
-     &     start(4)
+      write(nuout,*) 'KPP: Reading salinity from position ',start(4)
       status=NF_GET_VAR1_REAL(sal_ncid,time_varid,start(4),time_in)
 
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sal_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time',sal_time,
+         write(nuerr,*) 'KPP: Cannot find time',sal_time,
      &        'in salinity climatology input file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
       status=NF_GET_VARA_REAL(sal_ncid,sal_varid,start,count
      &     ,sal_in)
-      write(nuout,*) 'Salinity climatology data have been read from '//
+      write(nuout,*) 'KPP: Salinity climatology read from '//
      &     'position',start(4)
 
 c
@@ -2241,14 +2241,14 @@ c
       status=NF_INQ_DIM(ocnT_ncid,z_dimid,tmp_name,nz_file)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (NZP1.ne.nz_file) THEN
-         WRITE(nuout,*) 'Input file for ocean temperature climatology ',
+         WRITE(nuout,*) 'KPP: File for ocean temp climatology ',
      &        'does not have the correct number of vertical levels. ',
      &        'It should have ',NZP1,' but instead has ',nz_file
          CALL MIXED_ABORT
       ELSE
          status=NF_GET_VAR_REAL(ocnT_ncid,z_varid,z)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         WRITE(nuout,*) 'Read in depths from the ocean temperature ',
+         WRITE(nuout,*) 'KPP: Read in depths from ocean temperature ',
      &        'climatology input file'
       ENDIF
 
@@ -2275,7 +2275,7 @@ c
                ocnT_time=ocnT_time-ocnT_period
             ENDDO
          ELSE
-            WRITE(nuout,*) 'Time for which to read the ocean
+            WRITE(nuout,*) 'KPP: Time for which to read the ocean
      & temperatures exceeds the last time in the netCDF file
      & and L_PERIODIC_OCNT has not been specified.
      & Attempting to read ocean temperatures will lead to an error, so
@@ -2284,26 +2284,26 @@ c
          ENDIF
       ENDIF
 
-      write(nuout,*) 'Reading ocean temperature for time ',ocnT_time
+      write(nuout,*) 'KPP: Reading ocean temp for time ',ocnT_time
       start(4)=NINT((ocnT_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdocnT))+1
 
-      write(nuout,*) 'Ocean temperature values are being read from ',
+      write(nuout,*) 'KPP: Reading ocean temp values from ',
      &     'position',start(4)
       status=NF_GET_VAR1_REAL(ocnT_ncid,time_varid,start(4),time_in)
 
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-ocnT_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'Cannot find time',ocnT_time,
+         write(nuerr,*) 'KPP: Cannot find time',ocnT_time,
      &        'in ocean temperature climatology input file'
-         write(nuerr,*) 'The closest I came was',time_in
+         write(nuerr,*) 'KPP: The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
       status=NF_GET_VARA_REAL(ocnT_ncid,ocnT_varid,start,count
      &     ,ocnT_in)
-      write(nuout,*) 'Ocean temperature climatology data have been '//
-     &     'read from position',start(4)
+      write(nuout,*) 'KPP: ocean temperatures read from position '
+     &     ,start(4)
 
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
