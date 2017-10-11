@@ -247,7 +247,8 @@ c
             WRITE(nuout,*) 'KPP: Called read_surface_currents, ntime =',
      +           kpp_const_fields%ntime
          ENDIF
-         IF (L_UPD_FCORR .AND. MOD(ntime-1,ndtupdfcorr) .EQ. 0) THEN
+         IF (L_UPD_FCORR .AND. MOD(ntime-1,ndtupdfcorr) .EQ. 0 .AND.
+     +        .NOT. L_INTERP_FCORR) THEN
             IF (L_FCORR_WITHZ) THEN
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
@@ -265,9 +266,17 @@ c
                WRITE(nuout,*) 'KPP: Called read_fcorr, ntime =',
      +              kpp_const_fields%ntime
             ENDIF
+         ELSEIF (L_UPD_FCORR .AND. L_INTERP_FCORR .AND.
+     +           MOD(ntime-1,ndt_interp_fcorr).EQ.0) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL interp_fcorr(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)            
          ENDIF
 !added SFCORR LH 24/05/2013
-         IF (L_UPD_SFCORR .AND. MOD(ntime-1,ndtupdsfcorr) .EQ. 0) THEN
+         IF (L_UPD_SFCORR .AND. MOD(ntime-1,ndtupdsfcorr) .EQ. 0 .AND.
+     +        .NOT. L_INTERP_SFCORR) THEN
             IF (L_SFCORR_WITHZ) THEN
                CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
                CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
@@ -285,7 +294,14 @@ c
                WRITE(nuout,*) 'KPP: Called read_sfcorr, ntime =',
      +              kpp_const_fields%ntime
             ENDIF
-         ENDIF
+         ELSEIF (L_UPD_SFCORR .AND. L_INTERP_SFCORR .AND. 
+     +           MOD(ntime-1,ndt_interp_sfcorr).EQ.0) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL interp_sfcorr(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+         ENDIF                       
          IF (L_UPD_BOTTOM_TEMP .AND. MOD(ntime-1,ndtupdbottom) .EQ. 0)
      +        THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
@@ -887,7 +903,9 @@ c     +     bottom_temp(:)
      &     isotherm_bottom,isotherm_threshold,L_DAMP_CURR,dtuvdamp,
      &     L_INTERP_OCNT,ndt_interp_ocnt,L_INTERP_SAL,ndt_interp_sal,
      &     L_FCORR_NSOL,L_FCORR_NSOL_FILE,fcorr_nsol_file,
-     &     fcorr_nsol_coeff,max_ekman_depth,max_ekadv_depth
+     &     fcorr_nsol_coeff,max_ekman_depth,max_ekadv_depth,
+     &     L_INTERP_FCORR,ndt_interp_fcorr,L_INTERP_SFCORR,
+     &     ndt_interp_sfcorr
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -1145,6 +1163,14 @@ c     Initialize and read the forcing namelist
       L_DAMP_CURR=.FALSE.
       L_FCORR_NSOL=.FALSE.
       L_FCORR_NSOL_FILE=.FALSE.
+      L_INTERP_OCNT=.FALSE.
+      L_INTERP_SAL=.FALSE.
+      L_INTERP_FCORR=.FALSE.
+      L_INTERP_SFCORR=.FALSE.
+      ndt_interp_ocnt=0
+      ndt_interp_sal=0
+      ndt_interp_sfcorr=0
+      ndt_interp_fcorr=0
       fcorr_nsol_coeff=0.0
       fcorr_nsol_file='none'
       forcing_file='1D_ocean_forcing.nc'
@@ -1264,6 +1290,8 @@ c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
 c     before the first time in the input file.
       IF (L_INTERP_OCNT) L_PERIODIC_OCNT=.TRUE.
       IF (L_INTERP_SAL) L_PERIODIC_SAL=.TRUE.
+      IF (L_INTERP_FCORR) L_PERIODIC_FCORR=.TRUE.
+      IF (L_INTERP_SFCORR) L_PERIODIC_SFCORR=.TRUE.
 
 c     Initialize and read the output name list
       ndt_varout_inst(:)=0
@@ -1869,6 +1897,141 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       RETURN
       END
+
+      SUBROUTINE interp_fcorr(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+#include <fcorr_in.com>
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER prev_time,next_time,true_time
+      REAL prev_weight,next_weight,ndays_upd_fcorr
+      REAL, allocatable :: prev_fcorr(:,:),next_fcorr(:,:)
+      
+      IF (L_FCORR_WITHZ) THEN
+         allocate(prev_fcorr(NPTS,NZP1))
+         allocate(next_fcorr(NPTS,NZP1))
+      ELSE
+         allocate(prev_fcorr(NPTS,1))
+         allocate(next_fcorr(NPTS,1))
+      ENDIF
+      true_time=kpp_const_fields%time
+      ndays_upd_fcorr=ndtupdfcorr*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+
+!     Read flux corrections for previous time
+      prev_time=FLOOR((true_time+ndays_upd_fcorr/2)/ndays_upd_fcorr)*
+     +     ndays_upd_fcorr-ndays_upd_fcorr*0.5
+      IF (prev_time .lt. 0) THEN
+         prev_weight=(ndays_upd_fcorr-ABS(true_time-prev_time))/
+     +        ndays_upd_fcorr
+         prev_time=prev_time+fcorr_period
+      ELSE
+         prev_weight=(ndays_upd_fcorr-(true_time-prev_time))/
+     +        ndays_upd_fcorr
+      ENDIF
+      WRITE(6,*) 'interp_fcorr : true_time = ',true_time
+      WRITE(6,*) 'interp_fcorr : prev_time = ',prev_time
+      WRITE(6,*) 'interp_fcorr : prev_weight = ',prev_weight
+      kpp_const_fields%time=prev_time
+      IF (L_FCORR_WITHZ) THEN
+         CALL READ_FCORRWITHZ(kpp_3d_fields,kpp_const_fields)
+         prev_fcorr=kpp_3d_fields%fcorr_withz
+      ELSEIF (L_FCORR) THEN
+         CALL READ_FCORR(kpp_3d_fields,kpp_const_fields)
+         prev_fcorr(:,1)=kpp_3d_fields%fcorr
+      ENDIF
+
+!     Read flux corrections for next time
+      next_time=prev_time+ndays_upd_fcorr
+      next_weight=1-prev_weight
+      WRITE(6,*) 'interp_fcorr : next_time = ',next_time
+      WRITE(6,*) 'interp_fcorr : next_weight = ',next_weight
+      kpp_const_fields%time=next_time
+      IF (L_FCORR_WITHZ) THEN
+         CALL READ_FCORRWITHZ(kpp_3d_fields,kpp_const_fields)
+         next_fcorr=kpp_3d_fields%fcorr_withz         
+         kpp_3d_fields%fcorr_withz=next_fcorr*next_weight+
+     +        prev_fcorr*prev_weight
+      ELSEIF (L_FCORR) THEN
+         CALL READ_FCORR(kpp_3d_fields,kpp_const_fields)
+         next_fcorr(:,1)=kpp_3d_fields%fcorr        
+         kpp_3d_fields%fcorr=next_fcorr(:,1)*next_weight+
+     +        prev_fcorr(:,1)*prev_weight
+      ENDIF
+
+      kpp_const_fields%time=true_time
+      
+      RETURN
+      END
+
+      SUBROUTINE interp_sfcorr(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+#include <kpp_3d_type.com>
+#include <sfcorr_in.com>
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER prev_time,next_time,true_time
+
+      REAL prev_weight,next_weight,ndays_upd_sfcorr
+      REAL, allocatable :: prev_sfcorr(:,:),next_sfcorr(:,:)
+      
+      IF (L_SFCORR_WITHZ) THEN
+         allocate(prev_sfcorr(NPTS,NZP1))
+         allocate(next_sfcorr(NPTS,NZP1))
+      ELSE
+         allocate(prev_sfcorr(NPTS,1))
+         allocate(next_sfcorr(NPTS,1))
+      ENDIF
+      true_time=kpp_const_fields%time
+      ndays_upd_sfcorr=ndtupdsfcorr*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+
+!     Read ocean temperatures for previous time
+      prev_time=FLOOR((true_time+ndays_upd_sfcorr/2)/ndays_upd_sfcorr)*
+     +     ndays_upd_sfcorr-ndays_upd_sfcorr*0.5
+      IF (prev_time .lt. 0) THEN
+         prev_weight=(ndays_upd_sfcorr-ABS(true_time-prev_time))/
+     +        ndays_upd_sfcorr
+         prev_time=prev_time+sfcorr_period
+      ELSE
+         prev_weight=(ndays_upd_sfcorr-(true_time-prev_time))/
+     +        ndays_upd_sfcorr
+      ENDIF
+      WRITE(6,*) 'interp_sfcorr : true_time = ',true_time
+      WRITE(6,*) 'interp_sfcorr : prev_time = ',prev_time
+      WRITE(6,*) 'interp_sfcorr : prev_weight = ',prev_weight
+      kpp_const_fields%time=prev_time
+      IF (L_SFCORR_WITHZ) THEN
+         CALL READ_SFCORRWITHZ(kpp_3d_fields,kpp_const_fields)
+         prev_sfcorr=kpp_3d_fields%sfcorr_withz
+      ELSEIF (L_SFCORR) THEN
+         CALL READ_SFCORR(kpp_3d_fields,kpp_const_fields)
+         prev_sfcorr(:,1)=kpp_3d_fields%sfcorr
+      ENDIF
+
+!     Read ocean temperatures for next time
+      next_time=prev_time+ndays_upd_sfcorr
+      next_weight=1-prev_weight
+      WRITE(6,*) 'interp_sfcorr : next_time = ',next_time
+      WRITE(6,*) 'interp_sfcorr : next_weight = ',next_weight
+      kpp_const_fields%time=next_time
+      IF (L_SFCORR_WITHZ) THEN
+         CALL READ_SFCORRWITHZ(kpp_3d_fields,kpp_const_fields)
+         next_sfcorr=kpp_3d_fields%sfcorr_withz         
+         kpp_3d_fields%sfcorr_withz=next_sfcorr*next_weight+
+     +        prev_sfcorr*prev_weight
+      ELSEIF (L_SFCORR) THEN
+         CALL READ_SFCORR(kpp_3d_fields,kpp_const_fields)
+         next_sfcorr(:,1)=kpp_3d_fields%sfcorr        
+         kpp_3d_fields%sfcorr=next_sfcorr(:,1)*next_weight+
+     +        prev_sfcorr(:,1)*prev_weight
+      ENDIF
+
+      kpp_const_fields%time=true_time
+      
+      RETURN
+      END  
 
       SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE

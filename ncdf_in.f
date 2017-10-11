@@ -923,21 +923,10 @@ c     NPK 29/06/08
      &       (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      +       (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
      &       (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
-
-         IF (fcorr_time .gt. last_timein) THEN
-            IF (L_PERIODIC_FCORR) THEN
-               DO WHILE (fcorr_time .gt. last_timein)
-                  fcorr_time=fcorr_time-fcorr_period
-               ENDDO
-            ELSE
-               WRITE(nuout,*) 'KPP: Time for which to read the flux &
-     &corrections exceeds the last time in the netCDF file &
-     &and L_PERIODIC_FCORR has not been specified.  &
-     &Attempting to read flux corrections will lead to an error, so &
-     &aborting now ...'
-               CALL MIXED_ABORT
-            ENDIF
-         ENDIF
+         
+         CALL determine_periodicity(L_PERIODIC_FCORR,
+     +     fcorr_period,fcorr_time,first_timein,last_timein,
+     +     ndays_upd_fcorr,'flux corrections','L_PERIODIC_FCORR')
 
          write(nuout,*) 'Reading flux correction for time ',fcorr_time
          start(3)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
@@ -1051,36 +1040,23 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
-     +     kpp_const_fields%spd
-!      WRITE(nuout,*) ndays_upd_fcorr,FLOOR(kpp_const_fields%time)*
-!     +     NINT(kpp_const_fields%spd),
-!     &     ndtupdfcorr*NINT(kpp_const_fields%dto),
-!     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr
+     +     kpp_const_fields%spd      
+      WRITE(6,*) ndays_upd_fcorr,kpp_const_fields%time,
+     &     kpp_const_fields%dto,ndtupdfcorr
       fcorr_time=(ndays_upd_fcorr)*
-     &     FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
-     +     FLOAT(ndtupdfcorr*NINT(kpp_const_fields%dto))+
+     &     (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
+     +     (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
-!      WRITE(nuout,*) fcorr_time,last_timein
-
-      IF (fcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_FCORR) THEN
-            DO WHILE (fcorr_time .gt. last_timein)
-               fcorr_time=fcorr_time-fcorr_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read the flux
-     & corrections exceeds the last time in the netCDF file
-     & and L_PERIODIC_FCORR has not been specified.
-     & Attempting to read flux corrections will lead to an error, so
-     & aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      WRITE(6,*) fcorr_time,last_timein
+      
+      CALL determine_periodicity(L_PERIODIC_FCORR,
+     +     fcorr_period,fcorr_time,first_timein,last_timein,
+     +     ndays_upd_fcorr,'flux corrections','L_PERIODIC_FCORR')
 
       write(nuout,*) 'KPP: Reading flux correction for time ',fcorr_time
       start(4)=NINT((fcorr_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdfcorr))+1
-      write(nuout,*) 'KPP: REading flux correction from position',
+      write(nuout,*) 'KPP: Reading flux correction from position',
      &     start(4)
       status=NF_GET_VAR1_REAL(fcorr_ncid,time_varid,start(4),time_in)
       WRITE(nuout,*) 'KPP: Start = ',start,' Count = ',count
@@ -1155,7 +1131,7 @@ c     include 'location.com'
       start(1)=1
       start(2)=1
 
-      CA LL determine_netcdf_boundaries_2d(fcorr_ncid,
+      CALL determine_netcdf_boundaries_2d(fcorr_ncid,
      &     'non-solar flux correction coefficients','latitude',
      &     'longitude',kpp_3d_fields%dlon(1),kpp_3d_fields%dlat(1),
      &     start(1),start(2))
@@ -1244,41 +1220,30 @@ c     NPK 29/06/08
      +     (ndtupdsfcorr*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr)
 
-      IF (sfcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SFCORR) THEN
-            DO WHILE (sfcorr_time .gt. last_timein)
-               sfcorr_time=sfcorr_time-sfcorr_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read the flux &
-     & corrections exceeds the last time in the netCDF file &
-     & and L_PERIODIC_SFCORR has not been specified.  &
-     & Attempting to read flux corrections will lead to an error, so &
-     & aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      CALL determine_periodicity(L_PERIODIC_SFCORR,
+     +     sfcorr_period,sfcorr_time,first_timein,last_timein,
+     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')      
 
-      write(nuout,*) 'Reading flux correction for time ',sfcorr_time
+      write(nuout,*) 'Reading salinity correction for time ',sfcorr_time
       start(3)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
      +     (kpp_const_fields%dto*ndtupdsfcorr))+1
-      write(nuout,*) 'Flux corrections are being read from position',
-     &     start(3)
+      write(nuout,*) 'Salinity corrections are being read from position'
+     &     ,start(3)
       status=NF_GET_VAR1_REAL(sfcorr_ncid,time_varid,start(3),time_in)
 
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       IF (abs(time_in-sfcorr_time) .GT. 0.01*kpp_const_fields%dtsec/
      +     kpp_const_fields%spd) THEN
          write(nuerr,*) 'Cannot find time',sfcorr_time,
-     &        'in flux-correction input file'
+     &        'in salinity-correction input file'
          write(nuerr,*) 'The closest I came was',time_in
          CALL MIXED_ABORT
       ENDIF
       status=NF_GET_VARA_REAL(sfcorr_ncid,sfcorr_varid,start,count
      &     ,sfcorr_twod_in)
       IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
-      write(nuout,*) 'Flux corrections have been read from position',
-     &     start(3)
+      write(nuout,*) 'Salinity corrections have been read from position'
+     &     ,start(3)
 
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
@@ -1375,25 +1340,14 @@ c
 !     &     ndtupdsfcorr*NINT(kpp_const_fields%dto),
 !     +     0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr
       sfcorr_time=(ndays_upd_sfcorr)*
-     &     FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
-     +     FLOAT(ndtupdsfcorr*NINT(kpp_const_fields%dto))+
+     &     (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
+     +     (ndtupdsfcorr*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsfcorr)
 !      WRITE(nuout,*) sfcorr_time,last_timein
 
-      IF (sfcorr_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SFCORR) THEN
-            DO WHILE (sfcorr_time .gt. last_timein)
-               sfcorr_time=sfcorr_time-sfcorr_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read the flux
-     & corrections exceeds the last time in the netCDF file
-     & and L_PERIODIC_SFCORR has not been specified.
-     & Attempting to read salinity corrections will lead to an error, so
-     & aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+       CALL determine_periodicity(L_PERIODIC_SFCORR,
+     +     sfcorr_period,sfcorr_time,first_timein,last_timein,
+     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')      
 
       WRITE(nuout,*) 'KPP: Reading salinity correction for time ',
      +     sfcorr_time
@@ -1529,7 +1483,7 @@ c      include 'location.com'
       INTEGER status,ncid
       REAL*4 var_in(sst_nx,sst_ny,1),time_in,
      &     first_timein,last_timein,sstclim_time,longitudes(NX_GLOBE),
-     &     latitudes(NY_GLOBE)
+     &     latitudes(NY_GLOBE),ndays_upd_sst
       INTEGER varid, time_varid,lat_varid,lon_varid,
      &     lon_dimid,lat_dimid,time_dimid
       INTEGER count(3),start(3)
@@ -1581,19 +1535,12 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       ENDIF
 c      WRITE(6,*) kpp_const_fields%time,kpp_const_fields%dto,
 c     +     kpp_const_fields%spd
-      IF (sstclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_CLIMSST) THEN
-            DO WHILE (sstclim_time .gt. last_timein)
-               sstclim_time=sstclim_time-climsst_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read SST exceeds
-     &the last time in the netCDF file and L_PERIODIC_CLIMSST has
-     &not been specified.  Attempting to read SST will lead to
-     &an error, so aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      
+      ndays_upd_sst = ndtupdsst*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+      CALL determine_periodicity(L_PERIODIC_CLIMSST,
+     +     climsst_period,sstclim_time,first_timein,last_timein,
+     +     ndays_upd_sst,'SST','L_PERIODIC_CLIMSST')
       write(nuout,*) 'Reading climatological SST for time ',sstclim_time
 
       start(3)=NINT((sstclim_time-first_timein)*kpp_const_fields%spd/
@@ -1690,7 +1637,8 @@ c      include 'location.com'
      &     usf_in(ice_nx,ice_ny),vsf_in(ice_nx,ice_ny),
      &     max_ice,min_ice
       REAL*4 var_in(ice_nx,ice_ny,1),iceclim_time,first_timein,
-     &     last_timein,time_in,latitudes(NY_GLOBE),longitudes(NX_GLOBE)
+     &     last_timein,time_in,latitudes(NY_GLOBE),longitudes(NX_GLOBE),
+     &     ndays_upd_ice
       INTEGER count(3),start(3)
       INTEGER ix,iy,status,ncid,varid,time_varid,lon_varid,lat_varid,
      &     time_dimid,lon_dimid,lat_dimid,ntime_file,nlon_file,
@@ -1742,19 +1690,11 @@ c     longitude and time.
          iceclim_time=kpp_const_fields%time
       ENDIF
 
-      IF (iceclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_CLIMICE) THEN
-            DO WHILE (iceclim_time .gt. last_timein)
-               iceclim_time=iceclim_time-climice_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read ice exceeds
-     &the last time in the netCDF file and L_PERIODIC_CLIMICE has
-     &not been specified.  Attempting to read ice will lead to
-     &an error, so aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      ndays_upd_ice = ndtupdice*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+      CALL determine_periodicity(L_PERIODIC_CLIMICE,
+     +     climice_period,iceclim_time,first_timein,last_timein,
+     +     ndays_upd_ice,'sea ice','L_PERIODIC_CLIMICE')
 
       write(nuout,*) 'Reading climatological ICECONC for time ',
      &     iceclim_time
@@ -1978,7 +1918,7 @@ c#include <location.com>
       REAL bottom_temp(NPTS),offset_temp
       REAL*4 var_in(NX,NY,1),time_in,
      & first_timein, bottomclim_time,latitudes(NY_GLOBE),
-     & longitudes(NX_GLOBE), last_timein
+     & longitudes(NX_GLOBE), last_timein, ndays_upd_bottom
       INTEGER varid,time_varid,lat_varid,lon_varid,time_dimid,lat_dimid,
      &     lon_dimid,nlat_file,nlon_file,ntime_file
 
@@ -2009,20 +1949,13 @@ c     boundaries in the input file.
 
       bottomclim_time=kpp_const_fields%time+0.5*kpp_const_fields%dto/
      +     kpp_const_fields%spd*ndtupdbottom
-      IF (bottomclim_time .gt. last_timein) THEN
-         IF (L_PERIODIC_BOTTOM_TEMP) THEN
-            DO WHILE (bottomclim_time .gt. last_timein)
-               bottomclim_time=bottomclim_time-bottom_temp_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read bottom temperature
-     &exceeds the last time in the netCDF file and
-     &L_PERIODIC_BOTTOM_TEMP has not been specified.  Attempting to
-     &read bottom temperature will lead to an error, so aborting
-     &now...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      ndays_upd_bottom = ndtupdbottom*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+
+      CALL determine_periodicity(L_PERIODIC_BOTTOM_TEMP,
+     +     bottom_temp_period,
+     +     bottomclim_time,first_timein,last_timein,ndays_upd_bottom,
+     +     'bottom temperatures','L_PERIODIC_BOTTOM_TEMP')
 
       write(nuout,*) 'KPP: Reading clim bottom temp for time ',
      &     bottomclim_time
@@ -2160,20 +2093,9 @@ c     &     ndtupdsal*NINT(dto),0.5*dto/spd*ndtupdsal
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdsal)
       WRITE(nuout,*) sal_time,last_timein
 
-      IF (sal_time .gt. last_timein) THEN
-         IF (L_PERIODIC_SAL) THEN
-            DO WHILE (sal_time .gt. last_timein)
-               sal_time=sal_time-sal_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read the salinity
-     & climatology exceeds the last time in the netCDF file
-     & and L_PERIODIC_SAL has not been specified.
-     & Attempting to read salinity climatology will lead to an error, so
-     & aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      CALL determine_periodicity(L_PERIODIC_SAL,sal_period,sal_time,
+     +     first_timein,last_timein,ndays_upd_sal,'ocean salinity',
+     +     'L_PERIODIC_SAL')
 
       write(nuout,*) 'KPP: Reading salinity for time ',sal_time
       start(4)=NINT((sal_time-first_timein)*kpp_const_fields%spd/
@@ -2284,26 +2206,17 @@ c
 
       ndays_upd_ocnT = ndtupdocnT*kpp_const_fields%dto/
      +     kpp_const_fields%spd
+      WRITE(6,*) ndays_upd_ocnT,kpp_const_fields%time,
+     &     kpp_const_fields%dto,ndtupdocnT
       ocnT_time=(ndays_upd_ocnT)*
      &     (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      &     (ndtupdocnT*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdocnT)
-      WRITE(nuout,*) ocnT_time,last_timein
+      WRITE(nuout,*) ocnT_time,last_timein,ocnT_period
 
-      IF (ocnT_time .gt. last_timein) THEN
-         IF (L_PERIODIC_OCNT) THEN
-            DO WHILE (ocnT_time .gt. last_timein)
-               ocnT_time=ocnT_time-ocnT_period
-            ENDDO
-         ELSE
-            WRITE(nuout,*) 'KPP: Time for which to read the ocean
-     & temperatures exceeds the last time in the netCDF file
-     & and L_PERIODIC_OCNT has not been specified.
-     & Attempting to read ocean temperatures will lead to an error, so
-     & aborting now ...'
-            CALL MIXED_ABORT
-         ENDIF
-      ENDIF
+      CALL determine_periodicity(L_PERIODIC_OCNT,ocnT_period,ocnT_time,
+     +     first_timein,last_timein,ndays_upd_ocnT,'ocean temperatures',
+     +     'L_PERIODIC_OCNT')
 
       write(nuout,*) 'KPP: Reading ocean temp for time ',ocnT_time
       start(4)=NINT((ocnT_time-first_timein)*kpp_const_fields%spd/
@@ -2456,5 +2369,54 @@ c     Find the first time and last time
      &     time_varid,ntime_file,last_time)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
+      RETURN
+      END
+
+      SUBROUTINE determine_periodicity(periodic_flag,period,time,
+     +    first_time,last_time,ndays_update,file_string,periodic_string)
+
+      IMPLICIT NONE
+      INTEGER nuout,nuerr
+      CHARACTER*40 file_string,periodic_string
+      PARAMETER(nuout=6,nuerr=0)
+      
+#include <parameter.inc>
+#include <netcdf.inc>
+
+      REAL*4 time, first_time, last_time, ndays_update
+      LOGICAL periodic_flag
+      INTEGER period
+
+      IF (periodic_flag) THEN
+        WRITE(6,*) periodic_flag,time,period,first_time,ndays_update
+	IF (time .gt. period) THEN
+            DO WHILE (time .gt. period)
+               time=time-period
+            ENDDO
+         ELSEIF (time .lt. first_time) THEN
+            time=time-(first_time-ndays_update/2.0)
+            DO WHILE (time .lt. 0)
+               time=time+period
+            ENDDO
+         ENDIF
+	WRITE(6,*) periodic_flag,time,period,first_time,ndays_update
+      ELSE
+         IF (time .gt. last_time) THEN
+            WRITE(nuout,*) 'KPP: Time for which to read the ',
+     +           file_string,' exceeds the last time in the netCDF
+     &file and ',periodic_string,' has not been specified.
+     &Attempting to read ',file_string,' will lead to an error, so
+     &aborting now ...'
+            CALL MIXED_ABORT
+         ELSEIF (time .lt. first_time) THEN
+            WRITE(nuout,*) 'KPP: Time for which to read the ',
+     +           file_string,' precedes the first time in the netCDF
+     &file and ',periodic_string,' has not been specified.
+     &Attempting to read ',file_string,' will lead to an error, so
+     &aborting now ...'
+            CALL MIXED_ABORT
+         ENDIF
+      ENDIF
+      
       RETURN
       END
