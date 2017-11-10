@@ -54,7 +54,11 @@ c      USE kpp_type_mod
 #include <ocn_advec.com>
 
 * Local variables
-      TYPE(kpp_3d_type),allocatable :: kpp_3d_fields
+#ifdef NOALLOC
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+#else
+      TYPE(kpp_3d_type), allocatable :: kpp_3d_fields
+#endif
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_timer_type) :: kpp_timer
@@ -111,7 +115,9 @@ c into the main program.  NPK 17/08/10 - R3
       allocate(kpp_const_fields%wmt(0:891,0:49))
       allocate(kpp_const_fields%wst(0:891,0:49))
       allocate(kpp_const_fields%tri(0:NZtmax,0:1,NGRID))
+#ifndef NOALLOC
       allocate(kpp_3d_fields)
+#endif
 
       CALL KPP_TIMER_TIME(kpp_timer,'Initialize',1)
       CALL initialize(kpp_3d_fields,kpp_const_fields,bottom_temp,
