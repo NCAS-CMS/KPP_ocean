@@ -46,7 +46,8 @@
      +     U_init(NPTS,NZP1,NVEL),fcorr_nsol_coeff(NPTS),
      +     fcorr_nsol(NPTS),reset_flag(npts),hekman(NPTS),
      +	   tinc_ekadv(NPTS,NZP1),sinc_ekadv(NPTS,NZP1),
-     +     runoff_incr(NPTS)
+     +     runoff_incr(NPTS),u_clim(NPTS,NZP1),
+     +     v_clim(NPTS,NZP1),relax_curr(npts)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
@@ -54,7 +55,7 @@
      +     nmodeadv(NPTS,2),
      +     modeadv(NPTS,maxmodeadv,2)
       ENDTYPE kpp_3D_type
-      
+
       TYPE kpp_2D_type
       real :: U(NZP1,NVEL),
      +     X(NZP1,NSCLR),
@@ -93,7 +94,8 @@
      +     sflux(NSFLXS,5,0:NJDT),
      +     dlat,dlon,
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
-     +     dampu_flag,dampv_flag,reset_flag,ekvel(NZP1),ekadv(NZP1,2)
+     +     dampu_flag,dampv_flag,reset_flag,ekvel(NZP1),ekadv(NZP1,2),
+     +	   u_clim(NZP1),v_clim(NZP1),relax_curr
       integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
       logical :: l_ocean,l_initflag,comp_flag
@@ -120,12 +122,12 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
-     +	   L_EKMAN_PUMP
+     +	   L_EKMAN_PUMP,L_RELAX_CURR
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type
 #ifdef OPENMP
-      REAL,dimension(timer_max_timers) :: 
+      REAL,dimension(timer_max_timers) ::
      +     timer_elapsed_time,timer_start_time
 #else
       REAL,dimension(timer_max_timers) :: timer_elapsed_time,
@@ -133,6 +135,6 @@ c      real wst(0:891,0:49)      ! lookup table for ws
 #endif
       LOGICAL,dimension(timer_max_timers) :: timer_running
       CHARACTER(LEN=30),dimension(timer_max_timers) :: timer_all_names
-      
+
       INTEGER :: timer_number_allocated
       ENDTYPE

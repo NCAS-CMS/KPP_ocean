@@ -612,6 +612,16 @@ c     +     kpp_2d_fields%difm(i)*Uo(i+1,2)
 
       npd = 1
       call tridmat(cu,cc,cl,rhs,Uo(:,2),NZ,kpp_2d_fields%U(:,2))
+
+      IF (kpp_const_fields%L_RELAX_CURR .and.
+     +    kpp_2d_fields%relax_curr .gt. 0.0) THEN
+          kpp_2d_fields%U(:,1)=kpp_2d_fields%U(:,1)+
+     +      (kpp_2d_fields%u_clim(:)-kpp_2d_fields%U(:,1))*
+     +      kpp_2d_fields%relax_curr*kpp_const_fields%dto
+          kpp_2d_fields%U(:,2)=kpp_2d_fields%U(:,2)+
+     +      (kpp_2d_fields%v_clim(:)-kpp_2d_fields%U(:,2))*
+     +      kpp_2d_fields%relax_curr*kpp_const_fields%dto
+      ENDIF
 c      f(ipt)= ftemp
 c      WRITE(6,*) 'After computation of U, sst = ',kpp_2d_fields%X(1,1)
 
@@ -712,7 +722,7 @@ c     flux corrections at depth (NPK 12/02/08).
      +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
          ENDDO
       ENDIF
-      
+
 c     Relax the temperature at each layer in the model by computing
 c     a flux correction at each layer.  Requires a three-dimensional
 c     (x,y,z) input file of ocean temperatures via subroutine
@@ -737,18 +747,18 @@ c     L_FCORR_WITHZ (see above).
       ENDDO
 
 c     ---
-c     Ekman pumping 
+c     Ekman pumping
 c     Vertical advection of temperature and salinity following Lu et al.
 c     (2017, Ocean Dynamics, doi:10.1007/s10236-016-1029-9).
 c
-c     1. Compute Ekman depth from surface wind stress 
+c     1. Compute Ekman depth from surface wind stress
 c     2. If depth is shallower than a user-prescribed maximum depth
 c        (ekmax; max_ekman_depth in NAME_FORCING), then advect.
-c     3. Advection by Ekman pumping is assumed to decay sinusoidally from the 
+c     3. Advection by Ekman pumping is assumed to decay sinusoidally from the
 c        Ekman depth to the surface and to a user-prescribed maximum depth,
 c        (ekadv_max; max_ekadv_depth in NAME_FORCING).  Advection uses
 c        a centred difference in the vertical.  Follows reference above.
-c     
+c
 c     Curl of the wind stress must be provided in surface forcing data.
 c     Positive curl = upwelling.
 c     NPK 24/7/17.
@@ -756,7 +766,7 @@ c     ---
       kpp_2d_fields%ekvel(:)=0.0
       kpp_2d_fields%ekadv(:,:)=0.0
       kpp_2d_fields%hekman = 0.4*SQRT((
-     +     SQRT(kpp_2d_fields%sflux(1,5,0)**2 + 
+     +     SQRT(kpp_2d_fields%sflux(1,5,0)**2 +
      +     kpp_2d_fields%sflux(2,5,0)**2))
      +     / (kpp_2d_fields%rho(1)*kpp_2d_fields%f**2)) + 1e-16
       IF (kpp_const_fields%L_EKMAN_PUMP .and.
@@ -764,7 +774,7 @@ c     ---
          ekvel_max = 1/(kpp_2d_fields%rho(1)*kpp_2d_fields%f)*
      +     kpp_2d_fields%sflux(7,5,0)
          DO k=2,NZ
-            IF (ABS(kpp_const_fields%zm(k)) .lt. 
+            IF (ABS(kpp_const_fields%zm(k)) .lt.
      +           kpp_const_fields%ekadv_max) THEN
                dist_hek = kpp_2d_fields%hekman-
      +              ABS(kpp_const_fields%zm(k))
@@ -776,17 +786,17 @@ c     ---
      +                 ABS(dist_hek))*3.14159/2.0/
      +                 (200-kpp_2d_fields%hekman))
                ELSE
-               ! If above Ekman depth, compute distance to surface                  
+               ! If above Ekman depth, compute distance to surface
                   weight_hek = SIN((kpp_2d_fields%hekman-dist_hek)/
      +                 kpp_2d_fields%hekman*3.14159/2.0)
                ENDIF
                kpp_2d_fields%ekvel(k)=weight_hek*ekvel_max
-               kpp_2d_fields%ekadv(k,1) = kpp_2d_fields%ekvel(k) * 
+               kpp_2d_fields%ekadv(k,1) = kpp_2d_fields%ekvel(k) *
      +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
      +              (kpp_2d_fields%X(k+1,1)-kpp_2d_fields%X(k-1,1))/2.0
                rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,1)
             ENDIF
-         ENDDO         
+         ENDDO
       ENDIF
 
       call tridmat(cu,cc,cl,rhs,Xo(:,1),NZ,kpp_2d_fields%X(:,1))
@@ -818,7 +828,7 @@ c     modify rhs for advections
 
          IF (kpp_const_fields%L_EKMAN_PUMP) THEN
             DO k=2,NZ
-               kpp_2d_fields%ekadv(k,n) = kpp_2d_fields%ekvel(k) * 
+               kpp_2d_fields%ekadv(k,n) = kpp_2d_fields%ekvel(k) *
      +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
      +              (kpp_2d_fields%X(k+1,n)-kpp_2d_fields%X(k-1,n))/2.0
                rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,n)
@@ -859,7 +869,7 @@ c     the correct units to be input as a flux correction via
 c     L_SFCORR_WITHZ (see above).
                kpp_2d_fields%scorr(k)=kpp_2d_fields%sinc_fcorr(k)/
      +              kpp_const_fields%dto
-            ENDDO                    
+            ENDDO
          ENDIF
 
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))

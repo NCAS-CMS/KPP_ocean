@@ -14,7 +14,7 @@ F90=gfortran
 # C Preprocessor
 CPP=cpp
 # Flags for the Fortran compiler
-F90_FLAGS=-cpp -fdefault-real-8 -ffixed-line-length-72 -I. -fopenmp
+F90_FLAGS=-cpp -fdefault-real-8 -ffixed-line-length-72 -I. 
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=
 # Oasis 2 static library
@@ -50,7 +50,7 @@ OASIS3_COUPLED_OBJS = $(OASIS3_COUPLED_FILES:.f=.o)
 CFS_COUPLED_OBJS = $(CFS_COUPLED_FILES:.f=.o)
 GFS_FORCED_OBJS = $(FORCED_OBJS)
 
-FORCED_LINK = $(F90) -fopenmp $(F90_FLAGS) $(FORCED_OBJS) -o ${EXECUTABLE} ${NCDF_INC} ${NCDF_LIB} -Wl,-stack_size,10000000
+FORCED_LINK = $(F90) $(F90_FLAGS) $(FORCED_OBJS) -o ${EXECUTABLE} ${NCDF_INC} ${NCDF_LIB}
 #FORCED_LINK = $(F90) $(F90_FLAGS) $(FORCED_OBJS) -o ${EXECUTABLE} ${NCDF_INC} ${NCDF_LIB}
 OASIS2_COUPLED_LINK = $(F90) $(OASIS2_COUPLED_OBJS) ${OASIS2_LIB} -o ${EXECUTABLE} ${MPI_LIB} ${MPI_INC} ${NCDF_INC} ${NCDF_LIB}
 OASIS3_COUPLED_LINK = $(F90) $(OASIS3_COUPLED_OBJS) ${OASIS3_LIB} -o ${EXECUTABLE} ${MPI_LIB} ${MPI_INC} ${NCDF_INC} ${NCDF_LIB}
@@ -63,7 +63,7 @@ GFS_FORCED_LINK = $(F90) $(GFS_FORCED_OBJS) -o $(EXECUTABLE) $(CFS_LIB) $(NCDF_I
 .f.o :
 	$(F90) $(F90_FLAGS) $(CPP_FLAGS) $(OASIS3_MOD_FLAG) $(NCDF_INC) $(MPI_INC) -c $< -o ${<:.f=.o}
 
-forced : CPP_FLAGS=$(F90_CPP_FLAG)-DOPENMP
+forced : CPP_FLAGS=$(F90_CPP_FLAG)
 forced : $(FORCED_OBJS) 
 	$(FORCED_LINK)
 

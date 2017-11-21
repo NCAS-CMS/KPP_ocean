@@ -88,7 +88,7 @@ c      include 'location.com'
 
       allocate(z_in(nz_in))
       allocate(var_in(NX,NY,nz_in))
-
+      WRITE(6,*) start,count
       status=NF_INQ_VARID(ncid,'zvel',varid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VAR_REAL(ncid,varid,z_in)
@@ -186,7 +186,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
       status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: read_init read initial temperature'      
+      WRITE(nuout,*) 'KPP: read_init read initial temperature'
 
       IF (L_INTERPINIT) THEN
          DO iy=1,ny
@@ -277,7 +277,7 @@ c
       ELSE
          write(nuerr,*) 'You have to interpolate'
       ENDIF
-      
+
 !     Read a global SST field and persist that as the climatological SST
 !     through the simulation
       IF (L_PERSIST_SST) THEN
@@ -923,7 +923,7 @@ c     NPK 29/06/08
      &       (FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
      +       (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
      &       (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
-         
+
          CALL determine_periodicity(L_PERIODIC_FCORR,
      +     fcorr_period,fcorr_time,first_timein,last_timein,
      +     ndays_upd_fcorr,'flux corrections','L_PERIODIC_FCORR')
@@ -1040,7 +1040,7 @@ c
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 
       ndays_upd_fcorr = ndtupdfcorr*kpp_const_fields%dto/
-     +     kpp_const_fields%spd      
+     +     kpp_const_fields%spd
       WRITE(6,*) ndays_upd_fcorr,kpp_const_fields%time,
      &     kpp_const_fields%dto,ndtupdfcorr
       fcorr_time=(ndays_upd_fcorr)*
@@ -1048,7 +1048,7 @@ c
      +     (ndtupdfcorr*NINT(kpp_const_fields%dto)))+
      &     (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdfcorr)
       WRITE(6,*) fcorr_time,last_timein
-      
+
       CALL determine_periodicity(L_PERIODIC_FCORR,
      +     fcorr_period,fcorr_time,first_timein,last_timein,
      +     ndays_upd_fcorr,'flux corrections','L_PERIODIC_FCORR')
@@ -1145,7 +1145,7 @@ c     include 'location.com'
 c
 c     Convert from REAL*4 to REAL*(default precision). Put all (NX,NY) points
 c     into one long array with dimension NPTS.
-c         
+c
       DO ix=1,NX
          DO iy=1,NY
             ipoint=(iy-1)*nx+ix
@@ -1158,7 +1158,7 @@ c
       RETURN
       END
 
-      
+
 
 !sfcorr added LH 24/05/2013
 
@@ -1222,7 +1222,7 @@ c     NPK 29/06/08
 
       CALL determine_periodicity(L_PERIODIC_SFCORR,
      +     sfcorr_period,sfcorr_time,first_timein,last_timein,
-     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')      
+     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')
 
       write(nuout,*) 'Reading salinity correction for time ',sfcorr_time
       start(3)=NINT((sfcorr_time-first_timein)*kpp_const_fields%spd/
@@ -1347,7 +1347,7 @@ c
 
        CALL determine_periodicity(L_PERIODIC_SFCORR,
      +     sfcorr_period,sfcorr_time,first_timein,last_timein,
-     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')      
+     +     ndays_upd_sfcorr,'salinity corrections','L_PERIODIC_SFCORR')
 
       WRITE(nuout,*) 'KPP: Reading salinity correction for time ',
      +     sfcorr_time
@@ -1535,7 +1535,7 @@ c      WRITE(nuout,*) 'Opened the sstin_file=',sstin_file
       ENDIF
 c      WRITE(6,*) kpp_const_fields%time,kpp_const_fields%dto,
 c     +     kpp_const_fields%spd
-      
+
       ndays_upd_sst = ndtupdsst*kpp_const_fields%dto/
      +     kpp_const_fields%spd
       CALL determine_periodicity(L_PERIODIC_CLIMSST,
@@ -1589,10 +1589,10 @@ c     ELSE
 c     sst_in(ix,iy,1)=var_in(ix,iy,1)
             sst_in(ix,iy,1)=var_in(ix,iy,1)-offset_sst
             IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
-            IF (.NOT. L_CLIMCURR) THEN
-               usf_in(ix,iy)=0.0
-               vsf_in(ix,iy)=0.0
-            ENDIF
+            !IF (.NOT. L_CLIMCURR) THEN
+            !   usf_in(ix,iy)=0.0
+            !   vsf_in(ix,iy)=0.0
+            !ENDIF
 c     ENDIF
          ENDDO
       ENDDO
@@ -1766,130 +1766,6 @@ c     longitude and time.
 
       status=NF_CLOSE(ncid)
       WRITE(nuout,*) 'KPP: Finished read_icein'
-      
-      RETURN
-      END
-
-      SUBROUTINE read_surface_currents(kpp_3d_fields,kpp_const_fields)
-
-      IMPLICIT NONE
-
-      INTEGER nuout,nuerr
-      PARAMETER (nuout=6,nuerr=0)
-
-#include <netcdf.inc>
-! Automatically includes paramter.inc!
-#include <kpp_3d_type.com>
-#include <constants.com>
-#include <couple.com>
-#include <times.com>
-#include <timocn.com>
-c#include <location.com>
-#include <sstclim.com>
-#include <currclim.com>
-
-      TYPE(kpp_3d_type) :: kpp_3d_fields
-      TYPE(kpp_const_type) :: kpp_const_fields
-
-      INTEGER curr_nx,curr_ny
-#ifdef COUPLE
-      PARAMETER(curr_nx=NX_GLOBE,curr_ny=NY_GLOBE)
-#else
-      PARAMETER(curr_nx=NX,curr_ny=NY)
-#endif
-      REAL sst_in(curr_nx,curr_ny,1),ice_in(curr_nx,curr_ny,1),
-     &     icedepth_in(curr_nx,curr_ny,1),
-     &     snowdepth_in(curr_nx,curr_ny,1),
-     &     usf_in(curr_nx,curr_ny),vsf_in(curr_nx,curr_ny),
-     &     max_ice,min_ice
-      REAL*4 var_in(curr_nx,curr_ny),currclim_time,first_timein,
-     &     time_in,latitudes(NY_GLOBE),longitudes(NX_GLOBE),last_timein
-      INTEGER count(3),start(3)
-      INTEGER ix,iy,status,ncid,varid,time_varid,time_dimid,ntime_file
-      CHARACTER(LEN=30) tmp_name
-
-      COMMON /save_sstin/ sst_in,ice_in,icedepth_in,snowdepth_in,
-     &     usf_in,vsf_in
-
-c     Set start and count to read a global field if coupled,
-c     or a regional field if not coupled.
-      count(1)=curr_nx
-      count(2)=curr_ny
-      count(3)=1
-      start(1)=1
-      start(2)=1
-      start(3)=1
-
-c     Open the netCDF file and find the correct time.
-      status=NF_OPEN(currin_file,0,ncid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-
-
-#ifndef COUPLE
-      CALL determine_netcdf_boundaries(ncid,'current climatology',
-     &     'latitude','longitude','t',kpp_3d_fields%dlon(1),
-     +     kpp_3d_fields%dlat(1),start(1),
-     &     start(2),first_timein,last_timein,time_varid)
-#else
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'t',time_varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMID(ncid,'t',time_dimid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIM(ncid,time_dimid,tmp_name,ntime_file)
-      status=NF_GET_VAR1_REAL(ncid,
-     &     time_varid,start(3),first_timein)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VAR1_REAL(ncid,
-     &     time_varid,ntime_file,last_timein)
-#endif
-
-      currclim_time=time+0.5*dto/spd*ndtupdsst
-      write(nuout,*) 'KPP: Reading climatological USF for time ',
-     &     currclim_time
-      start(3)=NINT((currclim_time-first_timein)*spd/(dto*ndtupdcurr))+1
-      status=NF_GET_VAR1_REAL(ncid,time_varid,start(3),time_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      IF (abs(time_in-currclim_time) .GT. 0.01*kpp_const_fields%dtsec/
-     +     kpp_const_fields%spd) THEN
-         write(nuerr,*) 'KPP: Cannot find time,',currclim_time,
-     &        'in curr concentration climatology file'
-         write(nuerr,*) 'KPP: The closest I came was',time_in
-         CALL MIXED_ABORT
-      ENDIF
-      write(nuout,*) 'KPP: Reading zonal currents from position',
-     &     start(3)
-!      WRITE(nuout,*) 'Start = ',start,'Count = ',count
-      status=NF_GET_VARA_REAL(ncid,varid,start,count
-     &     ,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: Zonal currents read from position',
-     &     start(3)
-
-      DO ix=1,curr_nx
-         DO iy=1,curr_ny
-            usf_in(ix,iy)=var_in(ix,iy)
-         ENDDO
-      ENDDO
-
-      status=NF_INQ_VARID(ncid,'vcurr',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: Reading climatological VSF for time ',
-     &     currclim_time
-      WRITE(nuout,*) 'KPP: Reading meridional currents from position',
-     &     start(3)
-      status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: Meridional currents read from position',
-     &     start(3)
-
-      DO ix=1,curr_nx
-         DO iy=1,curr_ny
-            vsf_in(ix,iy)=var_in(ix,iy)
-         ENDDO
-      ENDDO
-
-      status=NF_CLOSE(ncid)
 
       RETURN
       END
@@ -2261,6 +2137,126 @@ c
       RETURN
       END
 
+      SUBROUTINE read_currents(kpp_3D_fields,kpp_const_fields)
+        IMPLICIT NONE
+
+        INTEGER nuout,nuerr,start(4),count(4)
+        PARAMETER (nuout=6,nuerr=0)
+
+#include <netcdf.inc>
+#include <kpp_3d_type.com>
+#include <relax_3d.com>
+#include <times.com>
+#include <timocn.com>
+#include <constants.com>
+#include <ocn_paras.com>
+
+        TYPE(kpp_3d_type) :: kpp_3D_fields
+        TYPE(kpp_const_type) :: kpp_const_fields
+        REAL*4 ixx,jyy,first_timein,time_in,curr_time,ndays_upd_curr,
+     +    last_timein
+        CHARACTER(LEN=30) :: tmp_name
+        REAL*4, allocatable :: u_in(:,:,:,:),latitudes(:),
+     +    longitudes(:),z(:)
+        INTEGER :: curr_ncid, status, z_varid, z_dimid, nz_file,
+     +    u_varid, v_varid, ipoint, iy, ix, k, time_varid
+
+        allocate(u_in(NX,NY,NZP1,1))
+        allocate(longitudes(NX_GLOBE))
+        allocate(latitudes(NY_GLOBE))
+        allocate(z(NZP1))
+
+        WRITE(nuout,*) 'KPP: Trying to open currents input file ',
+     +     curr_file
+        status=NF_OPEN(curr_file,0,curr_ncid)
+        IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
+        WRITE(nuout,*) 'KPP: Opened currents input file ',curr_file
+        count=(/NX,NY,NZP1,1/)
+        start=(/1,1,1,1/)
+
+        status=NF_INQ_VARID(curr_ncid,'z',z_varid)
+        IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+        status=NF_INQ_DIMID(curr_ncid,'z',z_dimid)
+        IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+        status=NF_INQ_DIM(curr_ncid,z_dimid,tmp_name,nz_file)
+        IF (NZP1.ne.nz_file) THEN
+          WRITE(nuout,*) 'KPP: File for current climatology ',
+     +    'does not have the correct number of vertical levels.',
+     +    'It should have ',NZP1,' but instead has ',nz_file
+          CALL MIXED_ABORT
+        ELSE
+          status=NF_GET_VAR_REAL(curr_ncid,z_varid,z)
+          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+          WRITE(nuout,*) 'KPP: Read depths from currents climatology ',
+     +       ' input file'
+        ENDIF
+
+        CALL determine_netcdf_boundaries(curr_ncid,'currents clim',
+     +    'latitude','longitude','t',kpp_3d_fields%dlon(1),
+     +    kpp_3d_fields%dlat(1),start(1),start(2),first_timein,
+     +    last_timein,time_varid)
+
+        status=NF_INQ_VARID(curr_ncid,'uvel',u_varid)
+        IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+
+        ndays_upd_curr = ndtupdcurr*kpp_const_fields%dto/
+     +    kpp_const_fields%spd
+        curr_time = ndays_upd_curr * (
+     +    FLOOR(kpp_const_fields%time)*NINT(kpp_const_fields%spd)/
+     +    (ndtupdcurr*NINT(kpp_const_fields%dto)))+
+     +    (0.5*kpp_const_fields%dto/kpp_const_fields%spd*ndtupdcurr)
+
+        WRITE(6,*) 'curr_time = ',curr_time
+        CALL determine_periodicity(L_PERIODIC_CURR,curr_period,
+     +    curr_time,first_timein,last_timein,ndays_upd_curr,
+     +    'ocean currents','L_PERIODIC_CURR')
+
+        WRITE(nuout,*) 'KPP: Reading currents for time ',curr_time
+        start(4)=NINT((curr_time-first_timein)*kpp_const_fields%spd/
+     +    (kpp_const_fields%dto*ndtupdcurr))+1
+        WRITE(nuout,*) 'KPP: Reading currents from position ',start(4)
+        status=NF_GET_VAR1_REAL(curr_ncid,time_varid,start(4),time_in)
+        IF(status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+        IF (ABS(time_in-curr_time) .GT. 0.01*kpp_const_fields%dtsec/
+     +    kpp_const_fields%spd) THEN
+          WRITE(nuerr,*) 'KPP: Cannot find time ',curr_time,
+     +        'in current climatology input file.'
+          WRITE(nuerr,*) 'KPP: The closest that I came was ',time_in
+          CALL MIXED_ABORT
+        ENDIF
+        status=NF_GET_VARA_REAL(curr_ncid,u_varid,start,count,u_in)
+
+        DO ix=1,NX
+          DO iy=1,NY
+            ipoint = (iy-1)*nx+ix
+            DO k=1,NZP1
+              kpp_3d_fields%u_clim(ipoint,k) = u_in(ix,iy,k,1)
+            ENDDO
+          ENDDO
+        ENDDO
+
+        status=NF_INQ_VARID(curr_ncid,'vvel',v_varid)
+        IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+        status=NF_GET_VARA_REAL(curr_ncid,v_varid,start,count,u_in)
+
+        DO ix=1,NX
+          DO iy=1,NY
+            ipoint = (iy-1)*nx+ix
+            DO k=1,NZP1
+              kpp_3d_fields%v_clim(ipoint,k) = u_in(ix,iy,k,1)
+            ENDDO
+          ENDDO
+        ENDDO
+
+        status=NF_CLOSE(curr_ncid)
+        deallocate(u_in,longitudes,latitudes,z)
+
+        WRITE(nuout,*) 'KPP: Current climatology read from '//
+     +    'position',start(4)
+
+      RETURN
+      END Subroutine
+
       SUBROUTINE determine_netcdf_boundaries_2d(ncid,file_description,
      &     latitude_name,longitude_name,start_lon,start_lat,offset_lon,
      &     offset_lat)
@@ -2269,7 +2265,7 @@ c
 
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-      
+
 #include <parameter.inc>
 #include <netcdf.inc>
 
@@ -2326,17 +2322,17 @@ c
          iy=iy+1
       ENDDO
       offset_lat=iy
-     
-      RETURN 
+
+      RETURN
       END
-      
+
 
       SUBROUTINE determine_netcdf_boundaries(ncid,file_description,
      &     latitude_name,longitude_name,time_name,start_lon,start_lat,
      &     offset_lon,offset_lat,first_time,last_time,time_varid)
 
       IMPLICIT NONE
-      
+
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
@@ -2346,7 +2342,7 @@ c
       INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
      &     lat_dimid,lat_varid,time_dimid,time_varid,ix,iy,status,
      &     ntime_file
-      REAL start_lon,start_lat,first_time,last_time      
+      REAL start_lon,start_lat,first_time,last_time
       CHARACTER(*) file_description,latitude_name,longitude_name,
      &     time_name
       CHARACTER(LEN=30) tmp_name
@@ -2379,7 +2375,7 @@ c     Find the first time and last time
       INTEGER nuout,nuerr
       CHARACTER*40 file_string,periodic_string
       PARAMETER(nuout=6,nuerr=0)
-      
+
 #include <parameter.inc>
 #include <netcdf.inc>
 
@@ -2417,6 +2413,6 @@ c     Find the first time and last time
             CALL MIXED_ABORT
          ENDIF
       ENDIF
-      
+
       RETURN
       END

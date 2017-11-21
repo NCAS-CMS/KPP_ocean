@@ -14,7 +14,7 @@ c     at a specified point.
       REAL :: temp
       LOGICAL :: logical_temp
 
-      DO i=1,NZP1        
+      DO i=1,NZP1
          !WRITE(6,*) i
          DO j=1,NVEL
             temp=kpp_fields_3d%U(point,i,j)
@@ -43,7 +43,7 @@ c     at a specified point.
          temp=kpp_fields_3d%sinc_fcorr(point,i)
          kpp_fields_2d%sinc_fcorr(i)=temp
          temp=kpp_fields_3d%fcorr_withz(point,i)
-         kpp_fields_2d%fcorr_withz(i)=temp      
+         kpp_fields_2d%fcorr_withz(i)=temp
          temp=kpp_fields_3d%sfcorr_withz(point,i)
          kpp_fields_2d%sfcorr_withz(i)=temp
          temp=kpp_fields_3d%sal_clim(point,i) !Not updated within physics
@@ -52,6 +52,10 @@ c     at a specified point.
          kpp_fields_2d%ocnT_clim(i)=temp
          temp=kpp_fields_3d%ocnTcorr(point,i)
          kpp_fields_2d%ocnTcorr(i)=temp
+         temp=kpp_fields_3d%u_clim(point,i)  ! Not updated within physics
+         kpp_fields_2d%u_clim(i)=temp
+         temp=kpp_fields_3d%v_clim(point,i)  ! Not updated within physics
+         kpp_fields_2d%v_clim(i)=temp
          IF (i .le. NZ) THEN
             temp=kpp_fields_3d%dbloc(point,i)
             kpp_fields_2d%dbloc(i)=temp
@@ -70,7 +74,7 @@ c     at a specified point.
          kpp_fields_2d%rho(i)=temp
          !WRITE(6,*) 'cp'
          temp=kpp_fields_3d%cp(point,i)
-         kpp_fields_2d%cp(i)=temp         
+         kpp_fields_2d%cp(i)=temp
          IF (i .gt. 0) THEN
             !WRITE(6,*) 'buoy'
             temp=kpp_fields_3d%buoy(point,i)
@@ -106,7 +110,7 @@ c     at a specified point.
          ENDIF
          !WRITE(6,*) 'Finished for i =',i
       ENDDO
-      
+
       DO i=1,2
          k=kpp_fields_3d%nmodeadv(point,i) ! Not updated within physics
          kpp_fields_2d%nmodeadv(i)=k
@@ -128,7 +132,7 @@ c     at a specified point.
       ENDDO
 
       temp=kpp_fields_3d%ocdepth(point) !Not updated within physics
-      kpp_fields_2d%ocdepth=temp      
+      kpp_fields_2d%ocdepth=temp
       logical_temp=kpp_fields_3d%L_OCEAN(point) !Not updated within physics
       kpp_fields_2d%L_OCEAN=logical_temp
       logical_temp=kpp_fields_3d%L_INITFLAG(point)
@@ -148,6 +152,8 @@ c     at a specified point.
       kpp_fields_2d%relax_sal=temp
       temp=kpp_fields_3d%relax_ocnt(point) !Not updated within physics
       kpp_fields_2d%relax_ocnt=temp
+      temp=kpp_fields_3d%relax_curr(point) !Not updated within physics
+      kpp_fields_2d%relax_curr=temp
 
       temp=kpp_fields_3d%hmix(point)
       kpp_fields_2d%hmix=temp
@@ -174,7 +180,7 @@ c     at a specified point.
       kpp_fields_2d%jerlov=i
 
       temp=kpp_fields_3d%dlat(point) !Not updated within physics
-      kpp_fields_2d%dlat=temp          
+      kpp_fields_2d%dlat=temp
       temp=kpp_fields_3d%dlon(point) !Not updated within physics
       kpp_fields_2d%dlon=temp
 
@@ -186,7 +192,7 @@ c     at a specified point.
       IMPLICIT NONE
 
 c     Accepts a 2D and a 3D variable of the KPP derived type.
-c     Returns the 3D variable, updated at a specified point with the 
+c     Returns the 3D variable, updated at a specified point with the
 c     values from the 2D variable.
 
 #include <kpp_3d_type.com>
@@ -232,7 +238,7 @@ c     values from the 2D variable.
          kpp_fields_3d%sfcorr_withz(point,i)=temp
          temp=kpp_fields_2d%ocnTcorr(i)
          kpp_fields_3d%ocnTcorr(point,i)=temp
-         IF (i.le.NZ) THEN 
+         IF (i.le.NZ) THEN
             temp=kpp_fields_2d%dbloc(i)
             kpp_fields_3d%dbloc(point,i)=temp
          ENDIF
@@ -249,7 +255,7 @@ c     values from the 2D variable.
          temp=kpp_fields_2d%rho(i)
          kpp_fields_3d%rho(point,i)=temp
          temp=kpp_fields_2d%cp(i)
-         kpp_fields_3d%cp(point,i)=temp         
+         kpp_fields_3d%cp(point,i)=temp
          IF (i .gt. 0) THEN
             temp=kpp_fields_2d%buoy(i)
             kpp_fields_3d%buoy(point,i)=temp
@@ -272,8 +278,8 @@ c     values from the 2D variable.
             DO j=1,NSCLR
                temp=kpp_fields_2d%wXNT(i,j)
                kpp_fields_3d%wXNT(point,i,j)=temp
-            ENDDO            
-            IF (i .gt. 0) THEN 
+            ENDDO
+            IF (i .gt. 0) THEN
                temp=kpp_fields_2d%ghat(i)
                kpp_fields_3d%ghat(point,i)=temp
             ENDIF
@@ -283,7 +289,7 @@ c     values from the 2D variable.
             kpp_fields_3d%swdk_opt(point,i)=temp
          ENDIF
       ENDDO
-      
+
       logical_temp=kpp_fields_2d%L_INITFLAG
       kpp_fields_3d%L_INITFLAG(point)=logical_temp
 
@@ -353,7 +359,6 @@ c     values from the 2D variable.
 #include <initialcon.com>
 #include <ocn_advec.com>
 #include <relax_3d.com>
-#include <currclim.com>
 #include <couple.com>
 
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
@@ -395,6 +400,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_RESTART=L_RESTART
       kpp_const_fields%L_RELAX_SAL=L_RELAX_SAL
       kpp_const_fields%L_RELAX_OCNT=L_RELAX_OCNT
+      kpp_const_fields%L_RELAX_CURR=L_RELAX_CURR
       kpp_const_fields%L_DAMP_CURR=L_DAMP_CURR
       kpp_const_fields%L_SLAB=L_SLAB
       kpp_const_fields%L_COLUMBIA_LAND=L_COLUMBIA_LAND
@@ -404,6 +410,3 @@ c     values from the 2D variable.
 
       RETURN
       END
-      
-      
-      

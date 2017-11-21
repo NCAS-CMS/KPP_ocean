@@ -39,7 +39,7 @@ c      USE kpp_type_mod
 #endif /*COUPLE*/
 
 #include <bottomclim.com>
-#include <currclim.com>
+!#include <currclim.com>
 #include <couple.com>
 #include <fcorr_in.com>
 #include <sfcorr_in.com>
@@ -91,7 +91,7 @@ c into the main program.  NPK 17/08/10 - R3
 #define omp_nthreads 36
 #elif defined ARCHER
 #define omp_nthreads 24
-#else 
+#else
 #define omp_nthreads 24
 #endif
          nthreads=omp_nthreads
@@ -244,15 +244,25 @@ c
             WRITE(nuout,*) 'KPP: Called read_icein, ntime =',
      +           kpp_const_fields%ntime
          ENDIF
-         IF (L_UPD_CLIMCURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
-            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
-            CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
-            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-            WRITE(nuout,*) 'KPP: Called read_surface_currents, ntime =',
-     +           kpp_const_fields%ntime
+         IF (L_UPD_CURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
+           CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+           CALL read_currents(kpp_3d_fields,kpp_const_fields)
+           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+           CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+           WRITE(nuout,*) 'KPP: Called read_currents, ntime =',
+     +            kpp_const_fields%ntime
          ENDIF
+
+!         IF (L_UPD_CLIMCURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
+!            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+!            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+!            CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
+!            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+!            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+!            WRITE(nuout,*) 'KPP: Called read_surface_currents, ntime =',
+!     +           kpp_const_fields%ntime
+!         ENDIF
          IF (L_UPD_FCORR .AND. MOD(ntime-1,ndtupdfcorr) .EQ. 0 .AND.
      +        .NOT. L_INTERP_FCORR) THEN
             IF (L_FCORR_WITHZ) THEN
@@ -278,7 +288,7 @@ c
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL interp_fcorr(kpp_3d_fields,kpp_const_fields)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
-            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)            
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
          ENDIF
 !added SFCORR LH 24/05/2013
          IF (L_UPD_SFCORR .AND. MOD(ntime-1,ndtupdsfcorr) .EQ. 0 .AND.
@@ -300,14 +310,14 @@ c
                WRITE(nuout,*) 'KPP: Called read_sfcorr, ntime =',
      +              kpp_const_fields%ntime
             ENDIF
-         ELSEIF (L_UPD_SFCORR .AND. L_INTERP_SFCORR .AND. 
+         ELSEIF (L_UPD_SFCORR .AND. L_INTERP_SFCORR .AND.
      +           MOD(ntime-1,ndt_interp_sfcorr).EQ.0) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
             CALL interp_sfcorr(kpp_3d_fields,kpp_const_fields)
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-         ENDIF                       
+         ENDIF
          IF (L_UPD_BOTTOM_TEMP .AND. MOD(ntime-1,ndtupdbottom) .EQ. 0)
      +        THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
@@ -373,8 +383,10 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 !$OMP& SHARED(kpp_timer,ocnT_file,sal_file,ifirst,jfirst)
 !$OMP& PRIVATE(trans_timer_name,phys_timer_name,tid)
          tid=OMP_GET_THREAD_NUM()
+!$OMP CRITICAL
          WRITE(trans_timer_name,'(A17,I2)') 'KPP 3D/2D thread ',tid
          WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',tid
+!$OMP END CRITICAL
 !$OMP DO SCHEDULE(dynamic)
 #else
          WRITE(trans_timer_name,'(A19)') 'KPP 3D/2D thread 01'
@@ -627,7 +639,7 @@ c     then close the current files and create new ones.
 c     Updated to take advantage of new ndt_per_file option.
 c     NPK 10/6/09 - R2
 c
-         IF (MOD(ntime,ndt_per_file) .eq.0 .AND. 
+         IF (MOD(ntime,ndt_per_file) .eq.0 .AND.
      +      ntime.NE.nend*ndtocn)THEN
             day_out=day_out+NINT(kpp_const_fields%dtsec/FLOAT(ndtocn)
      +           *FLOAT(ndt_per_file)/kpp_const_fields%spd)
@@ -857,7 +869,7 @@ c      USE kpp_type_mod
 #include <sfcorr_in.com>
 #include <relax_3d.com>
 #include <bottomclim.com>
-#include <currclim.com>
+!#include <currclim.com>
 
 *     Input/output
       TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
@@ -889,7 +901,7 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
-     +     L_RELAX_OCNT,relax_ocnt_in
+     +     L_RELAX_OCNT,relax_ocnt_in, L_RELAX_CURR, relax_curr_in
       NAMELIST/NAME_PARAS/ paras_file,L_JERLOV
       NAMELIST/NAME_OUTPUT/ ndt_varout_inst,ndt_singout_inst,
      +     output_file,L_RESTARTW,restart_outfile,ndt_varout_mean,
@@ -911,12 +923,13 @@ c     +     bottom_temp(:)
      &     L_FCORR_NSOL,L_FCORR_NSOL_FILE,fcorr_nsol_file,
      &     fcorr_nsol_coeff,max_ekman_depth,max_ekadv_depth,
      &     L_INTERP_FCORR,ndt_interp_fcorr,L_INTERP_SFCORR,
-     &     ndt_interp_sfcorr
+     &     ndt_interp_sfcorr,L_UPD_CURR,L_PERIODIC_CURR,curr_file,
+     &     curr_period,ndtupdcurr
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
      &     L_CLIM_ICE_DEPTH,L_CLIM_SNOW_ON_ICE,L_OUTKELVIN,
-     &     L_COUPLE_CURRENTS,currin_file,L_CLIMCURR,L_UPD_CLIMCURR,
+     &     L_COUPLE_CURRENTS,currin_file,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
      &     climsst_period,climice_period,L_DIST_RUNOFF
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
@@ -1100,7 +1113,7 @@ c     Initialize and read the times namelist
       L_UPD_CLIMICE=.FALSE.
       L_CLIMICE=.FALSE.
       L_CLIMSST=.FALSE.
-      L_CLIMCURR=.FALSE.
+!      L_CLIMCURR=.FALSE.
       L_BAD_ICE_DEPTH=.FALSE.
       L_DIST_RUNOFF=.FALSE.
       ifirst=1
@@ -1130,8 +1143,10 @@ c     Initialize and read the advection namelist
       DO iy=1,ny
          relax_sst_in(iy)=0.0
          relax_sal_in(iy)=0.0
+         relax_curr_in(iy)=0.0
       ENDDO
       READ(75,NAME_ADVEC)
+      WRITE(6,*) 'relax_curr_in = ',relax_curr_in
       IF (L_ADVECT) THEN
          CALL init_advect(kpp_3d_fields)
       ELSE
@@ -1142,7 +1157,8 @@ c     Initialize and read the advection namelist
          write(nuout,*) 'KPP : No advection has been specified'
       ENDIF
       write(nuout,*) 'KPP : Read Namelist ADVEC'
-      IF (L_RELAX_SST .OR. L_RELAX_SAL .OR. L_RELAX_OCNT) THEN
+      IF (L_RELAX_SST .OR. L_RELAX_SAL .OR. L_RELAX_OCNT
+     +   .OR. L_RELAX_CURR) THEN
          CALL init_relax(kpp_3d_fields,kpp_const_fields)
       ENDIF
 c     Initialize and read the paras namelist
@@ -1215,7 +1231,7 @@ c     Initialize and read the forcing namelist
      &           //'value for the coefficient using (fcorr_nsol_coeff).'
             CALL MIXED_ABORT
          ELSE
-!     Set value of fcorr_nsol at all points to the specified value of 
+!     Set value of fcorr_nsol at all points to the specified value of
 !     fcorr_nsol_coeff.
             kpp_3d_fields%fcorr_nsol_coeff(:)=fcorr_nsol_coeff
          ENDIF
@@ -1227,7 +1243,7 @@ c     Initialize and read the forcing namelist
      &        //'neither.'
          CALL MIXED_ABORT
       ENDIF
-      
+
       IF (L_FCORR_NSOL .AND. .NOT. L_CLIMSST) THEN
          WRITE(nuerr,*) 'KPP: If you use relax SST by constraining '
      &        //'the non-solar heat flux (L_FCORR_NSOL), you must '
@@ -1258,8 +1274,6 @@ c      ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
       IF (L_CLIMICE) CALL read_icein(kpp_3d_fields,kpp_const_fields)
-      IF (L_CLIMCURR)
-     +     CALL read_surface_currents(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
@@ -1690,6 +1704,18 @@ c
      +              kpp_const_fields%spd)
             ENDDO
          ENDIF
+         IF (L_RELAX_CURR .and. relax_curr_in(iy) .EQ. 0.0) THEN
+            DO ix=1,nx
+              ipoint=(iy-1)*nx+ix
+              kpp_3d_fields%relax_curr(ipoint)=0.0
+            ENDDO
+         ELSE
+            DO ix=1,nx
+              ipoint=(iy-1)*nx+ix
+              kpp_3d_fields%relax_curr(ipoint)=1./(relax_curr_in(iy)*
+     +              kpp_const_fields%spd)
+            ENDDO
+         ENDIF
       ENDDO
       CALL upd_sst0(kpp_3d_fields)
       DO iy=1,ny
@@ -1913,7 +1939,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       INTEGER prev_time,next_time,true_time
       REAL prev_weight,next_weight,ndays_upd_fcorr
       REAL, allocatable :: prev_fcorr(:,:),next_fcorr(:,:)
-      
+
       IF (L_FCORR_WITHZ) THEN
          allocate(prev_fcorr(NPTS,NZP1))
          allocate(next_fcorr(NPTS,NZP1))
@@ -1956,18 +1982,18 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       kpp_const_fields%time=next_time
       IF (L_FCORR_WITHZ) THEN
          CALL READ_FCORRWITHZ(kpp_3d_fields,kpp_const_fields)
-         next_fcorr=kpp_3d_fields%fcorr_withz         
+         next_fcorr=kpp_3d_fields%fcorr_withz
          kpp_3d_fields%fcorr_withz=next_fcorr*next_weight+
      +        prev_fcorr*prev_weight
       ELSEIF (L_FCORR) THEN
          CALL READ_FCORR(kpp_3d_fields,kpp_const_fields)
-         next_fcorr(:,1)=kpp_3d_fields%fcorr        
+         next_fcorr(:,1)=kpp_3d_fields%fcorr
          kpp_3d_fields%fcorr=next_fcorr(:,1)*next_weight+
      +        prev_fcorr(:,1)*prev_weight
       ENDIF
 
       kpp_const_fields%time=true_time
-      
+
       RETURN
       END
 
@@ -1981,7 +2007,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       REAL prev_weight,next_weight,ndays_upd_sfcorr
       REAL, allocatable :: prev_sfcorr(:,:),next_sfcorr(:,:)
-      
+
       IF (L_SFCORR_WITHZ) THEN
          allocate(prev_sfcorr(NPTS,NZP1))
          allocate(next_sfcorr(NPTS,NZP1))
@@ -2024,20 +2050,20 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       kpp_const_fields%time=next_time
       IF (L_SFCORR_WITHZ) THEN
          CALL READ_SFCORRWITHZ(kpp_3d_fields,kpp_const_fields)
-         next_sfcorr=kpp_3d_fields%sfcorr_withz         
+         next_sfcorr=kpp_3d_fields%sfcorr_withz
          kpp_3d_fields%sfcorr_withz=next_sfcorr*next_weight+
      +        prev_sfcorr*prev_weight
       ELSEIF (L_SFCORR) THEN
          CALL READ_SFCORR(kpp_3d_fields,kpp_const_fields)
-         next_sfcorr(:,1)=kpp_3d_fields%sfcorr        
+         next_sfcorr(:,1)=kpp_3d_fields%sfcorr
          kpp_3d_fields%sfcorr=next_sfcorr(:,1)*next_weight+
      +        prev_sfcorr(:,1)*prev_weight
       ENDIF
 
       kpp_const_fields%time=true_time
-      
+
       RETURN
-      END  
+      END
 
       SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
