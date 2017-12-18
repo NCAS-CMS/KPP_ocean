@@ -52,6 +52,7 @@ c      USE kpp_type_mod
 #include <initialcon.com>
 #include <sstclim.com>
 #include <ocn_advec.com>
+#include <flx_in.com>
 
 * Local variables
 #ifdef NOALLOC
@@ -201,7 +202,9 @@ c
 #else
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',1)
-            CALL fluxes(kpp_3d_fields,kpp_const_fields,kpp_timer)
+            IF (L_FLUXDATA .AND. L_UPD_FLUXDATA) THEN
+               CALL fluxes(kpp_3d_fields,kpp_const_fields,kpp_timer)
+            ENDIF
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
 #endif /*COUPLE*/
@@ -924,7 +927,7 @@ c     +     bottom_temp(:)
      &     fcorr_nsol_coeff,max_ekman_depth,max_ekadv_depth,
      &     L_INTERP_FCORR,ndt_interp_fcorr,L_INTERP_SFCORR,
      &     ndt_interp_sfcorr,L_UPD_CURR,L_PERIODIC_CURR,curr_file,
-     &     curr_period,ndtupdcurr
+     &     curr_period,ndtupdcurr,L_UPD_FLUXDATA
       NAMELIST/NAME_COUPLE/ L_COUPLE,ifirst,ilast,jfirst,jlast,
      &     L_CLIMSST,sstin_file,L_UPD_CLIMSST,ndtupdsst,L_CPLWGHT,
      &     cplwght_file,icein_file,L_CLIMICE,L_UPD_CLIMICE,ndtupdice,
@@ -1170,6 +1173,7 @@ c     Initialize and read the paras namelist
 
 c     Initialize and read the forcing namelist
       L_FLUXDATA=.FALSE.
+      L_UPD_FLUXDATA=.TRUE.
       L_FCORR_WITHZ=.FALSE.
       L_FCORR=.FALSE.
       L_UPD_FCORR=.FALSE.

@@ -200,8 +200,12 @@ c      WRITE(6,*) 'L_REST=',L_REST
             DO jy=jfirst,jlast
                ipt=(jy-jfirst)*nx+(ix-ifirst)+1
                ipt_globe=(jy-1)*NX_GLOBE+ix
-               IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
-     &              kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
+               IF (kpp_3d_fields%L_OCEAN(ipt) 
+#ifdef COUPLE
+     &              .and. kpp_3d_fields%cplwght(ipt_globe) .gt. 0) THEN
+#else
+     &              ) THEN
+#endif
                   kpp_3d_fields%fcorr_nsol(ipt) = 
      &                 kpp_3d_fields%fcorr_nsol_coeff(ipt)*
      &                 (kpp_3d_fields%X(ipt,1,1)-SST_in(ix,jy,1))
