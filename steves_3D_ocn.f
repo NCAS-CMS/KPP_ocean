@@ -202,7 +202,8 @@ c
 #else
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',1)
-            IF (L_FLUXDATA .AND. L_UPD_FLUXDATA) THEN
+            IF ((L_FLUXDATA .AND. L_UPD_FLUXDATA) .or. 
+     &           (L_FLUXDATA .AND. kpp_const_fields%ntime .eq. 1)) THEN
                CALL fluxes(kpp_3d_fields,kpp_const_fields,kpp_timer)
             ENDIF
             CALL KPP_TIMER_TIME(kpp_timer,'Update surface fluxes',0)
