@@ -315,27 +315,27 @@ c
             IF (kpp_3d_fields%cplwght(ipoint_globe) .LT. -1e-10) THEN              
 c     Point is outside the coupling domain; set to SST climatology
                SST(ipoint_globe) = SST_in(ix,jy,1)
-               IF (.NOT. L_CLIMCURR) THEN
-                  SURF_CURR_X(ipoint_globe)=0.
-                  SURF_CURR_Y(ipoint_globe)=0.
-               ELSE
-                  SURF_CURR_X(ipoint_globe)=usf_in(ix,jy)
-                  SURF_CURR_Y(ipoint_globe)=vsf_in(ix,jy)
-               ENDIF
+c               IF (.NOT. L_CLIMCURR) THEN
+               SURF_CURR_X(ipoint_globe)=0.
+               SURF_CURR_Y(ipoint_globe)=0.
+c               ELSE
+c                 SURF_CURR_X(ipoint_globe)=usf_in(ix,jy)
+c                 SURF_CURR_Y(ipoint_globe)=vsf_in(ix,jy)
+c               ENDIF
             ELSE
 c     Point is inside the coupling domain; set to weighted value
                ipoint=(jy-jfirst)*nx+(ix-ifirst)+1             
                SST(ipoint_globe) = kpp_3d_fields%X(ipoint,1,1)*
      +              kpp_3d_fields%cplwght(ipoint_globe)+SST_in(ix,jy,1)*
      +              (1-kpp_3d_fields%cplwght(ipoint_globe))
-               IF (L_COUPLE_CURRENTS .AND. .NOT. L_CLIMCURR) THEN
+               IF (L_COUPLE_CURRENTS) THEN
                   SURF_CURR_X(ipoint_globe)=kpp_3d_fields%U(ipoint,1,1)*
      +                 kpp_3d_fields%cplwght(ipoint_globe)
                   SURF_CURR_Y(ipoint_globe)=kpp_3d_fields%U(ipoint,1,2)*
      +                 kpp_3d_fields%cplwght(ipoint_globe)
-               ELSEIF (L_COUPLE_CURRENTS .AND. L_CLIMCURR) THEN
-                  SURF_CURR_X(ipoint_globe)=usf_in(ix,jy)
-                  SURF_CURR_Y(ipoint_globe)=vsf_in(ix,jy)
+c               ELSEIF (L_COUPLE_CURRENTS .AND. L_CLIMCURR) THEN
+c                  SURF_CURR_X(ipoint_globe)=usf_in(ix,jy)
+c                  SURF_CURR_Y(ipoint_globe)=vsf_in(ix,jy)
                ENDIF
             ENDIF
             ice(ipoint_globe)=ice_in(ix,jy,1)
