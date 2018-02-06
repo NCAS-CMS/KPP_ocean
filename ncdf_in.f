@@ -280,7 +280,7 @@ c
 
 !     Read a global SST field and persist that as the climatological SST
 !     through the simulation
-      IF (L_PERSIST_SST) THEN
+      IF (L_PERSIST_SST .or. L_PERSIST_SST_ANOM) THEN
          deallocate(var_in)
          allocate(var_in(NX_GLOBE,NY_GLOBE,1))
          start(:) = 1
@@ -1465,6 +1465,7 @@ c      include 'location.com'
       include 'times.com'
       include 'timocn.com'
       include 'sstclim.com'
+      include 'initialcon.com'
 c      include 'location.com'
 #include <currclim.com>
 
@@ -1576,8 +1577,16 @@ c
       END DO
 
       DO ix=1,sst_nx
-         DO iy=1,sst_ny
-
+	DO iy=1,sst_ny
+	    IF (L_PERSIST_SST_ANOM) THEN
+     		sst_in(ix,iy,1) = kpp_3d_fields%anom_sst(ix,iy) + 
+     &			var_in(ix,iy,1) - offset_sst
+	    ELSE
+		sst_in(ix,iy,1) = var_in(ix,iy,1)-offset_sst
+	    ENDIF
+	    IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
+	 ENDDO
+      ENDDO
 c     This is for the aqua-planet version; it sets the first
 c     two rows as land points.  Comment out if not doing aqua-planet.
 c     IF ((iy .LE. 2) .OR. (iy .GE. NY_GLOBE-1)) THEN
@@ -1587,16 +1596,11 @@ c     usf_in(ix,iy)=0.0
 c     vsf_in(ix,iy)=0.0
 c     ELSE
 c     sst_in(ix,iy,1)=var_in(ix,iy,1)
-            sst_in(ix,iy,1)=var_in(ix,iy,1)-offset_sst
-            IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
-            !IF (.NOT. L_CLIMCURR) THEN
+               !IF (.NOT. L_CLIMCURR) THEN
             !   usf_in(ix,iy)=0.0
             !   vsf_in(ix,iy)=0.0
             !ENDIF
 c     ENDIF
-         ENDDO
-      ENDDO
-
       WRITE(nuout,*) 'KPP: Finished read_sstin'
 
       END

@@ -878,6 +878,8 @@ c      USE kpp_type_mod
 *     Input/output
       TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
+      REAL sst_in(NX_GLOBE,NY_GLOBE)
+      COMMON /save_sstin/ sst_in
 
 *     Outputs
 c      REAL,intent(out),allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),
@@ -901,7 +903,7 @@ c     +     bottom_temp(:)
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
      &     L_SLAB,L_COLUMBIA_LAND,slab_depth
       NAMELIST/NAME_START/ L_INITDATA,initdata_file,L_INTERPINIT,
-     &     L_RESTART,restart_infile,L_PERSIST_SST
+     &     L_RESTART,restart_infile,L_PERSIST_SST,L_PERSIST_SST_ANOM
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
@@ -1066,6 +1068,8 @@ c     Initialize and read the start name list
       L_INITDATA= .TRUE.
       L_INTERPINIT= .TRUE.
       L_RESTART= .FALSE.
+      L_PERSIST_SST = .FALSE.
+      L_PERSIST_SST_ANOM = .FALSE.
       WRITE(restart_infile,*) 'fort.30'
       READ(75,NAME_START)
       write(nuout,*) 'KPP : Read Namelist START'
@@ -1277,7 +1281,16 @@ c      ENDIF
          kpp_const_fields%dt_uvdamp=10000
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
-      IF (L_CLIMSST) CALL read_sstin(kpp_3d_fields,kpp_const_fields)
+      IF (L_CLIMSST .and. L_PERSIST_SST) THEN
+	WRITE(6,*) 'Persisting the initial SST (full field) is incompatible',
+     &	' with reading SST climatologies.'
+	CALL MIXED_ABORT 
+      ELSEIF (L_CLIMSST) THEN
+	CALL read_sstin(kpp_3d_fields,kpp_const_fields)
+c	If persisting the initial SST anomaly, then store initial clim SST
+c	so that it doesn't get overwritten when initial conditions are read
+	IF (L_PERSIST_SST_ANOM) kpp_3d_fields%clim_sst = sst_in
+      ENDIF
       IF (L_CLIMICE) CALL read_icein(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
@@ -1310,6 +1323,17 @@ c      ENDIF
      +     .AND. .NOT. L_RELAX_OCNT) THEN
          CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
          CALL read_salinity(kpp_3d_fields,kpp_const_fields)
+      ENDIF
+c    Compute initial SST anomaly from climatology
+      IF (L_PERSIST_SST_ANOM) THEN
+	IF (L_CLIMSST) THEN
+	   kpp_3d_fields%anom_sst = sst_in-kpp_3d_fields%clim_sst
+        ELSE
+	   WRITE(6,*) 'Persisting the initial SST anomaly',
+     &     ' (L_PERIST_SST_ANOM) reading climatological SST ',
+     &	   ' (L_CLIMSST).'
+	   CALL MIXED_ABORT
+	ENDIF
       ENDIF
 c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
 c     before the first time in the input file.
@@ -1669,7 +1693,6 @@ c
       TYPE(kpp_const_type) :: kpp_const_fields
 
       REAL sst_in(NX_GLOBE,NY_GLOBE,1)
-
       COMMON /save_sstin/ sst_in
 
       DO iy=1,ny
