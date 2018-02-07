@@ -878,8 +878,8 @@ c      USE kpp_type_mod
 *     Input/output
       TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
-      REAL sst_in(NX_GLOBE,NY_GLOBE)
-      COMMON /save_sstin/ sst_in
+      REAL sst_in(NX_GLOBE,NY_GLOBE), ice_in(NX_GLOBE,NY_GLOBE)
+      COMMON /save_sstin/ sst_in,ice_in
 
 *     Outputs
 c      REAL,intent(out),allocatable :: VEC_mean(:,:,:),SCLR_mean(:,:),
@@ -903,7 +903,8 @@ c     +     bottom_temp(:)
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
      &     L_SLAB,L_COLUMBIA_LAND,slab_depth
       NAMELIST/NAME_START/ L_INITDATA,initdata_file,L_INTERPINIT,
-     &     L_RESTART,restart_infile,L_PERSIST_SST,L_PERSIST_SST_ANOM
+     &     L_RESTART,restart_infile,L_PERSIST_SST,L_PERSIST_SST_ANOM,
+     &     L_PERSIST_ICE,L_PERSIST_ICE_ANOM
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
@@ -1070,6 +1071,8 @@ c     Initialize and read the start name list
       L_RESTART= .FALSE.
       L_PERSIST_SST = .FALSE.
       L_PERSIST_SST_ANOM = .FALSE.
+      L_PERSIST_ICE = .FALSE.
+      L_PERSIST_ICE_ANOM = .FALSE.
       WRITE(restart_infile,*) 'fort.30'
       READ(75,NAME_START)
       write(nuout,*) 'KPP : Read Namelist START'
@@ -1291,7 +1294,16 @@ c	If persisting the initial SST anomaly, then store initial clim SST
 c	so that it doesn't get overwritten when initial conditions are read
 	IF (L_PERSIST_SST_ANOM) kpp_3d_fields%clim_sst = sst_in
       ENDIF
-      IF (L_CLIMICE) CALL read_icein(kpp_3d_fields,kpp_const_fields)
+      IF (L_CLIMICE .and. L_PERSIST_ICE) THEN 
+	WRITE(6,*) 'Persisting the initial ice (full field) is incompatible',
+     &  ' with reading ice climatologies.'
+        CALL MIXED_ABORT
+      ELSEIF (L_CLIMICE) THEN
+	CALL read_icein(kpp_3d_fields,kpp_const_fields)
+c	If persisting the initial ice anomaly, then store initial clim ice
+c	so that it doesn't get overwritten when initial conditions are read
+	IF (L_PERSIST_ICE_ANOM) kpp_3d_fields%clim_ice = ice_in
+      ENDIF
       IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
       IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
@@ -1329,10 +1341,19 @@ c    Compute initial SST anomaly from climatology
 	IF (L_CLIMSST) THEN
 	   kpp_3d_fields%anom_sst = sst_in-kpp_3d_fields%clim_sst
         ELSE
-	   WRITE(6,*) 'Persisting the initial SST anomaly',
-     &     ' (L_PERIST_SST_ANOM) reading climatological SST ',
-     &	   ' (L_CLIMSST).'
+	   WRITE(6,*) 'Persisting the initial SST anomaly ',
+     &     '(L_PERIST_SST_ANOM) requires reading climatological SST ',
+     &	   '(L_CLIMSST).'
 	   CALL MIXED_ABORT
+	ENDIF
+      ENDIF
+      IF (L_PERSIST_ICE_ANOM) THEN 
+	IF (L_CLIMICE) THEN
+           kpp_3d_fields%anom_ice = ice_in-kpp_3d_fields%clim_ice
+        ELSE
+	   WRITE(6,*) 'Persisting the initial ice anomaly ',
+     &	   '(L_PERSIST_ICE_ANOM) requires reading climatological ice ',
+     &     '(L_CLIMICE)'
 	ENDIF
       ENDIF
 c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times

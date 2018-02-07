@@ -279,7 +279,7 @@ c
       ENDIF
 
 !     Read a global SST field and persist that as the climatological SST
-!     through the simulation
+!     or SST anomaly through the simulation
       IF (L_PERSIST_SST .or. L_PERSIST_SST_ANOM) THEN
          deallocate(var_in)
          allocate(var_in(NX_GLOBE,NY_GLOBE,1))
@@ -292,6 +292,22 @@ c
          status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          SST_in = var_in - offset_sst
+      ENDIF
+
+!     Read a global ice field and persist that as the climatological ice
+!     or ice anomaly through the simulation
+      IF (L_PERSIST_ICE .or. L_PERSIST_ICE_ANOM) THEN
+	deallocate(var_in)
+	allocate(var_in(NX_GLOBE,NY_GLOBE,1))
+	start(:)=1
+	count(1)=NX_GLOBE
+	count(2)=NY_GLOBE
+	count(3)=1
+	status = NF_INQ_VARID(ncid,'iceconc',varid)
+	IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+	status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+	IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+	ice_in = var_in
       ENDIF
 
       RETURN
@@ -1626,6 +1642,7 @@ c     Written by Nick Klingaman, 11/01/08.
       include 'times.com'
       include 'timocn.com'
       include 'sstclim.com'
+      include 'initialcon.com'
 c      include 'location.com'
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
@@ -1726,7 +1743,12 @@ c     longitude and time.
       min_ice = 1000.
       DO ix=1,ice_nx
          DO iy=1,ice_ny
-            ice_in(ix,iy,1) = var_in(ix,iy,1)
+	    IF (L_PERSIST_ICE_ANOM) THEN
+               ice_in(ix,iy,1) = kpp_3d_fields%anom_ice(ix,iy)+
+     &		var_in(ix,iy,1)
+	    ELSE
+	       ice_in(ix,iy,1) = var_in(ix,iy,1)
+	    ENDIF
             IF (ice_in(ix,iy,1) .gt. max_ice) max_ice = ice_in(ix,iy,1)
             IF (ice_in(ix,iy,1) .lt. min_ice) min_ice = ice_in(ix,iy,1)
          ENDDO

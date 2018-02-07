@@ -48,7 +48,8 @@
      +	   tinc_ekadv(NPTS,NZP1),sinc_ekadv(NPTS,NZP1),
      +     runoff_incr(NPTS),u_clim(NPTS,NZP1),
      +     v_clim(NPTS,NZP1),relax_curr(npts),
-     +	   clim_sst(NX_GLOBE,NY_GLOBE),anom_sst(NX_GLOBE,NY_GLOBE)
+     +	   clim_sst(NX_GLOBE,NY_GLOBE),anom_sst(NX_GLOBE,NY_GLOBE),
+     +     clim_ice(NX_GLOBE,NY_GLOBE),anom_ice(NX_GLOBE,NY_GLOBE)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
