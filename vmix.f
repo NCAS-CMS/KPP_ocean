@@ -8,7 +8,7 @@ c  Interface between 1-d model and vertical mixing
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
 c inputs including those from common.inc and parameter.inc
       type(kpp_2d_type) :: kpp_2d_fields

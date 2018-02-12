@@ -6,15 +6,15 @@
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c#include <landsea.com>
-      include 'vert_pgrid.com'
-      include 'output.com'
-      include 'times.com'
-      include 'initialcon.com'
-c      include 'location.com'
+#include "kpp_3d_type.com"
+c#include "landsea.com"
+#include "vert_pgrid.com"
+#include "output.com"
+#include "times.com"
+#include "initialcon.com"
+c#include "location.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -413,18 +413,18 @@ c     +        time_varids(k)
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'output.com'
+#include "kpp_3d_type.com"
+#include "output.com"
 
-      include 'times.com'
-      include 'ocn_advec.com'
-#include <landsea.com>
-#include <relax_3d.com>
-      include 'couple.com'
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
+#include "times.com"
+#include "ocn_advec.com"
+#include "landsea.com"
+#include "relax_3d.com"
+#include "couple.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -610,7 +610,7 @@ c      call output_close
       SUBROUTINE reformat_mask_output_1d(oned_in,mask,missval,
      +     twod_out)
       IMPLICIT NONE
-#include <parameter.inc>
+#include "parameter.inc"
 
       REAL*4,intent(in) :: oned_in(NPTS),missval
       REAL*4,intent(out) :: twod_out(NX,NY)
@@ -634,7 +634,7 @@ c      call output_close
      +     threed_out)
 
       IMPLICIT NONE
-#include <parameter.inc>
+#include "parameter.inc"
 
       INTEGER,intent(in) :: nz_in
       REAL*4,intent(in) :: twod_in(NPTS,nz_in),missval
@@ -663,16 +663,16 @@ c      call output_close
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'output.com'
-#include <landsea.com>
-      include 'times.com'
-      include 'timocn.com'
-      include 'ocn_advec.com'
-      include 'couple.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+#include "output.com"
+#include "landsea.com"
+#include "times.com"
+#include "timocn.com"
+#include "ocn_advec.com"
+#include "couple.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -795,16 +795,16 @@ c     Increment counter for time dimension of NetCDF file
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'output.com'
-#include <landsea.com>
-      include 'times.com'
-      include 'timocn.com'
-      include 'ocn_advec.com'
-      include 'couple.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+#include "output.com"
+#include "landsea.com"
+#include "times.com"
+#include "timocn.com"
+#include "ocn_advec.com"
+#include "couple.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -935,15 +935,15 @@ c     Increment counter for time dimension of NetCDF file
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 ! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
-      include 'output.com'
-      include 'times.com'
-#include <landsea.com>
-#include <relax_3d.com>
-      include 'couple.com'
-      include 'ocn_advec.com'
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
+#include "kpp_3d_type.com"
+#include "output.com"
+#include "times.com"
+#include "landsea.com"
+#include "relax_3d.com"
+#include "couple.com"
+#include "ocn_advec.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
 
       REAL,intent(inout) :: VEC_mean(NPTS,NZP1,NVEC_MEAN),
      +  SCLR_mean(NPTS,NSCLR_MEAN)
@@ -1096,15 +1096,15 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 ! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
-      include 'output.com'
-      include 'times.com'
-#include <landsea.com>
-#include <relax_3d.com>
-      include 'couple.com'
-      include 'ocn_advec.com'
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
+#include "kpp_3d_type.com"
+#include "output.com"
+#include "times.com"
+#include "landsea.com"
+#include "relax_3d.com"
+#include "couple.com"
+#include "ocn_advec.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
 
       REAL,intent(inout) :: VEC_range(NPTS,NZP1,NVEC_RANGE,2),
      +  SCLR_range(NPTS,NSCLR_RANGE,2)
@@ -1260,8 +1260,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       PARAMETER (nuout=6,nuerr=0)
 
 #include <netcdf.inc>
-#include <kpp_3d_type.com>
-#include <output.com>
+#include "kpp_3d_type.com"
+#include "output.com"
 
       INTEGER status
       INTEGER, intent(in) :: ncid
@@ -1279,8 +1279,8 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
       PARAMETER (nuout=6,nuerr=0)
 
 #include <netcdf.inc>
-#include <kpp_3d_type.com>
-#include <output.com>
+#include "kpp_3d_type.com"
+#include "output.com"
 
       INTEGER status
       INTEGER,intent(out) :: ncid

@@ -20,8 +20,8 @@ c
 
       IMPLICIT NONE
 #include <netcdf.inc>
-#include <kpp_3d_type.com>
-#include <kpp_oasis3.inc>
+#include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
 
       TYPE(kpp_const_type) :: kpp_const_fields
       

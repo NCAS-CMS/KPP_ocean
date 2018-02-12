@@ -5,19 +5,19 @@
       PARAMETER (nuout=6,nuerr=0)
       
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <landsea.com>
+#include "kpp_3d_type.com"
+#include "landsea.com"
 #ifdef COUPLE
 #ifdef OASIS3
-#include <kpp_oasis3.inc>
+#include "kpp_oasis3.inc"
 #endif /*OASIS3*/
 #endif /*COUPLE*/
       include 'ocn_paras.com'
       include 'flx_paras.com'
       include 'flx_in.com'
       include 'local_pt.com'
-#include <timocn.com>
-#include <initialcon.com>
+#include "timocn.com"
+#include "initialcon.com"
       include 'times.com'
       include 'couple.com'
 
@@ -230,7 +230,7 @@ c      WRITE(6,*) 'L_REST=',L_REST
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       INTEGER k
       REAL SWDK
@@ -271,7 +271,7 @@ c     ENDDO
 *******************************************************************
 
       REAL FUNCTION SWDK(z,jerlov)
-#include <parameter.inc>
+#include "parameter.inc"
 c     include 'proc_pars.com'
 c     include 'local_pt.com'
 

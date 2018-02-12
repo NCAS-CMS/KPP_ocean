@@ -19,20 +19,20 @@ c
       
 #ifdef COUPLE
 #ifdef CFS
-      include 'parameter.cfs_coupled.inc'
+#include "parameter.cfs_coupled.inc"
 #else
-      include 'parameter.oasis2.inc'
+#include "parameter.oasis2.inc"
 #endif
 #else
 #ifdef CFS
-      include 'parameter.cfs_forced.inc'
+#include "parameter.cfs_forced.inc"
 #else
-      include 'parameter.forced.inc'
+#include "parameter.forced.inc"
 #endif
 #endif
-      include 'times.com'
-      include 'couple.com'
-      include 'location.com'
+#include "times.com"
+#include "couple.com"
+#include "location.com"
 
       REAL solar(NPTS),non_solar(NPTS),PminusE(NPTS),
      +     u_stress(NPTS),v_stress(NPTS),precip(NPTS),evap(NPTS),
@@ -160,12 +160,12 @@ c
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
-      
-      include 'kpp_3d_type.com'
-      include 'location.com'
-      include 'couple.com'
-      include 'constants.com'
-      include 'landsea.cfs_coupled.com'
+     
+#include "kpp_3d_type.com"
+#include "location.com"
+#include "couple.com"
+#include "constants.com"
+#include "landsea.cfs_coupled.com"
 
 c     kpp_sst is a one-dimensional array of the model SST on the model grid.
       REAL SST_in(NX_GLOBE,NY_GLOBE,1)
@@ -364,18 +364,18 @@ c     Written by Nicholas Klingaman 19-23 March 2009.
 c
 #ifdef COUPLE
 #ifdef CFS
-      include 'parameter.cfs_coupled.inc'
+#include "parameter.cfs_coupled.inc"
 #else
-      include 'parameter.oasis2.inc'
+#include "parameter.oasis2.inc"
 #endif
 #else
 #ifdef CFS
-      include 'parameter.cfs_forced.inc'
+#include "parameter.cfs_forced.inc"
 #else
-      include 'parameter.forced.inc'
+#include "parameter.forced.inc"
 #endif
 #endif
-      include 'couple.com'
+#include "couple.com"
 
       REAL*4 twod_global(NX_GLOBE,NY_GLOBE)
       REAL*4 oned_regional(NPTS)

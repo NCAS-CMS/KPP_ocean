@@ -23,36 +23,36 @@ c      USE kpp_type_mod
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <landsea.com>
+#include "kpp_3d_type.com"
+#include "landsea.com"
 
 #ifdef COUPLE
 
 #ifdef OASIS2
-#include <param.h>
+#include "param.h"
 #endif /*OASIS2*/
 
 #ifdef OASIS3
-#include <kpp_oasis3.inc>
+#include "kpp_oasis3.inc"
 #endif /*OASIS3*/
 
 #endif /*COUPLE*/
 
-#include <bottomclim.com>
-!#include <currclim.com>
-#include <couple.com>
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
-#include <relax_3d.com>
-#include <times.com>
-#include <timocn.com>
-#include <vert_pgrid.com>
-#include <local_pt.com>
-#include <output.com>
-#include <initialcon.com>
-#include <sstclim.com>
-#include <ocn_advec.com>
-#include <flx_in.com>
+#include "bottomclim.com"
+!#include "currclim.com"
+#include "couple.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
+#include "relax_3d.com"
+#include "times.com"
+#include "timocn.com"
+#include "vert_pgrid.com"
+#include "local_pt.com"
+#include "output.com"
+#include "initialcon.com"
+#include "sstclim.com"
+#include "ocn_advec.com"
+#include "flx_in.com"
 
 * Local variables
 #ifdef NOALLOC
@@ -850,30 +850,30 @@ c      USE kpp_type_mod
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <landsea.com>
-#include <constants.com>
-#include <times.com>
-#include <timocn.com>
-#include <location.com>
-#include <vert_pgrid.com>
-#include <proc_swit.com>
-#include <proc_pars.com>
-#include <initialcon.com>
-#include <ocn_advec.com>
-#include <ocn_state.com>
-#include <ocn_paras.com>
-#include <ice_paras.com>
-#include <flx_paras.com>
-#include <flx_in.com>
-#include <output.com>
-#include <couple.com>
-#include <sstclim.com>
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
-#include <relax_3d.com>
-#include <bottomclim.com>
-!#include <currclim.com>
+#include "kpp_3d_type.com"
+#include "landsea.com"
+#include "constants.com"
+#include "times.com"
+#include "timocn.com"
+#include "location.com"
+#include "vert_pgrid.com"
+#include "proc_swit.com"
+#include "proc_pars.com"
+#include "initialcon.com"
+#include "ocn_advec.com"
+#include "ocn_state.com"
+#include "ocn_paras.com"
+#include "ice_paras.com"
+#include "flx_paras.com"
+#include "flx_in.com"
+#include "output.com"
+#include "couple.com"
+#include "sstclim.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
+#include "relax_3d.com"
+#include "bottomclim.com"
+!#include "currclim.com"
 
 *     Input/output
       TYPE(kpp_3d_type),intent(inout) :: kpp_3d_fields
@@ -1542,12 +1542,12 @@ c     Set ranges to large values
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c#include <times.com>
-c#include <ocn_paras.com>
-c#include <ocn_state.com>
-c#include <output.com>
-c#include <flx_in.com>
+#include "kpp_3d_type.com"
+c#include "times.com"
+c#include "ocn_paras.com"
+c#include "ocn_state.com"
+c#include "output.com"
+c#include "flx_in.com"
 c
 c     Inputs
 c
@@ -1599,7 +1599,7 @@ c     %Us and %Xs are the largest fields, so they get their own file.
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 c
 c     Inputs
 c
@@ -1701,12 +1701,12 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'constants.com'
-      include 'ocn_advec.com'
-      include 'couple.com'
-      include 'sstclim.com'
-#include <relax_3d.com>
+#include "kpp_3d_type.com"
+#include "constants.com"
+#include "ocn_advec.com"
+#include "couple.com"
+#include "sstclim.com"
+#include "relax_3d.com"
 
       INTEGER ix,iy,ipoint
 
@@ -1789,11 +1789,11 @@ c     Written by NPK 27/8/07
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'constants.com'
-      include 'ocn_advec.com'
-      include 'couple.com'
-      include 'sstclim.com'
+#include "kpp_3d_type.com"
+#include "constants.com"
+#include "ocn_advec.com"
+#include "couple.com"
+#include "sstclim.com"
 
       INTEGER ix,iy,ipoint
 
@@ -1821,8 +1821,8 @@ c     Written by NPK 10/4/08
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <kpp_3d_type.com>
-#include <landsea.com>
+#include "kpp_3d_type.com"
+#include "landsea.com"
 
       INTEGER ipt,z
       REAL bottom_temp(NPTS)
@@ -1851,7 +1851,7 @@ c     Note that the value of the flag is equal to the *fraction* of levels
 c     at that point that were < -1.8C.
 c
       IMPLICIT NONE
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       INTEGER ipt,z
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
@@ -1885,7 +1885,7 @@ c
 c     NPK 15/5/2013 for R4.
 c
       IMPLICIT NONE
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       INTEGER ipt,z,j
       REAL dz_total,dtdz_total,dz
 
@@ -1931,8 +1931,8 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       SUBROUTINE interp_ocnT(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
-#include <kpp_3d_type.com>
-#include <relax_3d.com>
+#include "kpp_3d_type.com"
+#include "relax_3d.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER prev_time,next_time,true_time
@@ -1981,8 +1981,8 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       SUBROUTINE interp_fcorr(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
-#include <kpp_3d_type.com>
-#include <fcorr_in.com>
+#include "kpp_3d_type.com"
+#include "fcorr_in.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER prev_time,next_time,true_time
@@ -2048,8 +2048,8 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       SUBROUTINE interp_sfcorr(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
-#include <kpp_3d_type.com>
-#include <sfcorr_in.com>
+#include "kpp_3d_type.com"
+#include "sfcorr_in.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER prev_time,next_time,true_time
@@ -2116,8 +2116,8 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       SUBROUTINE interp_sal(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
-#include <kpp_3d_type.com>
-#include <relax_3d.com>
+#include "kpp_3d_type.com"
+#include "relax_3d.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER prev_time,next_time,true_time

@@ -11,14 +11,14 @@ C
 C     Attach a (LARGE) MPI buffer for sending and receiving messages.
 C
       INTEGER*4,PARAMETER :: nuout=6,nuerr=0,buffer_size=10000000
-c      
-      INCLUDE 'clim.h'
-      INCLUDE 'mpiclim.h'
-      INCLUDE 'oasis.h'
-      INCLUDE 'param.h'
-      INCLUDE 'param_cou.h'
-      INCLUDE 'inc_cpl.h'
-      INCLUDE 'mpif.h'
+c     
+#INCLUDE "clim.h"
+#INCLUDE "mpiclim.h"
+#INCLUDE "oasis.h"
+#INCLUDE "param.h"
+#INCLUDE "param_cou.h"
+#INCLUDE "inc_cpl.h"
+#INCLUDE <mpif.h>
 c
       INTEGER il_commlocal,kastp,kstep,kexch,inmods,ierr
       INTEGER il_size,il_rank
@@ -122,24 +122,24 @@ c
 c
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-      INCLUDE 'param.h'
+#INCLUDE "param.h"
 c
       INTEGER kastp, kexch, kstep
       INTEGER iparal(3)
       INTEGER ifcpl, idt, info, imxtag, istep, jf, il_commlocal
 c
-      INCLUDE 'param_cou.h'
-      INCLUDE 'inc_cpl.h'
+#INCLUDE "param_cou.h"
+#INCLUDE "inc_cpl.h"
       CHARACTER*3 cljobnam      ! experiment name
       CHARACTER*6 clmodnam      ! model name
       CHARACTER*5 cloasis       ! coupler name (Oasis)
       INTEGER imess(4)
       INTEGER getpid            ! system functions
 c
-      INCLUDE 'clim.h'
-      INCLUDE 'mpiclim.h'
+#INCLUDE "clim.h"
+#INCLUDE "mpiclim.h"
 c
-      INCLUDE 'oasis.h'         ! contains the name of communication technique.
+#INCLUDE "oasis.h"         ! contains the name of communication technique.
                                 ! Here cchan=CLIM only is possible.
 c
 C     -----------------------------------------------------------

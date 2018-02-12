@@ -6,7 +6,7 @@ c     Accepts a 3D variable of the KPP derived type.
 c     Returns a 2D variable of the KPP derived type, extraced from the 3D variable
 c     at a specified point.
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       TYPE(kpp_3d_type),intent(in)  :: kpp_fields_3d
       TYPE(kpp_2d_type),intent(out) :: kpp_fields_2d
       INTEGER,intent(in) :: point
@@ -195,7 +195,7 @@ c     Accepts a 2D and a 3D variable of the KPP derived type.
 c     Returns the 3D variable, updated at a specified point with the
 c     values from the 2D variable.
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       TYPE(kpp_3d_type),intent(inout)  :: kpp_fields_3d
       TYPE(kpp_2d_type),intent(in) :: kpp_fields_2d
       INTEGER,intent(in) :: point
@@ -342,24 +342,24 @@ c     values from the 2D variable.
       IMPLICIT NONE
 
 !     Automatically includes parameter.inc
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
 !     Include all the common blocks containing constants (boo, hiss, common blocks)
-#include <constants.com>
-#include <flx_paras.com>
-#include <ocn_state.com>
-#include <ocn_paras.com>
-#include <ice_paras.com>
-#include <proc_pars.com>
-#include <proc_swit.com>
-#include <vert_pgrid.com>
-#include <timocn.com>
-#include <fcorr_in.com>
-#include <sfcorr_in.com>
-#include <initialcon.com>
-#include <ocn_advec.com>
-#include <relax_3d.com>
-#include <couple.com>
+#include "constants.com"
+#include "flx_paras.com"
+#include "ocn_state.com"
+#include "ocn_paras.com"
+#include "ice_paras.com"
+#include "proc_pars.com"
+#include "proc_swit.com"
+#include "vert_pgrid.com"
+#include "timocn.com"
+#include "fcorr_in.com"
+#include "sfcorr_in.com"
+#include "initialcon.com"
+#include "ocn_advec.com"
+#include "relax_3d.com"
+#include "couple.com"
 
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields
 

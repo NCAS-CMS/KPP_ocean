@@ -12,12 +12,11 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 #include <netcdf.inc>
-      include 'constants.com'
-      include 'vert_pgrid.com'
-c      include 'location.com'
-c      include 'ocn_state.com'
+#include "constants.com"
+#include "vert_pgrid.com"
+
 c     Inputs
       LOGICAL lstretchgrid
       REAL dscale
@@ -134,10 +133,10 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <initialcon.com>
-      include 'ocn_paras.com'
-      include 'ocn_state.com'
+#include "kpp_3d_type.com"
+#include "initialcon.com"
+#include "ocn_paras.com"
+#include "ocn_state.com"
 c output
       real var_in(NZP1)
 c local
@@ -206,7 +205,7 @@ c      IMPLICIT NONE
 c      INTEGER nuout,nuerr
 c      PARAMETER (nuout=6,nuerr=0)
 c
-c#include <parameter.inc>
+c#include "parameter.inc"
 c      include 'constants.com'
 c      include 'vert_pgrid.com'
 c
@@ -297,7 +296,7 @@ c     common deltax(NJDT), xbar, denom
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       integer i,ipt
 c
@@ -325,8 +324,8 @@ c
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <kpp_3d_type.com>
-      include 'proc_pars.com'
+#include "kpp_3d_type.com"
+#include "proc_pars.com"
       
       TYPE(kpp_3d_type) :: kpp_3d_fields
       integer jerlov(npts)
@@ -365,8 +364,8 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'ocn_advec.com'
+#include "kpp_3d_type.com"
+#include "ocn_advec.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       INTEGER nmode(npts)
@@ -441,9 +440,9 @@ c         ENDDO
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
-#include <landsea.com>
-#include <vert_pgrid.com>
+#include "kpp_3d_type.com"
+#include "landsea.com"
+#include "vert_pgrid.com"
 
       REAL landsea(npts)
       TYPE (kpp_3d_type) :: kpp_3d_fields
@@ -492,10 +491,9 @@ c         ENDDO
       INTEGER ipoint_globe
       
       PARAMETER (nuout=6,nuerr=0)
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 #include <netcdf.inc>
-c#include <location.com>
-#include <couple.com>
+#include "couple.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       REAL*4 ixx, jyy, cplwght_in(NX_GLOBE,NY_GLOBE)

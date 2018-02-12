@@ -1,7 +1,7 @@
       SUBROUTINE kpp_timer_init(kpp_timer)
       IMPLICIT NONE
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 #ifdef OPENMP
       REAL(kind=8) omp_get_wtime,current_time
 #else
@@ -47,7 +47,7 @@
       CHARACTER(LEN=*),intent(in) :: name
       INTEGER,intent(in) :: action
 
-#include <kpp_3d_type.com>            
+#include "kpp_3d_type.com"            
       INTEGER :: i,current_timer,flag
 #ifdef OPENMP
       REAL omp_get_wtime,current_time
@@ -156,7 +156,7 @@ c         WRITE(6,*) 'Stopped timer '//name,current_timer
       SUBROUTINE kpp_timer_print(kpp_timer)
       IMPLICIT NONE
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       INTEGER :: i
 #ifdef OPENMP

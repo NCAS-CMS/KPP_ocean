@@ -26,10 +26,10 @@ c     Standard include files
 c
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <kpp_oasis3.inc>
-#include <times.com>
-#include <constants.com>
+#include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
+#include "times.com"
+#include "constants.com"
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_3d_type) :: kpp_3d_fields
 c
@@ -237,14 +237,14 @@ c     Standard include files
 c
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <kpp_oasis3.inc>
-#include <times.com>
-#include <couple.com>
-c#include <location.com>
-#include <constants.com>
-#include <currclim.com>
-c#include <initialcon.com>
+#include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
+#include "times.com"
+#include "couple.com"
+c#include "location.com"
+#include "constants.com"
+#include "currclim.com"
+c#include "initialcon.com"
 
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -487,7 +487,7 @@ c
 c
       IMPLICIT NONE
 c
-#include <kpp_oasis3.inc>
+#include "kpp_oasis3.inc"
 c
 c     Local variables
 c
@@ -516,7 +516,7 @@ c
      +     ustress,vstress)
       IMPLICIT NONE
 
-#include <parameter.inc>
+#include "parameter.inc"
 #include <netcdf.inc>
      
       INTEGER nuout,nuerr
@@ -561,7 +561,7 @@ c
      +     ustress,vstress)
       IMPLICIT NONE
 
-#include <parameter.inc>
+#include "parameter.inc"
 #include <netcdf.inc>
       
       INTEGER nuout,nuerr
@@ -609,8 +609,8 @@ c     NPK 19/9/09 - R3
 c     
       IMPLICIT NONE
 
-#include <parameter.inc>
-#include <couple.com>
+#include "parameter.inc"
+#include "couple.com"
       
       REAL global(NPTS_GLOBE),regional(NPTS)
       INTEGER*4 ix,jy,ipoint,ipoint_globe
@@ -634,8 +634,8 @@ c     for KPP).
 c     NPK 28/9/09 - R3
 c
       IMPLICIT NONE
-#include <parameter.inc>
-#include <couple.com>
+#include "parameter.inc"
+#include "couple.com"
       
       REAL global(NX_GLOBE,NY_GLOBE),regional(NPTS)
       INTEGER*4 ix,jy,ipoint,ipoint_globe
@@ -658,7 +658,7 @@ c     the combination of a KPP regional field and a global climatology)
 c     to a two-dimensional global field (as required by HadGEM3-A).
 c     NPK 28/9/09 - R3
 c
-#include <parameter.inc>
+#include "parameter.inc"
 
       REAL oned(NX_GLOBE*NY_GLOBE),twod(NX_GLOBE,NY_GLOBE)
       INTEGER*4 ix,jy,ipoint_globe

@@ -35,8 +35,8 @@ c              16 Nov 1994 - wgl : new KPP codes no temporary grid
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <ocn_energy.com>
+#include "kpp_3d_type.com"
+#include "ocn_energy.com"
 
 c Input/Output
 c      real U(NPTS,NZP1,NVEL), X(NPTS,NZP1,NSCLR), Rig(npts,nz),
@@ -513,7 +513,7 @@ c     Written  19 March 1991 - jan
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 c Input
       integer intri             ! index for tri.diag. coeff
 c     +     nzi
@@ -553,7 +553,7 @@ c      COMMON /save_sal/ sal_clim
 
 
 c      WRITE(nuout,*) 'Entering ocnint:'
-c      WRITE(nuout,*) '--> L_FCORR =',L_FCORR
+c      WRITE(nuout,*) '--' L_FCORR =',L_FCORR
 c      WRITE(nuout,*) '--> L_FCORR_WITHZ =',L_FCORR_WITHZ
 c      WRITE(nuout,*) '--> L_RELAX_SST =',L_RELAX_SST
 c      WRITE(nuout,*) '--> L_RELAX_CALCONLY =',L_RELAX_CALCONLY
@@ -889,7 +889,7 @@ c-----
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 c Input
       TYPE(kpp_const_type) :: kpp_const_fields
       integer nzi,              ! dimension of field
@@ -940,7 +940,7 @@ c           bottom  ..... ..... +dto/h(nzi)*diff(nzi)/dzb(nzi)*yo(nzi+1)
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
 c Input
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1026,9 +1026,9 @@ c        7 : Seasonal thermocline horizontal advection to 1.5 dm
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c#include <ocn_paras.com>
-c#include <local_pt.com>
+#include "kpp_3d_type.com"
+c#include "ocn_paras.com"
+c#include "local_pt.com"
 c Input
       integer nzi,              ! vertical dimension of field
      +     km,                  ! index of gridpoint just below h
@@ -1217,7 +1217,7 @@ c-----
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <parameter.inc>
+#include "parameter.inc"
 c Input
       integer nzi               ! dimension of matrix
       real cu (nzi),            ! upper coeff. for (k-1) on k line of tridmatrix
@@ -1283,7 +1283,7 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
 c     Input
 c      real  U(NPTS,NZP1,NVEL),X(NPTS,NZP1,NSCLR)
@@ -1447,7 +1447,7 @@ c     paulson (1977)
       parameter(nwtype=5) ! max number of different water types
 c
 c  model
-c#include <local_pt.com>
+c#include "local_pt.com"
 
 c      integer imt         ! number of horizontal grid points
 
@@ -1492,7 +1492,7 @@ c  100 continue
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       type(kpp_2d_type) :: kpp_2d_fields
       type(kpp_const_type) :: kpp_const_fields
@@ -1583,7 +1583,7 @@ c *********************************************************
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <parameter.inc>
+#include "parameter.inc"
       integer nzi
       real cu(nzi),cc(nzi),cl(nzi)
 c      real tri(0:NZtmax,0:1,NGRID)
@@ -1617,10 +1617,10 @@ c     paulson (1977)
 c
 c  model
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c#include <local_pt.com>
-c#include <times.com>
-c#include <vert_pgrid.com>
+#include "kpp_3d_type.com"
+c#include "local_pt.com"
+c#include "times.com"
+c#include "vert_pgrid.com"
 
 c      integer imt         ! number of horizontal grid points
 

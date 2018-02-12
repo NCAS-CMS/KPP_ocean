@@ -7,16 +7,16 @@
       PARAMETER (nuout=6,nuerr=0)
 
 c     Include files for KPP
-#include <parameter.inc>
-#include <times.com>
-#include <couple.com>
-#include <location.com>
+#include "parameter.inc"
+#include "times.com"
+#include "couple.com"
+#include "location.com"
 
 c     Include files for OASIS2
-#include <clim.h>
-#include <oasis.h>
-#include <param_cou.h>
-#include <inc_cpl.h>
+#include "clim.h"
+#include "oasis.h"
+#include "param_cou.h"
+#include "inc_cpl.h"
 
       REAL solar(NPTS),non_solar(npts),PminusE(npts)
 
@@ -75,20 +75,20 @@ c
       PARAMETER (nuout=6,nuerr=0)
 
 c     Include files for KPP
-#include <parameter.inc>      
-#include <times.com>
-#include <couple.com>
-#include <location.com>
+#include "parameter.inc"      
+#include "times.com"
+#include "couple.com"
+#include "location.com"
 
       REAL ustress(NPTS),vstress(npts)
       INTEGER kt,info
       REAL ustress_in(NX_GLOBE,NY_GLOBE),vstress_in(NX_GLOBE,NY_GLOBE)
       
 c     Include files for OASIS2
-#include <clim.h>
-#include <oasis.h>
-#include <param_cou.h>
-#include <inc_cpl.h>
+#include "clim.h"
+#include "oasis.h"
+#include "param_cou.h"
+#include "inc_cpl.h"
 
       INTEGER jf,ipoint,ix,jy,jf_in
 
@@ -135,21 +135,21 @@ c***********************************************************
       PARAMETER (nuout=6,nuerr=0)
 
 c     Include files for KPP
-#include <parameter.inc>
-#include <constants.com>
-#include <times.com>
-#include <couple.com>
-#include <location.com>
-#include <ocn_advec.com>
+#include "parameter.inc"
+#include "constants.com"
+#include "times.com"
+#include "couple.com"
+#include "location.com"
+#include "ocn_advec.com"
 
       REAL X(NPTS,NZP1,NSCLR)
       INTEGER kt
 
 c     Include files for OASIS2
-#include <clim.h>
-#include <oasis.h>
-#include <param_cou.h>
-#include <inc_cpl.h>
+#include "clim.h"
+#include "oasis.h"
+#include "param_cou.h"
+#include "inc_cpl.h"
 
       INTEGER ix,jy,ipoint,ipoint_globe
       REAL ICE_in(NX_GLOBE,NY_GLOBE,1)
@@ -609,8 +609,8 @@ C
 
       IMPLICIT NONE
 
-#include <parameter.inc>
-      
+#include "parameter.inc"
+  
       REAL twod(NX_GLOBE,NY_GLOBE),oned(NX_GLOBE*NY_GLOBE)
       INTEGER*4 i,j,point
 

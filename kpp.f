@@ -20,14 +20,14 @@ c
 c.......................................................................
 c     
 ! Automatically includes parameter.inc
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       integer km,kmp1,mdiff,ki
 
       parameter (km = NZ, kmp1 = nzp1)!, imt = 1) !NX*NY)
       parameter (mdiff = 3)  ! number of diffusivities for local arrays
 c   include 'local_pt.com'
-c  #include <landsea.com>
+c  #include "landsea.com>
 c
 c input
 c      real zgrid(kmp1)          ! vertical grid (<= 0)            (m)
@@ -196,7 +196,7 @@ c
 c     model  
 c      include 'local_pt.com'
 c      include 'times.com'
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
 c     Necessary for IMPLICIT NONE
       real bvsq,cekman,cmonob,cs,cv,epsilon,fekman,fmonob,
@@ -440,7 +440,7 @@ c     zetahat (=vonk*sigma*hbl*bfsfc).
 c
 c
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 c
 c     Necessary for IMPLICIT NONE (NPK 11/2/13)
       INTEGER ni,nj,i,iz,izp1,j,ju,jup1
@@ -563,7 +563,7 @@ c
 c     input
 c      include 'local_pt.com'
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -751,7 +751,7 @@ c
  
 c input    
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>     
+#include "kpp_3d_type.com"     
 c      include 'local_pt.com'
 
 c     Necessary for IMPLICIT NONE (NPK 11/2/13)
@@ -828,7 +828,7 @@ c model
 c      include 'local_pt.com'
 
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 
       TYPE(kpp_2d_type) :: kpp_2d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1007,7 +1007,7 @@ c enhance the diffusivity at the kbl-.5 interface
 c
 c
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 c     input
 c     include 'local_pt.com'
 
@@ -1075,7 +1075,7 @@ c***********************************************************************
 
       IMPLICIT NONE
       
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
       TYPE(kpp_const_type) :: kpp_const_fields
 
       real zmin,zmax,umin,umax,usta,zeta,zehat,epsln,

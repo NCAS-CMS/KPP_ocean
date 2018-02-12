@@ -5,7 +5,7 @@
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
       
       INTEGER ncid,dimid,varid,dimlen
       REAL*4 delta
@@ -38,7 +38,8 @@
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
+#include <netcdf.inc>
+
 
       REAL*4 valid_min,valid_max,miss_val,fill_val
       PARAMETER (valid_max=1.e19,valid_min=-valid_max,
@@ -81,7 +82,7 @@
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
+#include <netcdf.inc>    
 
       integer status
       CHARACTER*80 err_message

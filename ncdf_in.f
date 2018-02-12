@@ -4,13 +4,13 @@
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'vert_pgrid.com'
-      include 'initialcon.com'
-c      include 'location.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+#include "vert_pgrid.com"
+#include "initialcon.com"
+c#include "location.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -318,9 +318,9 @@ c
       IMPLICIT NONE
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 #include <netcdf.inc>
-#include <flx_in.com>
+#include "flx_in.com"
 
       TYPE(kpp_const_type) :: kpp_const_fields
       CHARACTER*40 fname
@@ -374,8 +374,8 @@ c
 
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <flx_in.com>
+#include "kpp_3d_type.com"
+#include "flx_in.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -579,9 +579,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'proc_pars.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "proc_pars.com"
 
       INTEGER status
 
@@ -597,9 +597,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'proc_pars.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "proc_pars.com"
 
       INTEGER status
 
@@ -615,9 +615,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'ocn_advec.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "ocn_advec.com"
 
       INTEGER status
 
@@ -633,9 +633,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'ocn_advec.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "ocn_advec.com"
 
       INTEGER status
 
@@ -651,9 +651,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-#include <landsea.com>
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "landsea.com"
 
       INTEGER status
 
@@ -669,9 +669,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-#include <landsea.com>
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "landsea.com"
 
 
       INTEGER status
@@ -688,9 +688,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'couple.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "couple.com"
 
       INTEGER status
 
@@ -706,9 +706,9 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER(nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-      include 'couple.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "couple.com"
 
       INTEGER status
 
@@ -725,10 +725,10 @@ c      time=dummy_time
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
 
@@ -817,10 +817,10 @@ C               WRITE(nuout,*) 'dlon=',dlon(ipt),'iyy=',iyy,'ixx=',ixx
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 !Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
 
@@ -890,14 +890,14 @@ c      include 'location.com'
      +     nlat_file,nlon_file,ntime_file
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
-      include 'fcorr_in.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
+#include "fcorr_in.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -994,14 +994,14 @@ c
      +     time_dimid,nlon_file,nlat_file,ntime_file,nz_file
 
       PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
-      include 'fcorr_in.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
+#include "fcorr_in.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1125,12 +1125,12 @@ c
      &     lat_dimid,lon_dimid,fcorr_ncid,nlat_file,nlon_file
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c     include 'location.com'
-      include 'fcorr_in.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+c     include "location.com"
+#include "fcorr_in.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1187,14 +1187,14 @@ c
      +     nlat_file,nlon_file,ntime_file
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
-      include 'sfcorr_in.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
+#include "sfcorr_in.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1287,14 +1287,14 @@ c
      +     time_dimid,nlon_file,nlat_file,ntime_file,nz_file
 
       PARAMETER (nuout=6,nuerr=0)
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c      include 'location.com'
-      include 'sfcorr_in.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'constants.com'
+#include "kpp_3d_type.com"
+c#include "location.com"
+#include "sfcorr_in.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1418,11 +1418,11 @@ c
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
-#include <parameter.inc>
-#include <landsea.com>
-      include 'constants.com'
-c      include 'location.com'
+#include <netcdf.inc>
+#include "parameter.inc"
+#include "landsea.com"
+#include "constants.com"
+c#include "location.com"
 
       INTEGER status,varid,latid,lonid
       REAL*4 var_in(NX_GLOBE,NY_GLOBE),latitudes_in(NY_GLOBE),
@@ -1473,17 +1473,17 @@ c      include 'location.com'
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'constants.com'
-      include 'couple.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'sstclim.com'
-      include 'initialcon.com'
-c      include 'location.com'
-#include <currclim.com>
+#include "kpp_3d_type.com"
+#include "constants.com"
+#include "couple.com"
+#include "times.com"
+#include "timocn.com"
+#include "sstclim.com"
+#include "initialcon.com"
+c#include "location.com"
+#include "currclim.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1634,16 +1634,16 @@ c     Written by Nick Klingaman, 11/01/08.
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-      include 'netcdf.inc'
+#include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-      include 'constants.com'
-      include 'couple.com'
-      include 'times.com'
-      include 'timocn.com'
-      include 'sstclim.com'
-      include 'initialcon.com'
-c      include 'location.com'
+#include "kpp_3d_type.com"
+#include "constants.com"
+#include "couple.com"
+#include "times.com"
+#include "timocn.com"
+#include "sstclim.com"
+#include "initialcon.com"
+c#include "location.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1806,13 +1806,13 @@ c     longitude and time.
 
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-#include <constants.com>
-#include <couple.com>
-#include <times.com>
-#include <timocn.com>
-#include <bottomclim.com>
-c#include <location.com>
+#include "kpp_3d_type.com"
+#include "constants.com"
+#include "couple.com"
+#include "times.com"
+#include "timocn.com"
+#include "bottomclim.com"
+c#include "location.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -1922,13 +1922,13 @@ c            bottom_temp(ipoint) = bottom_temp(ipoint)-offset_temp
       PARAMETER (nuout=6,nuerr=0)
 #include <netcdf.inc>
 ! Automatically includes parameter.inc!
-#include <kpp_3d_type.com>
-c#include <location.com>
-#include <relax_3d.com>
-#include <times.com>
-#include <timocn.com>
-#include <constants.com>
-#include <ocn_paras.com>
+#include "kpp_3d_type.com"
+c#include "location.com"
+#include "relax_3d.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
+#include "ocn_paras.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -2048,9 +2048,9 @@ c
       SUBROUTINE read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
 
-#include <kpp_3d_type.com>
+#include "kpp_3d_type.com"
 #include <netcdf.inc>
-#include <relax_3d.com>
+#include "relax_3d.com"
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER nuout,nuerr,start(4),count(4)
@@ -2170,12 +2170,12 @@ c
         PARAMETER (nuout=6,nuerr=0)
 
 #include <netcdf.inc>
-#include <kpp_3d_type.com>
-#include <relax_3d.com>
-#include <times.com>
-#include <timocn.com>
-#include <constants.com>
-#include <ocn_paras.com>
+#include "kpp_3d_type.com"
+#include "relax_3d.com"
+#include "times.com"
+#include "timocn.com"
+#include "constants.com"
+#include "ocn_paras.com"
 
         TYPE(kpp_3d_type) :: kpp_3D_fields
         TYPE(kpp_const_type) :: kpp_const_fields
@@ -2292,7 +2292,7 @@ c
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <parameter.inc>
+#include "parameter.inc"
 #include <netcdf.inc>
 
       INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
@@ -2362,7 +2362,7 @@ c
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
-#include <parameter.inc>
+#include "parameter.inc"
 #include <netcdf.inc>
 
       INTEGER ncid,offset_lon,offset_lat,lon_dimid,lon_varid,
@@ -2402,7 +2402,7 @@ c     Find the first time and last time
       CHARACTER*40 file_string,periodic_string
       PARAMETER(nuout=6,nuerr=0)
 
-#include <parameter.inc>
+#include "parameter.inc"
 #include <netcdf.inc>
 
       REAL*4 time, first_time, last_time, ndays_update
