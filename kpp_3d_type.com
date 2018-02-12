@@ -1,5 +1,5 @@
-#include <parameter.inc>
-#include <kpp_timer.com>
+#include "parameter.inc"
+#include "kpp_timer.com"
 	TYPE kpp_3D_type
 
 	real :: U(NPTS,NZP1,NVEL),
