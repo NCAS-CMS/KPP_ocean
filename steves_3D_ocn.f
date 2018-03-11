@@ -1285,8 +1285,8 @@ c      ENDIF
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST .and. L_PERSIST_SST) THEN
-	WRITE(6,*) 'Persisting the initial SST (full field) is incompatible',
-     &	' with reading SST climatologies.'
+	WRITE(6,*) 'Persisting the initial SST (full field) is',
+     &	' incompatible with reading SST climatologies.'
 	CALL MIXED_ABORT 
       ELSEIF (L_CLIMSST) THEN
 	CALL read_sstin(kpp_3d_fields,kpp_const_fields)
@@ -1295,8 +1295,8 @@ c	so that it doesn't get overwritten when initial conditions are read
 	IF (L_PERSIST_SST_ANOM) kpp_3d_fields%clim_sst = sst_in
       ENDIF
       IF (L_CLIMICE .and. L_PERSIST_ICE) THEN 
-	WRITE(6,*) 'Persisting the initial ice (full field) is incompatible',
-     &  ' with reading ice climatologies.'
+	WRITE(6,*) 'Persisting the initial ice (full field) is ',
+     &  ' incompatible with reading ice climatologies.'
         CALL MIXED_ABORT
       ELSEIF (L_CLIMICE) THEN
 	CALL read_icein(kpp_3d_fields,kpp_const_fields)
