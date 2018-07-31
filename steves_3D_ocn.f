@@ -1124,9 +1124,10 @@ c     Initialize and read the times namelist
          WRITE(nuerr,*) 'KPP : Run with a shorter job step.'
          CALL MIXED_ABORT
       ENDIF
+#endif /*OASIS3*/
 #else
       L_COUPLE=.FALSE.
-#endif
+#endif /*COUPLE*/
       L_COUPLE_CURRENTS=.FALSE.
       L_OUTKELVIN=.FALSE.
       L_UPD_CLIMSST=.FALSE.
