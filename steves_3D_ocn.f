@@ -1115,6 +1115,15 @@ c     Initialize and read the times namelist
 *Initialize and read the couple namelist
 #ifdef COUPLE
       L_COUPLE=.TRUE.
+#ifdef OASIS3
+      IF ( finalt-startt .ge. 24855 ) THEN
+         WRITE(nuerr,*) 'KPP : OASIS coupled simulations cannot ',
+     +        'be longer than 2^31 seconds (per job step), due to ',
+     +        'OASIS use of a 32-bit signed integer to store the ',
+     +        'coupling time.'
+         WRITE(nuerr,*) 'KPP : Run with a shorter job step.'
+         CALL MIXED_ABORT
+      ENDIF
 #else
       L_COUPLE=.FALSE.
 #endif
