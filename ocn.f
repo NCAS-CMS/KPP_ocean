@@ -78,20 +78,30 @@ c      integer kmixe(npts),kmixn(npts)
 c
 c More Local Variables (to make implicit none)
 c
-      real deltaz,rhonot,a,b, dzb(NZ)
+      real deltaz,rhonot,a,b, dzb(NZ), dm(0:NZ), hm(NZP1), zm(NZP1)
       integer k,l,n
 c Number of iterations for computational instability
       integer comp_iter_max
       real rmsd(4),rmsd_threshold(4)
       data comp_iter_max /10/
+
+      data lambda /0.5/
+
+c Initialise grid
+      kpp_2d_fields%zm = kpp_const_fields%zm
+      kpp_2d_fields%dm = kpp_const_fields%dm
+      kpp_2d_fields%hm = kpp_const_fields%hm
+      kpp_2d_fields%tri = kpp_const_fields%tri
+
 c Critical depth-integrated RMS difference between old and new profiles
 c for repeating integration, for (/U,V,T,S/). Typical (stable)
 c values are O(10^-2) for U and V, O(10^-3) for T and O(10^-4) for S.
 c NPK 17/5/13
-      data rmsd_threshold /4,4,1,1/
-!      data rmsd_threshold /100,100,100,100/
-      data lambda /0.5/
-
+      IF (kpp_const_fields%L_SLAB) THEN
+         rmsd_threshold = (/4,4,100,100/)
+      ELSE
+         rmsd_threshold = (/4,4,1,1/)
+      ENDIF      
 c Change slab depth for Columbia ITCZ experiments within specified bounds
       IF (kpp_const_fields%L_SLAB .and.
      +     kpp_const_fields%L_COLUMBIA_LAND) THEN
@@ -99,42 +109,37 @@ c Change slab depth for Columbia ITCZ experiments within specified bounds
      +        kpp_2d_fields%dlat .le. 30 .and.
      +        kpp_2d_fields%dlon .ge. 0 .and.
      +        kpp_2d_fields%dlon .le. 45) THEN
-c	    WRITE(6,*) 'Change slab depth at ',
-c     +		kpp_2d_fields%dlat,kpp_2d_fields%dlon
-            kpp_const_fields%dm(1)=30
-            kpp_const_fields%zm(1)=-15
-            kpp_const_fields%hm(1)=30
-         ELSE
-            kpp_const_fields%dm(1)=kpp_const_fields%slab_depth
-            kpp_const_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
-            kpp_const_fields%hm(1)=kpp_const_fields%slab_depth
-         ENDIF
+            kpp_2d_fields%dm(1)=0.1
+            kpp_2d_fields%zm(1)=-0.05
+            kpp_2d_fields%hm(1)=0.1
+            rmsd_threshold = (/4,4,100,100/)
 c Force recomputation of tridiagonal matrix coefficients
-         do k=1,NZ
-            dzb(k) = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
-         enddo
-         kpp_const_fields%tri(0,1,1) = kpp_const_fields%dto/
-     +        kpp_const_fields%hm(1)
-         kpp_const_fields%tri(1,1,1) = kpp_const_fields%dto/
-     +        kpp_const_fields%hm(1)/dzb(1)
-         do k=2,NZ
-            kpp_const_fields%tri(k,1,1) = kpp_const_fields%dto/
-     +           kpp_const_fields%hm(k)/dzb(k)
-            kpp_const_fields%tri(k,0,1) = kpp_const_fields%dto/
-     +           kpp_const_fields%hm(k)/dzb(k-1)
-         enddo
+            do k=1,NZ
+               dzb(k) = kpp_2d_fields%zm(k) - kpp_2d_fields%zm(k+1)
+            enddo
+            kpp_2d_fields%tri(0,1,1) = kpp_const_fields%dto/
+     +           kpp_2d_fields%hm(1)
+            kpp_2d_fields%tri(1,1,1) = kpp_const_fields%dto/
+     +           kpp_2d_fields%hm(1)/dzb(1)
+            do k=2,NZ
+               kpp_2d_fields%tri(k,1,1) = kpp_const_fields%dto/
+     +              kpp_2d_fields%hm(k)/dzb(k)
+               kpp_2d_fields%tri(k,0,1) = kpp_const_fields%dto/
+     +              kpp_2d_fields%hm(k)/dzb(k-1)
+            enddo
+         ENDIF
       ENDIF
-
+         
       Uo=kpp_2d_fields%U(:,:)
       Xo=kpp_2d_fields%X(:,:)
       kpp_2d_fields%comp_flag=.TRUE.
       kpp_2d_fields%reset_flag=0.0
 
-!      WRITE(6,*) 'Beginning of timestep:'
-!      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
-!      WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
-!      WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
-!      WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
+      WRITE(6,*) 'Beginning of timestep:'
+      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
+      WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
+      WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
+      WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
 
       DO WHILE (kpp_2d_fields%comp_flag .and.
      +     kpp_2d_fields%reset_flag .le. comp_iter_max)
@@ -239,8 +244,8 @@ c     +                    kpp_2d_fields%dlat,kpp_2d_fields%dlon
             iter = iter + 1
 
 c     check iteration for convergence
-            tol = hmixtolfrac*kpp_const_fields%hm(kmixn)
-            if(kmixn.eq.NZP1) tol = hmixtolfrac*kpp_const_fields%hm(NZ)
+            tol = hmixtolfrac*kpp_2d_fields%hm(kmixn)
+            if(kmixn.eq.NZP1) tol = hmixtolfrac*kpp_2d_fields%hm(NZ)
 c     write(40,*) abs(hmixn(ipt)-hmixe(ipt))/tol
             if(abs(hmixn-hmixe).gt.tol)  then
 c     Uncommeting the following the lines iconv=0 to IF (iconv ...)
@@ -319,16 +324,16 @@ c     NPK 16/5/2013
             DO k=1,NZP1
                rmsd(1)=rmsd(1)+(kpp_2d_fields%U(k,1)-Uo(k,1))*
      +              (kpp_2d_fields%U(k,1)-Uo(k,1))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+     +              kpp_2d_fields%hm(k)/kpp_2d_fields%dm(NZ)
                rmsd(2)=rmsd(2)+(kpp_2d_fields%U(k,2)-Uo(k,2))*
      +              (kpp_2d_fields%U(k,2)-Uo(k,2))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+     +              kpp_2d_fields%hm(k)/kpp_2d_fields%dm(NZ)
                rmsd(3)=rmsd(3)+(kpp_2d_fields%X(k,1)-Xo(k,1))*
      +              (kpp_2d_fields%X(k,1)-Xo(k,1))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+     +              kpp_2d_fields%hm(k)/kpp_2d_fields%dm(NZ)
                rmsd(4)=rmsd(4)+(kpp_2d_fields%X(k,2)-Xo(k,2))*
      +              (kpp_2d_fields%X(k,2)-Xo(k,2))*
-     +              kpp_const_fields%hm(k)/kpp_const_fields%dm(NZ)
+     +              kpp_2d_fields%hm(k)/kpp_2d_fields%dm(NZ)
             ENDDO
             DO k=1,4
                rmsd(k)=SQRT(rmsd(k))
@@ -345,11 +350,11 @@ c     NPK 16/5/2013
      +           comp_iter_max,' iterations.'
             WRITE(6,*) 'At point lat = ',
      +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
-            !WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
-            !WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
-            !WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
-            !WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
-            !WRITE(6,*) 'hmix = ',hmixn,kmixn
+            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
+            WRITE(6,*) 'hmix = ',hmixn,kmixn
          ENDIF
       ENDDO
 c     End of trapping code.
@@ -357,7 +362,7 @@ c     End of trapping code.
 c     Output  Results from permanent grid iterations to common.inc
 c     Compute diagnostic fluxes for writing to dat file
       do k=1,NZ
-         deltaz = 0.5*(kpp_const_fields%hm(k)+kpp_const_fields%hm(k+1))
+         deltaz = 0.5*(kpp_2d_fields%hm(k)+kpp_2d_fields%hm(k+1))
          do n=1,NSCLR
             kpp_2d_fields%wX(k,n)=-kpp_2d_fields%difs(k)*
      +           ((kpp_2d_fields%X(k,n)-kpp_2d_fields%X(k+1,n))/deltaz-
@@ -400,7 +405,7 @@ c     use "amax1" to prevent "underflow" in single precision
             Tmke = 0.0
             do 130 k=1,NZP1
                rmke(k) = 0.5 * rhonot * (kpp_2d_fields%U(k,1)**2 +
-     +              kpp_2d_fields%U(k,2)**2) * kpp_const_fields%hm(k)
+     +              kpp_2d_fields%U(k,2)**2) * kpp_2d_fields%hm(k)
                Tmke = Tmke + rmke(k)
  130        continue
 
@@ -429,7 +434,7 @@ c     boundary layer profiles in the diagnostics are the ones used to calculate
 c     the fluxes, as it stands at the moment this means that the CP and rho are
 c     also the values used in the timestepping not the values appropriate to the
 c     S,T at the new time level.
-c     call vmix(Un,Xn,hmixe,kmixe)
+c            call vmix(kpp_2d_fields%U,kpp_2d_fields%X,hmixe,kmixe)
 c     write(40,*) time,iter, hmixn,hmixe,kmixn,kmixe
             kpp_2d_fields%hmix = hmixn
             kpp_2d_fields%kmix = kmixn
@@ -490,7 +495,6 @@ c     Save variables for next timestep
      +                 kpp_2d_fields%X(k,l)
                enddo
             enddo
-
 c     close(40+ntime)
             return
             end
@@ -569,13 +573,13 @@ c                               set coefficients of tridiagonal matrix
       DO k=0,NZtmax
          diff(k)=kpp_2d_fields%difm(k)
       ENDDO
-      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
+      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_2d_fields)
 c                               U right hand side and solution
       rhs(1)= Uo(1,1) + kpp_const_fields%dto*
      +     ( ftemp*.5*(Uo(1,2)+kpp_2d_fields%U(1,2)) -
-     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1))
+     +     kpp_2d_fields%wU(0,1)/kpp_2d_fields%hm(1))
 c      rhs(1)=Uo(1,1)+kpp_const_fields%dto*(ftemp*Uo(1,2) -
-c     +     kpp_2d_fields%wU(0,1)/kpp_const_fields%hm(1))
+c     +     kpp_2d_fields%wU(0,1)/kpp_2d_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
      +        kpp_2d_fields%U(i,2))
@@ -583,20 +587,20 @@ c         rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)
       enddo
       i=NZ                      ! bottom
       rhs(i)= Uo(i,1) + kpp_const_fields%dto*ftemp*.5*(Uo(i,2)+
-     +     kpp_2d_fields%U(i,2)) + kpp_const_fields%tri(i,1,intri)*
+     +     kpp_2d_fields%U(i,2)) + kpp_2d_fields%tri(i,1,intri)*
      +     kpp_2d_fields%difm(i)*Uo(i+1,1)
 c      rhs(i)=Uo(i,1)+kpp_const_fields%dto*ftemp*Uo(i,2)+
-c     +     kpp_const_fields%tri(i,1,intri)*
+c     +     kpp_2d_fields%tri(i,1,intri)*
 c     +     kpp_2d_fields%difm(i)*Uo(i+1,1)
 
       call tridmat(cu,cc,cl,rhs,Uo(:,1),NZ,kpp_2d_fields%U(:,1))
 c     V rhs and solution
       rhs(1)= Uo(1,2) - kpp_const_fields%dto*
      +     ( ftemp*.5*(Uo(1,1)+kpp_2d_fields%U(1,1)) +
-     +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
+     +     kpp_2d_fields%wU(0,2)/kpp_2d_fields%hm(1))
 c      rhs(1)=Uo(1,2)-kpp_const_fields%dto*
 c     +     ( ftemp*Uo(1,1)+
-c     +     kpp_2d_fields%wU(0,2)/kpp_const_fields%hm(1))
+c     +     kpp_2d_fields%wU(0,2)/kpp_2d_fields%hm(1))
       do i=2,NZ-1
          rhs(i)= Uo(i,2) - kpp_const_fields%dto*ftemp*.5*(Uo(i,1)+
      +        kpp_2d_fields%U(i,1))
@@ -604,10 +608,10 @@ c         rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)
       enddo
       i=NZ
       rhs(i)= Uo(i,2) - kpp_const_fields%dto*ftemp*.5*(Uo(i,1)+
-     +     kpp_2d_fields%U(i,1)) + kpp_const_fields%tri(i,1,intri)*
+     +     kpp_2d_fields%U(i,1)) + kpp_2d_fields%tri(i,1,intri)*
      +     kpp_2d_fields%difm(i)*Uo(i+1,2)
 c      rhs(i)=Uo(i,2)-kpp_const_fields%dto*ftemp*Uo(i,1)+
-c     +     kpp_const_fields%tri(i,1,intri)*
+c     +     kpp_2d_fields%tri(i,1,intri)*
 c     +     kpp_2d_fields%difm(i)*Uo(i+1,2)
 
       npd = 1
@@ -642,12 +646,12 @@ c    $                     * sflux(3,5,0) / rho(ipt,0) / CP(ipt,0)
          gcap(k)=kpp_2d_fields%ghat(k)
          ntflx(k,1)=kpp_2d_fields%wXNT(k,1)
       ENDDO
-      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
+      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_2d_fields)
 c      WRITE(6,*) 'Before tridrhs, ntflx = ',ntflx(:,1),'diff=',diff,
 c     + 'gcap=',gcap,'sturflx=',sturflux,'intri=',intri
-      call tridrhs(npd,kpp_const_fields%hm,Xo(:,1),ntflx(:,1),diff,gcap,
+      call tridrhs(npd,kpp_2d_fields%hm,Xo(:,1),ntflx(:,1),diff,gcap,
      +     sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,rhs,
-     +     kpp_const_fields)
+     +     kpp_2d_fields)
 c      WRITE(6,*) 'After RHS on temperature, sst = ',kpp_2d_fields%X(1,1)
 c     +     ,'rhs=',rhs
 c     modify rhs for advection
@@ -656,7 +660,7 @@ c         adv_mode=kpp_2d_fields%modeadv(imode,1)
 c         adv_mag=kpp_2d_fields%advection(imode,1)
 c         call rhsmod(1,adv_mode,adv_mag,
 c     +        kpp_const_fields%dto,kmixe,
-c     +        kpp_const_fields%dm(kmixe),NZ,
+c     +        kpp_2d_fields%dm(kmixe),NZ,
 c     +        rhs,kpp_2d_fields,kpp_const_fields)
 c      enddo
 
@@ -673,15 +677,15 @@ c
          IF (kpp_2d_fields%relax_sst .GT. 1.e-10) THEN
             IF (.NOT. kpp_const_fields%L_RELAX_CALCONLY) THEN
 !               WRITE(6,*) kpp_2d_fields%relax_sst,kpp_const_fields%dto,
-!     +              kpp_2d_fields%SST0,kpp_const_fields%dm(kmixe)
+!     +              kpp_2d_fields%SST0,kpp_2d_fields%dm(kmixe)
                rhs(1)=rhs(1)+
      +              kpp_const_fields%dto*kpp_2d_fields%relax_sst*
      +              (kpp_2d_fields%SST0-Xo(1,1))*
-     +              kpp_const_fields%dm(kmixe)/kpp_const_fields%hm(1)
+     +              kpp_2d_fields%dm(kmixe)/kpp_2d_fields%hm(1)
             ENDIF
             kpp_2d_fields%fcorr=kpp_2d_fields%relax_sst*
      +           (kpp_2d_fields%SST0-Xo(1,1))*
-     +           kpp_const_fields%dm(kmixe)*kpp_2d_fields%rho(1)*
+     +           kpp_2d_fields%dm(kmixe)*kpp_2d_fields%rho(1)*
      +           kpp_2d_fields%cp(1)
          ELSE
             kpp_2d_fields%fcorr=0.0
@@ -701,7 +705,7 @@ c     Added by NPK (29/6/08)
          rhs(1)=rhs(1)+
      +        kpp_const_fields%dto*kpp_2d_fields%fcorr_twod/
      +        (kpp_2d_fields%rho(1)*kpp_2d_fields%cp(1)*
-     +        kpp_const_fields%hm(1))
+     +        kpp_2d_fields%hm(1))
       ENDIF
 c
 c     Correct the temperature at each layer in the model by using a flux
@@ -721,6 +725,8 @@ c     flux corrections at depth (NPK 12/02/08).
      +           kpp_2d_fields%fcorr_withz(k)/
      +           (kpp_2d_fields%rho(k)*kpp_2d_fields%cp(k))
          ENDDO
+         kpp_2d_fields%X(NZP1,1) = Xo(NZP1,1)+
+     +		 kpp_2d_fields%tinc_fcorr(NZP1)
       ENDIF
 
 c     Relax the temperature at each layer in the model by computing
@@ -774,12 +780,12 @@ c     ---
          ekvel_max = 1/(kpp_2d_fields%rho(1)*kpp_2d_fields%f)*
      +     kpp_2d_fields%sflux(7,5,0)
          DO k=2,NZ
-            IF (ABS(kpp_const_fields%zm(k)) .lt.
+            IF (ABS(kpp_2d_fields%zm(k)) .lt.
      +           kpp_const_fields%ekadv_max) THEN
                dist_hek = kpp_2d_fields%hekman-
-     +              ABS(kpp_const_fields%zm(k))
+     +              ABS(kpp_2d_fields%zm(k))
                ! If below Ekman depth, compute distance to bottom of Ekman layer
-               IF (ABS(kpp_const_fields%zm(k))
+               IF (ABS(kpp_2d_fields%zm(k))
      +              .ge.kpp_2d_fields%hekman) THEN
                   weight_hek = SIN((kpp_const_fields%ekadv_max-
      +                 kpp_2d_fields%hekman-
@@ -792,7 +798,7 @@ c     ---
                ENDIF
                kpp_2d_fields%ekvel(k)=weight_hek*ekvel_max
                kpp_2d_fields%ekadv(k,1) = kpp_2d_fields%ekvel(k) *
-     +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
+     +              kpp_const_fields%dtsec / kpp_2d_fields%hm(k) *
      +              (kpp_2d_fields%X(k+1,1)-kpp_2d_fields%X(k-1,1))/2.0
                rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,1)
             ENDIF
@@ -805,16 +811,16 @@ c     Salinity and other scalars
       DO k=0,NZtmax
          diff(k)=kpp_2d_fields%difs(k)
       ENDDO
-      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_const_fields)
+      call tridcof(diff,NZ,intri,cu,cc,cl,kpp_2d_fields)
       do 200 n=2,NSCLR
          DO k=0,NZtmax
             ntflx(k,n)=kpp_2d_fields%wXNT(k,n)
          ENDDO
          ghatflux = kpp_2d_fields%wX(0,n)
          sturflux = kpp_2d_fields%wX(0,n)
-         call tridrhs(npd,kpp_const_fields%hm,Xo(:,n),ntflx(:,n),
+         call tridrhs(npd,kpp_2d_fields%hm,Xo(:,n),ntflx(:,n),
      >        diff,gcap,sturflux,ghatflux,kpp_const_fields%dto,NZ,intri,
-     +        rhs,kpp_const_fields)
+     +        rhs,kpp_2d_fields)
 
 c     modify rhs for advections
          do imode=1,kpp_2d_fields%nmodeadv(2)
@@ -822,14 +828,14 @@ c     modify rhs for advections
             adv_mag=kpp_2d_fields%advection(imode,2)
             call rhsmod(2,adv_mode,adv_mag,
      +           kpp_const_fields%dto,kmixe,
-     +           kpp_const_fields%dm(kmixe),
+     +           kpp_2d_fields%dm(kmixe),
      +           NZ,rhs,kpp_2d_fields,kpp_const_fields)
          enddo
 
          IF (kpp_const_fields%L_EKMAN_PUMP) THEN
             DO k=2,NZ
                kpp_2d_fields%ekadv(k,n) = kpp_2d_fields%ekvel(k) *
-     +              kpp_const_fields%dtsec / kpp_const_fields%hm(k) *
+     +              kpp_const_fields%dtsec / kpp_2d_fields%hm(k) *
      +              (kpp_2d_fields%X(k+1,n)-kpp_2d_fields%X(k-1,n))/2.0
                rhs(k) = rhs(k) + kpp_2d_fields%ekadv(k,n)
             ENDDO
@@ -879,7 +885,7 @@ c     L_SFCORR_WITHZ (see above).
 
 ************************************************************************
 
-      SUBROUTINE tridcof(diff,nzi,ind,cu,cc,cl,kpp_const_fields)
+      SUBROUTINE tridcof(diff,nzi,ind,cu,cc,cl,kpp_2d_fields)
 
 c     Compute coefficients for tridiagonal matrix (dimension=nzi).
 c     Note: cu(1) = 0. and cl(nzi) = 0. are necessary conditions.
@@ -891,7 +897,7 @@ c-----
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 c Input
-      TYPE(kpp_const_type) :: kpp_const_fields
+      TYPE(kpp_2d_type) :: kpp_2d_fields
       integer nzi,              ! dimension of field
      +     ind                  ! index for tri-coefficients: = kmixo for t-grid,
 c                                           =     1 for p-grid.
@@ -909,14 +915,14 @@ c more local variables (to make implicit none)
 c
 c In the surface layer
       cu(1) = 0.
-      cc(1) = 1. + kpp_const_fields%tri(1,1,ind)*diff(1)   ! 1.+ dto/h(1)/dzb(1)*diff(1)
-      cl(1) =    - kpp_const_fields%tri(1,1,ind)*diff(1)   !   - dto/h(1)/dzb(1)*diff(1)
+      cc(1) = 1. + kpp_2d_fields%tri(1,1,ind)*diff(1)   ! 1.+ dto/h(1)/dzb(1)*diff(1)
+      cl(1) =    - kpp_2d_fields%tri(1,1,ind)*diff(1)   !   - dto/h(1)/dzb(1)*diff(1)
 c Inside the domain
       do 10 i=2,nzi
-      cu(i) =    - kpp_const_fields%tri(i,0,ind)*diff(i-1)
-      cc(i) = 1. + kpp_const_fields%tri(i,1,ind)*diff(i)   +
-     +     kpp_const_fields%tri(i,0,ind)*diff(i-1)
-      cl(i) =    - kpp_const_fields%tri(i,1,ind)*diff(i)
+      cu(i) =    - kpp_2d_fields%tri(i,0,ind)*diff(i-1)
+      cc(i) = 1. + kpp_2d_fields%tri(i,1,ind)*diff(i)   +
+     +     kpp_2d_fields%tri(i,0,ind)*diff(i-1)
+      cl(i) =    - kpp_2d_fields%tri(i,1,ind)*diff(i)
  10   continue
 c In the bottom layer
       cl(nzi)= 0.
@@ -926,7 +932,7 @@ c In the bottom layer
 ***********************************************************************
 
       SUBROUTINE tridrhs(npd,h,yo,ntflux,diff,ghat,sturflux,ghatflux,
-     +                   dto,nzi,ind,rhs,kpp_const_fields)
+     +                   dto,nzi,ind,rhs,kpp_2d_fields)
 
 c     Compute right hand side of tridiagonal matrix for scalar fields:
 c     =  yo (old field)
@@ -943,7 +949,7 @@ c           bottom  ..... ..... +dto/h(nzi)*diff(nzi)/dzb(nzi)*yo(nzi+1)
 #include "kpp_3d_type.com"
 
 c Input
-      TYPE(kpp_const_type) :: kpp_const_fields
+      TYPE(kpp_2d_type) :: kpp_2d_fields
       real dto           ! timestep interval (seconds)
       integer nzi,       ! dimension of field
      +        ind        ! index for tri-coefficients:=kmixo for t-grid,
@@ -999,7 +1005,7 @@ c     In the bottom layer
       rhs(i)= yo(i) + dto/h(i) *
      +              ( ghatflux*(diff(i)*ghat(i) - diff(i-1)*ghat(i-1))
      +               +ntflux(i) - ntflux(i-1) )
-     +      + yo(i+1)*kpp_const_fields%tri(i,1,ind)*diff(i)
+     +      + yo(i+1)*kpp_2d_fields%tri(i,1,ind)*diff(i)
       endif
       return
       end
@@ -1083,13 +1089,13 @@ c                          correct upper layer advection
      +        (kpp_2d_fields%rho(1)*kpp_2d_fields%cp(1))
          if(jsclr.eq.2) fact = dto * Am * 0.033
          rhs(1) = rhs(1)
-     &        + fact / kpp_const_fields%hm(1)
+     &        + fact / kpp_2d_fields%hm(1)
 
       else if(mode.eq.2) then
 c     correct mixed layer advection
          delta = 0.0
          do n=1,km-1
-            delta = delta + kpp_const_fields%hm(n)
+            delta = delta + kpp_2d_fields%hm(n)
          enddo
          do 215 n=1,km-1
             if(jsclr.eq.1) fact = dto * Am /
@@ -1103,7 +1109,7 @@ c     correct mixed layer advection
 c     throughout whole water column
          delta = 0.0
          do n=1,nzi
-            delta = delta + kpp_const_fields%hm(n)
+            delta = delta + kpp_2d_fields%hm(n)
          enddo
          do 315 n=1,nzi
             if(jsclr.eq.1) fact = dto * Am /
@@ -1119,10 +1125,10 @@ c     vertical advection = deep horizontal
          nzend=nzi-1            ! nzend=nzi (change:7-1-93)
          n1=0                   ! n1=16     (change:7-1-93)
  401     n1=n1+1
-         if(kpp_const_fields%zm(n1).ge.-100.) goto 401
+         if(kpp_2d_fields%zm(n1).ge.-100.) goto 401
          delta = 0.0
          do n=n1,nzend
-            delta = delta + kpp_const_fields%hm(n)
+            delta = delta + kpp_2d_fields%hm(n)
          enddo
          do 415 n=n1,nzend
             if(jsclr.eq.1) fact = dto * Am /
@@ -1138,7 +1144,7 @@ c     correct bottom layer diffusion
      +        kpp_2d_fields%cp(nzi))
          if(jsclr.eq.2) fact = dto * Am * 0.033
          rhs(nzi) = rhs(nzi)
-     &        + fact / kpp_const_fields%hm(nzi)
+     &        + fact / kpp_2d_fields%hm(nzi)
 
       else
 
@@ -1161,14 +1167,14 @@ c     Am = A                                          ! Steady
          if(mode.eq.6) then
 c     mixed layer to dm
             n1 = 1
-            depth = kpp_const_fields%hm(1)
-            dmax  = dm -  0.5 * (kpp_const_fields%hm(km) +
-     +           kpp_const_fields%hm(km-1))
+            depth = kpp_2d_fields%hm(1)
+            dmax  = dm -  0.5 * (kpp_2d_fields%hm(km) +
+     +           kpp_2d_fields%hm(km-1))
             delta = 0.0
             do 605 n =n1,nzi
                n2    = n
-               delta = delta + kpp_const_fields%hm(n)
-               depth = depth + kpp_const_fields%hm(n+1)
+               delta = delta + kpp_2d_fields%hm(n)
+               depth = depth + kpp_2d_fields%hm(n+1)
                if(depth.ge.dmax) go to 606
  605        continue
  606        continue
@@ -1176,13 +1182,13 @@ c     mixed layer to dm
          else if (mode.eq.7) then
 c     thermocline to 100m
             n1 = km - 1
-            depth = dm - 0.5 * kpp_const_fields%hm(km)
+            depth = dm - 0.5 * kpp_2d_fields%hm(km)
             dmax = 100.
             delta = 0.0
             do 705 n=n1,nzi
                n2 = n
-               delta = delta + kpp_const_fields%hm(n)
-               depth = depth + kpp_const_fields%hm(n+1)
+               delta = delta + kpp_2d_fields%hm(n)
+               depth = depth + kpp_2d_fields%hm(n+1)
                if(depth.ge.dmax) go to 706
  705        continue
  706        continue
@@ -1264,7 +1270,8 @@ c                                                      ! bottom
       do 22 i=nzi-1,1,-1
          yn(i)  = yn(i) - gam(i+1)*yn(i+1)
  22   continue
-      yn(nzi+1) = yo(nzi+1)
+      yn(nzi+1) = yn(nzi+1)
+c      yn(nzi+1) = yo(nzi+1)
 
       return
       end
@@ -1322,23 +1329,26 @@ c     tri(k=1:NZ,0,.........) : dt/h(k)/ {dzb(k-1)=z(k-1)-z(k)=dzabove}
 c     tri(k=1:NZ,1,.........) : dt/h(k)/ {dzb(k  )=z(k)-z(k+1)=dzbelow}
 c
 
+      kpp_2d_fields%dm = kpp_const_fields%dm
+      kpp_2d_fields%hm = kpp_const_fields%hm
+      kpp_2d_fields%zm = kpp_const_fields%zm
       IF (kpp_const_fields%L_SLAB) THEN
-        kpp_const_fields%dm(1)=kpp_const_fields%slab_depth
-        kpp_const_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
-        kpp_const_fields%hm(1)=kpp_const_fields%slab_depth
+         kpp_2d_fields%dm(1)=kpp_const_fields%slab_depth
+         kpp_2d_fields%zm(1)=kpp_const_fields%slab_depth*(-0.5)
+         kpp_2d_fields%hm(1)=kpp_const_fields%slab_depth
       ENDIF
       do 10 k=1,NZ
-         dzb(k)     = kpp_const_fields%zm(k) - kpp_const_fields%zm(k+1)
+         dzb(k)     = kpp_2d_fields%zm(k) - kpp_2d_fields%zm(k+1)
  10   continue
       kpp_const_fields%tri(0,1,1) = kpp_const_fields%dto/
-     +     kpp_const_fields%hm(1)
+     +     kpp_2d_fields%hm(1)
       kpp_const_fields%tri(1,1,1) = kpp_const_fields%dto/
-     +     kpp_const_fields%hm(1)/dzb(1)
+     +     kpp_2d_fields%hm(1)/dzb(1)
       do 20 k=2,NZ
          kpp_const_fields%tri(k,1,1) = kpp_const_fields%dto/
-     +        kpp_const_fields%hm(k)/dzb(k)
+     +        kpp_2d_fields%hm(k)/dzb(k)
          kpp_const_fields%tri(k,0,1) = kpp_const_fields%dto/
-     +        kpp_const_fields%hm(k)/dzb(k-1)
+     +        kpp_2d_fields%hm(k)/dzb(k-1)
  20   continue
 
       IF ( .NOT. kpp_const_fields%L_RESTART) THEN
@@ -1372,8 +1382,8 @@ c               ENDDO
                kpp_2d_fields%Tref = kpp_2d_fields%X(1,1)
 c Evaluate initial fluxes (to write to output data file)
                do k=1,NZ
-                  deltaz = 0.5*(kpp_const_fields%hm(k)+
-     +                 kpp_const_fields%hm(k+1))
+                  deltaz = 0.5*(kpp_2d_fields%hm(k)+
+     +                 kpp_2d_fields%hm(k+1))
                   do n=1,NSCLR
                      kpp_2d_fields%wX(k,n)=-kpp_2d_fields%difs(k)*
      +                    ((kpp_2d_fields%X(k,n)-
@@ -1512,10 +1522,10 @@ c  100 continue
       fltn = 1. / float(nz)
       write(nuout,*)
       do 5 k=1,nz
-      T1  =  T1 + X1(k,1)  * kpp_const_fields%hm(k)
-      T2  =  T2 + kpp_2d_fields%X(k,1)  * kpp_const_fields%hm(k)
-      S1  =  S1 + X1(k,2)  * kpp_const_fields%hm(k)
-      S2  =  S2 + kpp_2d_fields%X(k,2)  * kpp_const_fields%hm(k)
+      T1  =  T1 + X1(k,1)  * kpp_2d_fields%hm(k)
+      T2  =  T2 + kpp_2d_fields%X(k,1)  * kpp_2d_fields%hm(k)
+      S1  =  S1 + X1(k,2)  * kpp_2d_fields%hm(k)
+      S2  =  S2 + kpp_2d_fields%X(k,2)  * kpp_2d_fields%hm(k)
       write(nuout,*) k,X1(k,1),kpp_2d_fields%X(k,1),X1(k,2),
      +     kpp_2d_fields%X(k,2)
   5   continue
@@ -1538,7 +1548,7 @@ c  100 continue
 
       do 15 k=1,nz
          delt = (kpp_2d_fields%X(k,1)-X1(k,1))
-         fact = kpp_const_fields%dto / kpp_const_fields%hm(k)
+         fact = kpp_const_fields%dto / kpp_2d_fields%hm(k)
       rhs  = fact * (kpp_2d_fields%wX(k,1)-kpp_2d_fields%wX(k-1,1) +
      +     kpp_2d_fields%wXNT(k,1)-kpp_2d_fields%wXNT(k-1,1) )
       diff = delt - rhs
@@ -1654,9 +1664,9 @@ c
 c      IF ((kpp_const_fields%ntime .eq. 1) .and. (k .eq. 2)) THEN
       DO l=1,NZP1
 c     do 100 i = ipt,ipt
-         r1      = MAX(kpp_const_fields%zm(l)*
+         r1      = MAX(kpp_2d_fields%zm(l)*
      +        fact/a1(kpp_2d_fields%jerlov), rmin)
-         r2      = MAX(kpp_const_fields%zm(l)*
+         r2      = MAX(kpp_2d_fields%zm(l)*
      +        fact/a2(kpp_2d_fields%jerlov), rmin)
          kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  *
      +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)

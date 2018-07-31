@@ -1596,7 +1596,7 @@ c     %Us and %Xs are the largest fields, so they get their own file.
      +     restart_infile)
 
       IMPLICIT NONE
-      INTEGER nuout,nuerr
+      INTEGER nuout,nuerr,i,j,k
       PARAMETER (nuout=6,nuerr=0)
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
@@ -1634,6 +1634,18 @@ c
          READ(31) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(31)
       ENDIF
+      WRITE(6,*) 'T: ',kpp_3d_fields%X(:,:,1)
+      WRITE(6,*) 'S: ',kpp_3d_fields%X(:,:,2)
+      WRITE(6,*) 'U: ',kpp_3d_fields%U(:,:,1)
+      WRITE(6,*) 'V: ',kpp_3d_fields%U(:,:,2)
+      DO i=1,NPTS
+         DO j=1,NZP1
+            kpp_3d_fields%U(i,j,:) = 0.01
+            DO k=1,2
+               kpp_3d_fields%Us(i,j,k,:) = kpp_3d_fields%U(i,j,k)
+            ENDDO
+         ENDDO
+      ENDDO
 
       IF (abs(kpp_const_fields%time-kpp_const_fields%startt) .GT. 1.e-4)
      +     THEN

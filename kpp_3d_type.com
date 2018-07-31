@@ -97,7 +97,9 @@
      +     dlat,dlon,
      +     talpha(0:NZP1tmax),sbeta(0:NZP1tmax), ! Not needed outside physics
      +     dampu_flag,dampv_flag,reset_flag,ekvel(NZP1),ekadv(NZP1,2),
-     +	   u_clim(NZP1),v_clim(NZP1),relax_curr
+     +	   u_clim(NZP1),v_clim(NZP1),relax_curr,
+     +     dm(0:nz),hm(nzp1),zm(nzp1)
+      real :: tri(0:NZtmax,0:1,NGRID)
       integer :: old,new,jerlov,
      +     nmodeadv(2),modeadv(maxmodeadv,2)
       logical :: l_ocean,l_initflag,comp_flag

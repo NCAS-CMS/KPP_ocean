@@ -277,9 +277,9 @@ c     indices for array Rib(i,k), the bulk Richardson number.
       
 c     initialize hbl and kbl to bottomed out values
       Rib(ka) = 0.0
-      dmo(ka) = -kpp_const_fields%zm(kmp1)
+      dmo(ka) = -kpp_2d_fields%zm(kmp1)
       kbl    = km
-      hbl    = -kpp_const_fields%zm(km)
+      hbl    = -kpp_2d_fields%zm(km)
 c     Coriol(i) = 2. * (twopi/86164.) * sin(2.5*twopi/360.)
       hek =  cekman * ustar / 
      +     (abs(kpp_2d_fields%f) + epsln)
@@ -300,7 +300,7 @@ c     thereafter (see below).
          IF(kbl.ge.km) THEN
 c            WRITE(6,*) 'kbl = ',kbl
 c     use caseA as temporary array for next call to wscale
-            caseA = -kpp_const_fields%zm(kl)
+            caseA = -kpp_2d_fields%zm(kl)
             
 c     compute bfsfc= Bo + radiative contribution down to hbf * hbl
             bfsfc  = Bo
@@ -328,16 +328,16 @@ c         WRITE(6,*) 'wscale(',sigma,hbl,ustar,bfsfc
 c     compute the turbulent shear contribution to Rib
             bvsq =0.5*
      $           (kpp_2d_fields%dbloc(kl-1) / 
-     $           (kpp_const_fields%zm(kl-1)-kpp_const_fields%zm(kl))+ 
+     $           (kpp_2d_fields%zm(kl-1)-kpp_2d_fields%zm(kl))+ 
      $           kpp_2d_fields%dbloc(kl) / 
-     $           (kpp_const_fields%zm(kl)-kpp_const_fields%zm(kl+1)))
-            Vtsq = -kpp_const_fields%zm(kl) * ws * sqrt(abs(bvsq)) * Vtc
+     $           (kpp_2d_fields%zm(kl)-kpp_2d_fields%zm(kl+1)))
+            Vtsq = -kpp_2d_fields%zm(kl) * ws * sqrt(abs(bvsq)) * Vtc
 c     compute bulk Richardson number at new level, dunder
             Rib(ku) = Ritop(kl) / (dVsq(kl)+Vtsq+epsln)
             Rib(ku) = MAX( Rib(ku), Rib(ka) + epsln)
 c     linear interpolate to find hbl where Rib = Ricr
-            hri   = -kpp_const_fields%zm(kl-1) + 
-     +           (kpp_const_fields%zm(kl-1)-kpp_const_fields%zm(kl)) *
+            hri   = -kpp_2d_fields%zm(kl-1) + 
+     +           (kpp_2d_fields%zm(kl-1)-kpp_2d_fields%zm(kl)) *
      $           (Ricr - Rib(ka)) / (Rib(ku)-Rib(ka))
             
 c     compute the Monin Obukov length scale 
@@ -347,26 +347,26 @@ c     fmonob    = stable(i) * LMO
      +           * ustar
      >           / kpp_const_fields%vonk / (abs(bfsfc) + epsln)
             dmo(ku) = fmonob * dmo(ku) - (1.-fmonob) *
-     +           kpp_const_fields%zm(kmp1) 
-            if(dmo(ku).le.(-kpp_const_fields%zm(kl))) then
-               hmonob =(dmo(ku)-dmo(ka))/(kpp_const_fields%zm(kl-1)-
-     +              kpp_const_fields%zm(kl))
-               hmonob =(dmo(ku)+hmonob*kpp_const_fields%zm(kl)) / 
+     +           kpp_2d_fields%zm(kmp1) 
+            if(dmo(ku).le.(-kpp_2d_fields%zm(kl))) then
+               hmonob =(dmo(ku)-dmo(ka))/(kpp_2d_fields%zm(kl-1)-
+     +              kpp_2d_fields%zm(kl))
+               hmonob =(dmo(ku)+hmonob*kpp_2d_fields%zm(kl)) / 
      +              (1.-hmonob)
             else
-               hmonob = -kpp_const_fields%zm(kmp1)
+               hmonob = -kpp_2d_fields%zm(kmp1)
             endif
               
 c     compute the Ekman depth
 c     fekman  =  stable(i) * LEK
             fekman  =  stable * 1.0
             hekman  = fekman * hek - (1.-fekman) * 
-     +           kpp_const_fields%zm(kmp1)
+     +           kpp_2d_fields%zm(kmp1)
             
 c     compute boundary layer depth
             hmin  = MIN(hri, hmonob,  hekman, -kpp_2d_fields%ocdepth)
 c     WRITE(6,*) 'hri=',hri,'hmonob=',hmonob,'hekman=',hekman
-            if(hmin .lt. -kpp_const_fields%zm(kl) ) then
+            if(hmin .lt. -kpp_2d_fields%zm(kl) ) then
 c     
 c     Code below added by SJW 09/07/04 to solve problems where hek 
 c     less than zgrid(kl-1) giving negative diffusions
@@ -378,9 +378,9 @@ c     Ritop is negative or very small and so is not always helpful in
 c     this scenario.
 c     
                if (.not. kpp_2d_fields%l_initflag) then
-                  if (hmin .lt. -kpp_const_fields%zm(kl-1)) then
+                  if (hmin .lt. -kpp_2d_fields%zm(kl-1)) then
                      hmin2=MIN(hri,hmonob,-kpp_2d_fields%ocdepth)
-                     if (hmin2 .lt. -kpp_const_fields%zm(kl)) THEN
+                     if (hmin2 .lt. -kpp_2d_fields%zm(kl)) THEN
 c     write(6,*) 'Setting hmin=',
 c     &                         hmin2,'from hek? ',hekman,
 c     &                         'hri=',hri,'hmonob=',hmonob
@@ -421,8 +421,8 @@ c     &                hri
  
 c determine caseA and caseB
       caseA  = 0.5 + 
-     $     SIGN( 0.5,-kpp_const_fields%zm(kbl) -0.5*
-     +     kpp_const_fields%hm(kbl) -hbl)
+     $     SIGN( 0.5,-kpp_2d_fields%zm(kbl) -0.5*
+     +     kpp_2d_fields%hm(kbl) -hbl)
 
 
       return
@@ -625,7 +625,7 @@ c     use difs(imt,ki=1,km) as dummy in smoothing call
 c     WRITE(6,*) ki
 c     WRITE(6,*) 'Shsq(ki) = ',Shsq(ki)
          kpp_2d_fields%Rig(ki)  = kpp_2d_fields%dbloc(ki) * 
-     +        (kpp_const_fields%zm(ki)-kpp_const_fields%zm(ki+1))/
+     +        (kpp_2d_fields%zm(ki)-kpp_2d_fields%zm(ki+1))/
      $        (kpp_2d_fields%Shsq(ki) + epsln)
          kpp_2d_fields%dift(ki) = kpp_2d_fields%Rig(ki)
          kpp_2d_fields%difm(ki) = kpp_2d_fields%dift(ki)                        
@@ -889,33 +889,33 @@ c      WRITE(6,*) 'wscale(',sigma,hbl,ustar,bfsfc
      $     (1-ifix(caseA+epsln)) * kbl
       
 c     find the interior viscosities and derivatives at hbl(i) 
-      delhat = 0.5*kpp_const_fields%hm(kn)-kpp_const_fields%zm(kn) - 
+      delhat = 0.5*kpp_2d_fields%hm(kn)-kpp_2d_fields%zm(kn) - 
      +     hbl
-      R      = 1.0 - delhat / kpp_const_fields%hm(kn)
+      R      = 1.0 - delhat / kpp_2d_fields%hm(kn)
 c      WRITE(6,*) 'kn = ',kn
 c      WRITE(6,*) 'kpp_2d_fields%difm(kn-1) =',kpp_2d_fields%difm(kn-1)
 c      WRITE(6,*) 'kpp_2d_fields%difm(kn) =',kpp_2d_fields%difm(kn)
-c      WRITE(6,*) 'kpp_const_fields%hm(kn) = ',kpp_const_fields%hm(kn)
-c      WRITE(6,*) 'kpp_const_fields%hm(kn+1) =',kpp_const_fields%hm(kn+1)
+c      WRITE(6,*) 'kpp_2d_fields%hm(kn) = ',kpp_2d_fields%hm(kn)
+c      WRITE(6,*) 'kpp_2d_fields%hm(kn+1) =',kpp_2d_fields%hm(kn+1)
 
       dvdzup = (kpp_2d_fields%difm(kn-1) - kpp_2d_fields%difm(kn)) / 
-     +     kpp_const_fields%hm(kn) 
+     +     kpp_2d_fields%hm(kn) 
       dvdzdn = (kpp_2d_fields%difm(kn)   - kpp_2d_fields%difm(kn+1)) 
-     +     / kpp_const_fields%hm(kn+1)
+     +     / kpp_2d_fields%hm(kn+1)
       viscp  = 0.5 * ( (1.-R) * (dvdzup + abs(dvdzup))+
      $     R  * (dvdzdn + abs(dvdzdn)) )
       
       dvdzup = (kpp_2d_fields%difs(kn-1) - kpp_2d_fields%difs(kn)) / 
-     +     kpp_const_fields%hm(kn) 
+     +     kpp_2d_fields%hm(kn) 
       dvdzdn = (kpp_2d_fields%difs(kn)   - kpp_2d_fields%difs(kn+1)) 
-     +     / kpp_const_fields%hm(kn+1)
+     +     / kpp_2d_fields%hm(kn+1)
       difsp  = 0.5 * ( (1.-R) * (dvdzup + abs(dvdzup))+
      $     R  * (dvdzdn + abs(dvdzdn)) )
       
       dvdzup = (kpp_2d_fields%dift(kn-1) - kpp_2d_fields%dift(kn)) / 
-     +     kpp_const_fields%hm(kn) 
+     +     kpp_2d_fields%hm(kn) 
       dvdzdn = (kpp_2d_fields%dift(kn)   - kpp_2d_fields%dift(kn+1)) 
-     +     / kpp_const_fields%hm(kn+1)
+     +     / kpp_2d_fields%hm(kn+1)
       diftp  = 0.5 * ( (1.-R) * (dvdzup + abs(dvdzup))+
      $     R  * (dvdzdn + abs(dvdzdn)) )
 c     
@@ -949,15 +949,15 @@ c
 c
 c     compute turbulent velocity scales on the interfaces
 c     
-         sig     = (-kpp_const_fields%zm(ki) + 0.5 * 
-     +        kpp_const_fields%hm(ki)) / hbl
+         sig     = (-kpp_2d_fields%zm(ki) + 0.5 * 
+     +        kpp_2d_fields%hm(ki)) / hbl
          sigma   = stable*sig + (1.-stable)*AMIN1(sig,epsilon)
          call wscale(sigma, hbl, ustar, bfsfc,wm,ws,kpp_const_fields)
 c
 c     compute the dimensionless shape functions at the interfaces
 c
-         sig = (-kpp_const_fields%zm(ki) + 0.5 * 
-     +        kpp_const_fields%hm(ki)) / hbl
+         sig = (-kpp_2d_fields%zm(ki) + 0.5 * 
+     +        kpp_2d_fields%hm(ki)) / hbl
          a1 = sig - 2.
          a2 = 3.-2.*sig
          a3 = sig - 1.
@@ -977,12 +977,12 @@ c     nonlocal transport term = ghats * <ws>o
  300  continue
  
 c find diffusivities at kbl-1 grid level 
-      sig   =  -kpp_const_fields%zm(kbl-1)  / hbl
+      sig   =  -kpp_2d_fields%zm(kbl-1)  / hbl
       sigma =  stable * sig + (1.-stable) * AMIN1(sig,epsilon)
 c
       call wscale(sigma, hbl, ustar, bfsfc,   wm, ws,kpp_const_fields)
 c     
-      sig = -kpp_const_fields%zm(kbl-1) / hbl
+      sig = -kpp_2d_fields%zm(kbl-1) / hbl
       a1= sig - 2.
       a2 = 3.-2.*sig
       a3 = sig - 1.
@@ -1041,8 +1041,8 @@ c local
 c
       do ki=1,km-1         
          if(ki .eq. (kbl - 1) ) then            
-            delta = (hbl+kpp_const_fields%zm(ki)) / 
-     +           (kpp_const_fields%zm(ki)-kpp_const_fields%zm(ki+1))
+            delta = (hbl+kpp_2d_fields%zm(ki)) / 
+     +           (kpp_2d_fields%zm(ki)-kpp_2d_fields%zm(ki+1))
             
             dkmp5 = caseA * kpp_2d_fields%difm(ki) + (1.-caseA) * 
      +           blmc(ki,1)

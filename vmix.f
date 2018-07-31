@@ -70,7 +70,7 @@ c calculate density of fresh water and brine in surface layer
       sigma0=0
       sigma=0
 c      WRITE(6,*) 'Before ABK80, sst = ',kpp_2d_fields%X(1,1)
-      call ABK80(0.0,kpp_2d_fields%X(1,1),-kpp_const_fields%zm(1),
+      call ABK80(0.0,kpp_2d_fields%X(1,1),-kpp_2d_fields%zm(1),
      +     alpha,beta,exppr,sigma0,sigma)
 c      WRITE(6,*) 'After ABK80, sst = ',kpp_2d_fields%X(1,1)
 c      IF (beta .lt. 0) THEN
@@ -79,7 +79,7 @@ c     +        exppr,sigma
 c      ENDIF
       kpp_2d_fields%rhoh2o = 1000. + sigma0
       call ABK80(kpp_const_fields%SICE,kpp_2d_fields%X(1,1),
-     +     -kpp_const_fields%zm(1),alpha,beta,exppr,sigma0,sigma)
+     +     -kpp_2d_fields%zm(1),alpha,beta,exppr,sigma0,sigma)
       rhob      = 1000. + sigma0
  
 c     calculate temperature and salt contributions of buoyancy gradients  
@@ -87,12 +87,12 @@ c     calculate buoyancy profile (m/s**2) on gridlevels
 
       do 10 k=1,nzp1
          call ABK80(kpp_2d_fields%X(k,2)+kpp_2d_fields%Sref,
-     +        kpp_2d_fields%X(k,1),-kpp_const_fields%zm(k),
+     +        kpp_2d_fields%X(k,1),-kpp_2d_fields%zm(k),
      +        alpha,beta,exppr,sigma0,sigma)
          kpp_2d_fields%rho(k)= 1000. + sigma0
          kpp_2d_fields%CP(k) = CPSW(kpp_2d_fields%X(k,2)+
      +        kpp_2d_fields%Sref,kpp_2d_fields%X(k,1),
-     +        -kpp_const_fields%zm(k))
+     +        -kpp_2d_fields%zm(k))
          kpp_2d_fields%talpha(k) = alpha
          kpp_2d_fields%sbeta(k)  = beta
          kpp_2d_fields%buoy(k) = -kpp_const_fields%grav * sigma0 / 1000.
@@ -151,18 +151,18 @@ c               on interfaces for double diffusion
       
 c     compute buoyancy and shear profiles
       do 115  n = 1,nz
-         zref =  epsilon * kpp_const_fields%zm(n)
+         zref =  epsilon * kpp_2d_fields%zm(n)
 c     compute reference buoyancy and velocity
-         wz    = AMAX1(kpp_const_fields%zm(1),zref) 
+         wz    = AMAX1(kpp_2d_fields%zm(1),zref) 
          kpp_2d_fields%uref  = kpp_2d_fields%U(1,1) * wz / zref
          kpp_2d_fields%vref  = kpp_2d_fields%U(1,2) * wz / zref
          bref  = kpp_2d_fields%buoy(1)* wz / zref
          do 125 kl = 1,nz
-            IF(zref.ge.kpp_const_fields%zm(kl)) go to 126
-            wz = AMIN1(kpp_const_fields%zm(kl)-
-     +           kpp_const_fields%zm(kl+1),kpp_const_fields%zm(kl)-zref) 
-            del = 0.5 * wz / (kpp_const_fields%zm(kl) - 
-     +           kpp_const_fields%zm(kl+1))
+            IF(zref.ge.kpp_2d_fields%zm(kl)) go to 126
+            wz = AMIN1(kpp_2d_fields%zm(kl)-
+     +           kpp_2d_fields%zm(kl+1),kpp_2d_fields%zm(kl)-zref) 
+            del = 0.5 * wz / (kpp_2d_fields%zm(kl) - 
+     +           kpp_2d_fields%zm(kl+1))
 c            WRITE(6,*) wz, del
             kpp_2d_fields%uref = kpp_2d_fields%uref - 
      +           wz*( kpp_2d_fields%U(kl,1) + del *
@@ -178,7 +178,7 @@ c            WRITE(6,*) wz, del
  125     continue
  126     continue
 
-         Ritop(n) = (zref - kpp_const_fields%zm(n)) * 
+         Ritop(n) = (zref - kpp_2d_fields%zm(n)) * 
      +        (bref - kpp_2d_fields%buoy(n))
 c     NPK Additions (25/9/2008). Prevent Ritop from going negative.
 c     IF (Ritop(ipt,n) .lt. 0) Ritop(ipt,n) = epsln
@@ -213,8 +213,8 @@ c      else
 c     Set very small background diffusivity values for slab ocean
 c     Should we set wxNT(NZ,:) to zero as well for the slab? This is
 c     done above for LNBFLX.
-         dlimit=1e-20
-         vlimit=1e-20
+         dlimit=0.0
+         vlimit=0.0
          DO n=1,nsclr
             kpp_2d_fields%wXNT(NZ,n)=0.0
          ENDDO

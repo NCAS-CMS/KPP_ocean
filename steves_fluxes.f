@@ -109,6 +109,7 @@ c        WRITE(6,*) 'ipt=',ipt,'lwf=',lwf(ipt)
                kpp_3d_fields%sflux(ipt,7,5,0)=0.0
             ENDIF
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields) 
+            
             call ntflx(kpp_2d_fields,kpp_const_fields)
             CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
          ENDIF
@@ -233,7 +234,7 @@ c      WRITE(6,*) 'L_REST=',L_REST
 #include "kpp_3d_type.com"
 
       INTEGER k
-      REAL SWDK
+      REAL SWDK, dm(0:NZ)
 c      REAL SWDK_OPT(NPTS,0:NZ)
       EXTERNAL SWDK
       TYPE(kpp_2d_type) :: kpp_2d_fields
@@ -243,19 +244,34 @@ c      COMMON /SWDK_SAVE/SWDK_OPT
 
 c      WRITE(6,*) 'ntime = ',kpp_const_fields%ntime
       IF (kpp_const_fields%ntime .le. 1) THEN
+	 IF (kpp_const_fields%L_SLAB) THEN
+	    kpp_2d_fields%swdk_opt(0)=1
+	    kpp_2d_fields%swdk_opt(1)=0
+            IF (kpp_const_fields%L_COLUMBIA_LAND .and.
+     +           kpp_2d_fields%dlat .ge. -30 .and.
+     +           kpp_2d_fields%dlat .le. 30 .and.
+     +           kpp_2d_fields%dlon .ge. 0 .and.
+     +           kpp_2d_fields%dlon .le. 45) THEN
+               dm(1) = 0.1
+            ELSE
+               dm(1) = kpp_const_fields%slab_depth     
+            ENDIF
+         ELSE
+            dm = kpp_const_fields%dm
+         ENDIF
          DO k=0,NZ
-            kpp_2d_fields%swdk_opt(k)=swdk(-kpp_const_fields%dm(k),
-     +           kpp_2d_fields%jerlov)
+            kpp_2d_fields%swdk_opt(k)=swdk(-dm(k),
+     +           kpp_2d_fields%jerlov)           
          ENDDO
       ENDIF
-      DO k=0,NZ
-         IF (kpp_const_fields%ntime .ge. 1) THEN 
+      IF (kpp_const_fields%ntime .ge. 1) THEN
+         DO k=0,NZ
             kpp_2d_fields%wXNT(k,1)=-kpp_2d_fields%sflux(3,5,0)
      +           *kpp_2d_fields%swdk_opt(k)
      &           /(kpp_2d_fields%rho(0)*kpp_2d_fields%CP(0))
-         ENDIF
-      ENDDO
-c         WRITE(6,*) 'Computed wXNT, sflux=',kpp_2d_fields%sflux(3,5,0),
+         ENDDO
+      ENDIF
+c     WRITE(6,*) 'Computed wXNT, sflux=',kpp_2d_fields%sflux(3,5,0),
 c     + 'swdk_opt=',kpp_2d_fields%swdk_opt,'rho=',
 c     +    kpp_2d_fields%rho(0),'cp=',kpp_2d_fields%CP(0),'jerlov=',
 c     +    kpp_2d_fields%jerlov
