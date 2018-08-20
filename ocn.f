@@ -135,11 +135,11 @@ c Force recomputation of tridiagonal matrix coefficients
       kpp_2d_fields%comp_flag=.TRUE.
       kpp_2d_fields%reset_flag=0.0
 
-      WRITE(6,*) 'Beginning of timestep:'
-      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
-      WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
-      WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
-      WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
+c      WRITE(6,*) 'Beginning of timestep:'
+c      WRITE(6,*) 'U=',kpp_2d_fields%U(:,1)
+c      WRITE(6,*) 'V=',kpp_2d_fields%U(:,2)
+c      WRITE(6,*) 'T=',kpp_2d_fields%X(:,1)
+c      WRITE(6,*) 'S=',kpp_2d_fields%X(:,2)
 
       DO WHILE (kpp_2d_fields%comp_flag .and.
      +     kpp_2d_fields%reset_flag .le. comp_iter_max)
