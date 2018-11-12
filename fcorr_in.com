@@ -4,7 +4,7 @@
       INTEGER ndtupdfcorr, fcorr_period, isotherm_bottom,
      +     ndt_interp_fcorr
       REAL isotherm_threshold, fcorr_nsol_coeff
-      CHARACTER*40 fcorrin_file, fcorr_nsol_file
+      CHARACTER*200 fcorrin_file, fcorr_nsol_file
       common /fcorr_in/ L_FCORR_WITHZ,L_FCORR,
      &     ndtupdfcorr, fcorrin_file,L_UPD_FCORR, L_PERIODIC_FCORR,
      &     fcorr_period, L_NO_FREEZE,

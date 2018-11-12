@@ -4,7 +4,7 @@
      +     L_BAD_ICE_DEPTH,L_DIST_RUNOFF
       INTEGER ifirst,ilast,jfirst,jlast,ncid_cplwght,ndtupdice,
      +     climice_period
-      CHARACTER*40 sstin_file,cplwght_file,icein_file,
+      CHARACTER*200 sstin_file,cplwght_file,icein_file,
      +     currin_file
       common /couple/ ifirst,ilast,jfirst,jlast,sstin_file,
      +     icein_file,L_COUPLE,L_CLIMICE,L_CLIM_ICE_DEPTH,

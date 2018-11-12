@@ -1,6 +1,6 @@
       LOGICAL L_LANDSEA
       INTEGER ncid_landsea
-      CHARACTER*40 landsea_file
+      CHARACTER*200 landsea_file
       REAL ocdepth(NPTS)
 #ifdef COUPLE
 #ifdef CFS

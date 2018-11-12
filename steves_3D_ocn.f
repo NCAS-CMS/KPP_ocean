@@ -998,10 +998,13 @@ c     Initilalize and read the location name list
       L_STRETCHGRID=.FALSE.
       L_REGGRID=.TRUE.
       L_VGRID_FILE=.FALSE.
+      vgrid_file='none'
       L_SLAB=.FALSE.
       L_COLUMBIA_LAND=.FALSE.
       slab_depth=0.0
       READ(75,NAME_DOMAIN)
+      IF (L_VGRID_FILE .and. vgrid_file .eq. 'none') 
+     +     vgrid_file='kpp_vgrid.nc'
       IF (DMAX .LE. 0.0) THEN
          WRITE(nuerr,*) 'KPP : You must specify a depth for the domain'
          CALL MIXED_ABORT
@@ -1020,9 +1023,11 @@ c     Initilalize and read the location name list
 c
 c     Initialize and read the landsea name list
       L_LANDSEA=.FALSE.
+      landsea_file='none'
       READ(75,NAME_LANDSEA)
       WRITE(nuout,*) 'KPP : Read Namelist LANDSEA'
       IF (L_LANDSEA) THEN
+         IF (landsea_file .eq. 'none') landsea_file='lsm_ocndepth.nc'
          kpp_3d_fields%dlat(1)=alat
          kpp_3d_fields%dlon(1)=alon
          CALL init_landsea(kpp_3d_fields)
@@ -1067,6 +1072,7 @@ c     Initialize the vertical grid
 c
 c     Initialize and read the start name list
       L_INITDATA= .TRUE.
+      initdata_file='none'
       L_INTERPINIT= .TRUE.
       L_RESTART= .FALSE.
       L_PERSIST_SST = .FALSE.
@@ -1076,6 +1082,9 @@ c     Initialize and read the start name list
       WRITE(restart_infile,*) 'fort.30'
       READ(75,NAME_START)
       write(nuout,*) 'KPP : Read Namelist START'
+      IF (L_INITDATA .and. initdata_file .eq. 'none') 
+     +     initdata_file='initcond.nc'
+      
 c
 c     Initialize and read the times namelist
       ndtocn=1
@@ -1183,9 +1192,11 @@ c     Initialize and read the advection namelist
          CALL init_relax(kpp_3d_fields,kpp_const_fields)
       ENDIF
 c     Initialize and read the paras namelist
-      paras_file='3D_ocnparas.nc'
+      paras_file='none'
       L_JERLOV=.TRUE.
       READ(75,NAME_PARAS)
+      IF (L_JERLOV .and. paras_file = 'none') 
+     +     paras_file='aqua_paras.nc'      
       CALL init_paras(kpp_3d_fields)
       write(nuout,*) 'KPP : Read Namelist PARAS'
 
@@ -1217,13 +1228,21 @@ c     Initialize and read the forcing namelist
       ndt_interp_fcorr=0
       fcorr_nsol_coeff=0.0
       fcorr_nsol_file='none'
+      fcorrin_file='none'
+      sfcorrin_file='none'
       forcing_file='1D_ocean_forcing.nc'
       ocnT_file='none'
+      bottomin_file='none'
       max_ekman_depth=0.0
       max_ekadv_depth=0.0
       READ(75,NAME_FORCING)
       write(nuout,*) 'KPP : Read Namelist FORCING'
-      WRITE(6,*) 'L_REST=',L_REST,'after namelist'
+      IF (L_VARY_BOTTOM_TEMP .and. bottomin_file .eq. 'none')
+     +     bottomin_file='bottom_temps.nc'
+      IF ((L_FCORR .or. L_FCORR_WITHZ) .and. fcorrin_file .eq. 'none')
+     +     fcorrin_file='fcorr.nc'
+      IF ((L_SFCORR .or. L_SFCORR_WITHZ) .and. sfcorrin_file .eq. 'none')
+     +     sfcorrin_file='sfcorr.nc'     
       IF (L_FCORR_WITHZ .AND. L_FCORR) THEN
          WRITE(nuerr,*) 'KPP : L_FCORR and L_FCORR_WITHZ are '
      &        //'mutually exclusive.  Choose one or neither.'

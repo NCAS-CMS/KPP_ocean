@@ -1,7 +1,7 @@
 c      INTEGER nmodeadv(npts,2),modeadv(npts,maxmodeadv,2)
 c      REAL advection(npts,maxmodeadv,2)
       LOGICAL L_ADVECT
-      CHARACTER*40 advect_file
+      CHARACTER*200 advect_file
       INTEGER ncid_advec
       common/ ocn advec / 
      &     L_ADVECT,advect_file,ncid_advec
