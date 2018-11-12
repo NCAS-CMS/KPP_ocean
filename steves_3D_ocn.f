@@ -1028,6 +1028,7 @@ c     Initialize and read the landsea name list
       WRITE(nuout,*) 'KPP : Read Namelist LANDSEA'
       IF (L_LANDSEA) THEN
          IF (landsea_file .eq. 'none') landsea_file='lsm_ocndepth.nc'
+         WRITE(6,*) 'KPP : landsea_file = ',landsea_file
          kpp_3d_fields%dlat(1)=alat
          kpp_3d_fields%dlon(1)=alon
          CALL init_landsea(kpp_3d_fields)
