@@ -938,7 +938,7 @@ c     +     bottom_temp(:)
      &     L_CLIM_ICE_DEPTH,L_CLIM_SNOW_ON_ICE,L_OUTKELVIN,
      &     L_COUPLE_CURRENTS,currin_file,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
-     &     climsst_period,climice_period,L_DIST_RUNOFF
+     &     climsst_period,climice_period,L_DIST_RUNOFF,initflux_file
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1150,7 +1150,10 @@ c     Initialize and read the times namelist
       ilast=nx
       jfirst=1
       jfirst=ny
+      initflux_file='none'
       READ(75,NAME_COUPLE)
+      IF (L_COUPLE .and. initflux_file .eq. 'none')
+     +     initflux_file='kpp_initfluxes.nc'
       write(nuout,*) 'KPP : Read Namelist COUPLE'
 c      IF (L_CLIMSST) CALL read_sstin
 c      IF (L_CLIMICE) CALL read_icein
@@ -1195,7 +1198,7 @@ c     Initialize and read the paras namelist
       paras_file='none'
       L_JERLOV=.TRUE.
       READ(75,NAME_PARAS)
-      IF (L_JERLOV .and. paras_file = 'none') 
+      IF (L_JERLOV .and. paras_file .eq. 'none') 
      +     paras_file='aqua_paras.nc'      
       CALL init_paras(kpp_3d_fields)
       write(nuout,*) 'KPP : Read Namelist PARAS'
@@ -1241,7 +1244,7 @@ c     Initialize and read the forcing namelist
      +     bottomin_file='bottom_temps.nc'
       IF ((L_FCORR .or. L_FCORR_WITHZ) .and. fcorrin_file .eq. 'none')
      +     fcorrin_file='fcorr.nc'
-      IF ((L_SFCORR .or. L_SFCORR_WITHZ) .and. sfcorrin_file .eq. 'none')
+      IF ((L_SFCORR .or. L_SFCORR_WITHZ) .and. sfcorrin_file.eq.'none')
      +     sfcorrin_file='sfcorr.nc'     
       IF (L_FCORR_WITHZ .AND. L_FCORR) THEN
          WRITE(nuerr,*) 'KPP : L_FCORR and L_FCORR_WITHZ are '

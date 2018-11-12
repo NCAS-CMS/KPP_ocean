@@ -33,7 +33,6 @@
      +     icedepth_in(NX_GLOBE,NY_GLOBE,1),vsf_in(NX_GLOBE,NY_GLOBE),
      +     snowdepth_in(NX_GLOBE,NY_GLOBE,1),usf_in(NX_GLOBE,NY_GLOBE)
       CHARACTER(LEN=19) :: trans_timer_name
-      CHARACTER(LEN=40) :: flux_file
       COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
      +     usf_in,vsf_in
       INTEGER ix,jy,ipt_globe
@@ -57,15 +56,12 @@
 
       ! HadGEM3 passes zeros at the first timestep for a new run (i.e., NRUN)
       ! Thus, if this is NOT a restart run, we need to provide a file
-      ! of fluxes for KPP for the first coupling timestep.      
-      ! I am specifying "kpp_initfluxes.nc" as the filename here, although
-      ! we could always add a namelist option later to control this.
+      ! of fluxes for KPP for the first coupling timestep.           
       ! NPK 15/10/09, revised 6/11/09 to specify .NOT. L_RESTART
       ! as HadGEM3 does pass good fields for a restart run (i.e., CRUN)
-      IF (kpp_const_fields%ntime .EQ. 1 .AND. .NOT. L_RESTART) THEN 
-         WRITE(flux_file,'(A17)') 'kpp_initfluxes.nc'
-         WRITE(6,*) 'KPP: Reading fluxes from netCDF file ',flux_file
-         CALL init_flxdata(flux_file,kpp_const_fields)
+      IF (kpp_const_fields%ntime .EQ. 1 .AND. .NOT. L_RESTART) THEN          
+         WRITE(6,*) 'KPP: Reading fluxes from file ',initflux_file
+         CALL init_flxdata(initflux_file,kpp_const_fields)
          CALL read_fluxes(taux,tauy,swf,lwf,lhf,shf,rain,snow,curl_tau,
      +        kpp_3d_fields,kpp_const_fields)
 ! Convert to variables expected for a coupled model
