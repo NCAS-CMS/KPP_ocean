@@ -12,4 +12,4 @@
      +     cplwght_file,ncid_cplwght,L_OUTKELVIN,
      +	   L_UPD_CLIMICE,L_PERIODIC_CLIMICE,L_COUPLE_CURRENTS,
      +     currin_file,climice_period,L_CPLWGHT,
-     +     L_BAD_ICE_DEPTH,L_DIST_RUNOFF
+     +     L_BAD_ICE_DEPTH,L_DIST_RUNOFF,initflux_file
