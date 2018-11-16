@@ -8,7 +8,8 @@
       REAL :: current_time
 #endif
       TYPE(kpp_timer_type) :: kpp_timer
-
+      INTEGER :: i
+      
 #ifdef OPENMP
       current_time=OMP_GET_WTIME()
 #else
@@ -21,6 +22,9 @@
       kpp_timer%timer_start_time(timer_max_timers)=
      +     current_time
       kpp_timer%timer_running(timer_max_timers)=.TRUE.
+      DO i=1,timer_max_timers-1
+         kpp_timer%timer_all_names(i)='None'
+      ENDDO      
       kpp_timer%timer_all_names(timer_max_timers)='Timer'
 
       kpp_timer%timer_start_time(kpp_timer%timer_number_allocated)=
@@ -89,6 +93,7 @@
       ELSEIF (flag .eq. 0) THEN
          current_timer=kpp_timer%timer_number_allocated+1
          kpp_timer%timer_number_allocated=current_timer
+         WRITE(6,*) name
          kpp_timer%timer_all_names(current_timer)=name
       ENDIF
       

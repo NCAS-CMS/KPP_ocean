@@ -955,9 +955,10 @@ c     Increment counter for time dimension of NetCDF file
 !      allocate(field(NPTS,NZP1))
 !      allocate(vec(NPTS))
 
+      WRITE(6,*) 'In mean_output ',N_VAROUTS
       i=1
-      DO ivar=1,N_VAROUTS
-c         WRITE(6,*) ivar
+      DO ivar=1,N_VAROUTS         
+         WRITE(6,*) ivar
          IF (ndt_varout_mean(ivar) .gt. 0) THEN
 c            WRITE(6,*) 'Computing means for ivar = ',ivar,'i=',i
 c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
@@ -1284,7 +1285,7 @@ c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)
 
       INTEGER status
       INTEGER,intent(out) :: ncid
-      CHARACTER*50,intent(in) :: file
+      CHARACTER(LEN=*),intent(in) :: file
 
       status=NF_OPEN(file,NF_WRITE,ncid)
       IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)

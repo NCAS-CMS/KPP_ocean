@@ -100,7 +100,7 @@ c NPK 17/5/13
       IF (kpp_const_fields%L_SLAB) THEN
          rmsd_threshold = (/4,4,100,100/)
       ELSE
-         rmsd_threshold = (/4,4,1,1/)
+         rmsd_threshold = (/4,4,10,10/)
       ENDIF      
 c Change slab depth for Columbia ITCZ experiments within specified bounds
       IF (kpp_const_fields%L_SLAB .and.
@@ -312,7 +312,9 @@ c     NPK 16/5/2013
               IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
      +            ABS(kpp_2d_fields%U(k,2)).ge.10 .or.
      +            ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
-     +            .ge. 10) THEN
+     +              .ge. 10) THEN
+                 WRITE(6,*) k,kpp_2d_fields%U(k,1),kpp_2d_fields%U(k,2),
+     +                kpp_2d_fields%X(k,1),kpp_2d_fields%X(k+1,1)
                 kpp_2d_fields%comp_flag=.TRUE.
                 kpp_2d_fields%f=kpp_2d_fields%f*
      +			       (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
@@ -338,6 +340,7 @@ c     NPK 16/5/2013
             DO k=1,4
                rmsd(k)=SQRT(rmsd(k))
                IF (rmsd(k).ge.rmsd_threshold(k)) THEN
+                  WRITE(6,*) k,rmsd(k),rmsd_threshold(k)
                   kpp_2d_fields%comp_flag=.TRUE.
                   kpp_2d_fields%f=kpp_2d_fields%f*1.01
                ENDIF
@@ -880,6 +883,8 @@ c     L_SFCORR_WITHZ (see above).
 
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
  200  continue
+      IF (ABS(kpp_2d_fields%hmix) .gt. 1000)
+     +     WRITE(6,*) 'hmix = ',kpp_2d_fields%hmix
       return
       end
 
@@ -1354,10 +1359,10 @@ c
       IF ( .NOT. kpp_const_fields%L_RESTART) THEN
 c
 c     Determine hmix for initial profile:
-#ifdef OPENMP
-!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
-!$OMP DO SCHEDULE(dynamic)
-#endif
+c#ifdef OPENMP
+c!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
+c!$OMP DO SCHEDULE(dynamic)
+c#endif
          DO ipt=1,npts
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
             IF (kpp_2d_fields%L_OCEAN) THEN
@@ -1432,12 +1437,13 @@ c     WRITE(6,*) 'difm = ',kpp_2d_fields%difm
 c     STOP
 c     ENDIF
             ENDIF
+            !WRITE(6,*) 'Initial hmix = ',kpp_2d_fields%hmix
             CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
          ENDDO
-#ifdef OPENMP
-!$OMP END DO
-!$OMP END PARALLEL
-#endif
+c#ifdef OPENMP
+c!$OMP END DO
+c!$OMP END PARALLEL
+c#endif
       ENDIF
       return
       end

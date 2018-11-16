@@ -542,7 +542,7 @@ c     Set cplwght equal to one (if not already set from NetCDF file)
 c     to obtain model SSTs.
                kpp_3d_fields%cplwght(ipoint_globe) = 
      +              MIN(kpp_3d_fields%cplwght(ipoint_globe),1.)
-               ipoint=NX*jyy+ixx
+               ipoint=NX*jyy+ixx+1            
                IF (kpp_3d_fields%L_OCEAN(ipoint) .and.
      +              kpp_3d_fields%ocdepth(ipoint) .gt. 100) THEN
                   kpp_3d_fields%L_OCEAN(ipoint)=.FALSE.

@@ -2399,7 +2399,7 @@ c     Find the first time and last time
 
       IMPLICIT NONE
       INTEGER nuout,nuerr
-      CHARACTER*40 file_string,periodic_string
+      CHARACTER(LEN=*) file_string,periodic_string
       PARAMETER(nuout=6,nuerr=0)
 
 #include "parameter.inc"

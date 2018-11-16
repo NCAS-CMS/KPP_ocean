@@ -83,9 +83,9 @@ c into the main program.  NPK 17/08/10 - R3
       CALL KPP_TIMER_INIT(kpp_timer)
 #ifdef OPENMP
 !$OMP PARALLEL PRIVATE(nthreads)
-      CALL OMP_SET_DYNAMIC(.FALSE.)
-      nthreads=OMP_GET_NUM_THREADS()
+      CALL OMP_SET_DYNAMIC(.FALSE.)      
 !$OMP END PARALLEL
+      nthreads=OMP_GET_NUM_THREADS()
       WRITE(6,*) 'Initialising ',nthreads,'timers'
       IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN
 #ifdef NEXCS
@@ -93,7 +93,7 @@ c into the main program.  NPK 17/08/10 - R3
 #elif defined ARCHER
 #define omp_nthreads 24
 #else
-#define omp_nthreads 24
+#define omp_nthreads 2
 #endif
          nthreads=omp_nthreads
          WRITE(6,*) 'setting nthreads = ',nthreads
@@ -379,15 +379,17 @@ c     Call Large et al. (1994) boundary-layer ocean physics routines
 c
          kpp_const_fields%time=kpp_const_fields%startt+ntime*
      +        kpp_const_fields%dto/kpp_const_fields%spd
-!         WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
+         WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+         WRITE(nuout,*) 'KPP: called KPP_TIMER_TIME'
 c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
-!$OMP& SHARED(kpp_timer,ocnT_file,sal_file,ifirst,jfirst)
 !$OMP& PRIVATE(trans_timer_name,phys_timer_name,tid)
-         tid=OMP_GET_THREAD_NUM()
+!$OMP& SHARED(kpp_timer,ocnT_file,sal_file,ifirst,jfirst)      
+        tid=OMP_GET_THREAD_NUM()
 !$OMP CRITICAL
+         WRITE(6,*) 'Thread ',tid
          WRITE(trans_timer_name,'(A17,I2)') 'KPP 3D/2D thread ',tid
          WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',tid
 !$OMP END CRITICAL
@@ -409,19 +411,19 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 !     +                 ix .ge. ifirst .and. ix .le. ilast) THEN
            !ipt=(iy-jfirst)*NX+(ix-ifirst)+1
            IF (kpp_3d_fields%L_OCEAN(ipt)) THEN
-!                        WRITE(6,*) 'ipt = ',ipt,'ix=',ix,'iy=',iy
+!              WRITE(6,*) 'ipt = ',ipt
 #endif
-                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
-                  CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,
-     +                 kpp_2d_fields)
-                  CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
-                  CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,1)
-                  CALL ocnstep(kpp_2d_fields,kpp_const_fields)
+              CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,1)
+              CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,
+     +             kpp_2d_fields)
+              CALL KPP_TIMER_TIME(kpp_timer,trans_timer_name,0)
+              CALL KPP_TIMER_TIME(kpp_timer,phys_timer_name,1)
+              CALL ocnstep(kpp_2d_fields,kpp_const_fields)
 c     If the integration has failed because of unrealistic values in T, S, U or V
 c     or very high RMS difference between the old and new profiles, then reset
 c     T and S to climatology (if available) and U and V to the initial profiles.
 c     NPK 17/5/13.
-                  IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne.
+              IF (kpp_2d_fields%comp_flag .and. ocnT_file .ne.
      +                 'none' .and. sal_file .ne. 'none') THEN
                      WRITE(6,*) 'Resetting point to climatology ...'
                      kpp_2d_fields%X(:,1)=kpp_2d_fields%ocnT_clim(:)
@@ -549,6 +551,7 @@ c
          IF (L_OUTPUT_MEAN) THEN
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',1)
+            WRITE(6,*) 'Calling mean_output'
             CALL mean_output(kpp_3d_fields,VEC_mean,SCLR_mean)
 !            WRITE(6,*) 'KPP: Finished meaning output'
             CALL KPP_TIMER_TIME(kpp_timer,'Time-meaning of output',0)
@@ -1339,7 +1342,11 @@ c	so that it doesn't get overwritten when initial conditions are read
       ENDIF
       IF (L_FCORR_WITHZ)
      +     CALL read_fcorrwithz(kpp_3d_fields,kpp_const_fields)
-      IF (L_FCORR) CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
+      IF (L_FCORR) THEN
+         CALL read_fcorr(kpp_3d_fields,kpp_const_fields)
+      ELSE
+         kpp_3d_fields%fcorr(:)=0.0
+      ENDIF
       IF (L_FCORR_NSOL_FILE) CALL read_fcorr_nsol(kpp_3d_fields,
      +     kpp_const_fields)
       IF (L_SFCORR_WITHZ)
