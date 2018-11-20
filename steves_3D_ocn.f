@@ -1453,10 +1453,10 @@ c
          min_output_file='KPPocean'
          max_output_file='KPPocean'
       ELSE
-         output_file=TRIM(output_dir)//'KPPocean'
-         mean_output_file=TRIM(output_dir)//'KPPocean'
-         min_output_file=TRIM(output_dir)//'KPPocean'
-         max_output_file=TRIM(output_dir)//'KPPocean'
+         output_file=TRIM(output_dir)//'/KPPocean'
+         mean_output_file=TRIM(output_dir)//'/KPPocean'
+         min_output_file=TRIM(output_dir)//'/KPPocean'
+         max_output_file=TRIM(output_dir)//'/KPPocean'
       ENDIF
          
       zprofs_mask(:,0)=.TRUE.
