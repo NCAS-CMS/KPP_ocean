@@ -20,8 +20,8 @@ c#include "location.com"
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER i,j,k,m,ix,iy,ncid,status,extra_time
       CHARACTER*11 varname(N_VAROUTS),singname(N_SINGOUTS)
-      CHARACTER*50 longname(N_VAROUTS),singlong(N_SINGOUTS),
-     &     filename
+      CHARACTER*50 longname(N_VAROUTS),singlong(N_SINGOUTS)
+      CHARACTER(LEN=*) filename
       CHARACTER*15 units(N_VAROUTS),singunits(N_SINGOUTS)
       CHARACTER*6 type
       CHARACTER*7 time_name
