@@ -1648,9 +1648,11 @@ c
       CHARACTER(LEN=*) :: restart_infile
 
       WRITE(6,*) 'KPP: Total number of points = ',REAL(NPTS)*REAL(NZP1)
-      WRITE(6,*) 'KPP: Reading from restart input file ',restart_infile
+      
       IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN
-         OPEN(30,FILE=restart_infile,status='unknown',
+         WRITE(6,*) 'KPP: Reading from restart input file ',
+     +        TRIM(restart_infile)
+         OPEN(30,FILE=TRIM(restart_infile),status='unknown',
      +        form='unformatted')
          READ(30) kpp_const_fields%time,kpp_3d_fields%U,
      +        kpp_3d_fields%X,kpp_3d_fields%CP,
@@ -1661,7 +1663,9 @@ c
      +        kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(30)
       ELSE
-         OPEN(30,FILE=restart_infile//'.1',status='unknown',
+         WRITE(6,*) 'KPP: Reading from restart input file ',
+     +        TRIM(restart_infile)//'.1'
+         OPEN(30,FILE=TRIM(restart_infile)//'.1',status='unknown',
      +        form='unformatted')
          READ(30) kpp_const_fields%time,kpp_3d_fields%U,
      +        kpp_3d_fields%X,kpp_3d_fields%CP,
@@ -1670,7 +1674,9 @@ c
      +        kpp_3d_fields%Ssurf,
      +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new
          CLOSE(30)
-         OPEN(31,FILE=restart_infile//'.2',status='unknown',
+         WRITE(6,*) 'KPP: Reading from restart input file ',
+     +        TRIM(restart_infile)//'.2'
+         OPEN(31,FILE=TRIM(restart_infile)//'.2',status='unknown',
      +        form='unformatted')
          READ(31) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(31)
