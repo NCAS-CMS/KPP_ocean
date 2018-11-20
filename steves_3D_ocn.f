@@ -918,7 +918,7 @@ c     +     bottom_temp(:)
      &     ndt_singout_mean,L_OUTPUT_MEAN,L_OUTPUT_INST,L_OUTPUT_RANGE,
      &     ndt_per_file,ndt_per_restart,ndt_varout_range,
      &     ndt_singout_range,zprof_varout_inst,zprof_varout_mean,
-     &     zprof_varout_range,zprofs
+     &     zprof_varout_range,zprofs,output_dir
       NAMELIST/NAME_FORCING/ L_FLUXDATA,forcing_file,L_FCORR_WITHZ,
      &     fcorrin_file,ndtupdfcorr,L_VARY_BOTTOM_TEMP,ndtupdbottom,
      &     bottomin_file,L_FCORR,L_UPD_FCORR,L_UPD_BOTTOM_TEMP,L_REST,
@@ -1425,10 +1425,7 @@ c     Initialize and read the output name list
       ntout_sing_mean(:)=1
       ntout_vec_range(:)=1
       ntout_sing_range(:)=1
-      output_file=TRIM(output_dir)//'KPPocean'
-      mean_output_file=TRIM(output_dir)//'KPPocean'
-      min_output_file=TRIM(output_dir)//'KPPocean'
-      max_output_file=TRIM(output_dir)//'KPPocean'
+      output_dir='none'
 c
 c     Set up defaults for ndt_per_file (timesteps between creating
 c     new output files) depending on whether and how KPP is coupled.
@@ -1449,9 +1446,21 @@ c
      +     ndtocn))
 #endif /*COUPLE*/
       READ(75,NAME_OUTPUT)
-      write(nuout,*) 'Read Namelist OUTPUT'
+      write(nuout,*) 'Read Namelist OUTPUT'   
+      IF (output_dir .eq. 'none') THEN
+         output_file='KPPocean'
+         mean_output_file='KPPocean'
+         min_output_file='KPPocean'
+         max_output_file='KPPocean'
+      ELSE
+         output_file=TRIM(output_dir)//'KPPocean'
+         mean_output_file=TRIM(output_dir)//'KPPocean'
+         min_output_file=TRIM(output_dir)//'KPPocean'
+         max_output_file=TRIM(output_dir)//'KPPocean'
+      ENDIF
+         
       zprofs_mask(:,0)=.TRUE.
-      zprofs_Mask(:,1:N_ZPROFS_MAX)=.FALSE.
+      zprofs_mask(:,1:N_ZPROFS_MAX)=.FALSE.
       zprofs_nvalid(0)=NZP1
       DO i=1,N_ZPROFS_MAX
          j=1
@@ -1681,10 +1690,10 @@ c
          READ(31) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(31)
       ENDIF
-      WRITE(6,*) 'T: ',kpp_3d_fields%X(:,:,1)
-      WRITE(6,*) 'S: ',kpp_3d_fields%X(:,:,2)
-      WRITE(6,*) 'U: ',kpp_3d_fields%U(:,:,1)
-      WRITE(6,*) 'V: ',kpp_3d_fields%U(:,:,2)
+      !WRITE(6,*) 'T: ',kpp_3d_fields%X(:,:,1)
+      !WRITE(6,*) 'S: ',kpp_3d_fields%X(:,:,2)
+      !WRITE(6,*) 'U: ',kpp_3d_fields%U(:,:,1)
+      !WRITE(6,*) 'V: ',kpp_3d_fields%U(:,:,2)
       DO i=1,NPTS
          DO j=1,NZP1
             kpp_3d_fields%U(i,j,:) = 0.01
