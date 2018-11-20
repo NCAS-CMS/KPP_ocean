@@ -536,7 +536,7 @@ c
      +                 FLOOR(kpp_const_fields%time)
                ENDIF
                WRITE(restart_outfile,'(A,I5)') TRIM(output_dir)//
-     + 		    'KPP.restart.',restart_time
+     + 		    '/KPP.restart.',restart_time
                CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +              restart_outfile)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',0)
@@ -766,7 +766,7 @@ c
             WRITE(restart_time,'(I5)')
      +           FLOOR(kpp_const_fields%time)
          ENDIF
-         WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
+         WRITE(restart_outfile,*) TRIM(output_dir)//'/KPP.restart.',
      +        restart_time
          CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +        restart_outfile)
