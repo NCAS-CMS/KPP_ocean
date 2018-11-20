@@ -68,9 +68,10 @@
 ************************************************************************
       INTEGER ncid_out,mean_ncid_out,min_ncid_out,max_ncid_out,
      +     day_out,flen,ndt_per_file
-      CHARACTER*50 output_file,mean_output_file,
+      CHARACTER*200 output_dir
+      CHARACTER*250 output_file,mean_output_file,
      +     min_output_file,max_output_file
-      CHARACTER*17 restart_outfile
+      CHARACTER*217 restart_outfile
       INTEGER londim,latdim,zdim,ddim,hdim,timdim
       INTEGER lon_id,lat_id,z_id,h_id,d_id,time_id
 
@@ -97,5 +98,5 @@
      &     varid_sing_mean,ndt_per_file,ntout_vec_inst,ntout_sing_inst,
      &     ntout_vec_mean,ntout_sing_mean,min_output_file,max_ncid_out,
      &     max_output_file,ntout_vec_range,ntout_sing_range,
-     &     min_ncid_out,varid_vec_range,varid_sing_range
+     &     min_ncid_out,varid_vec_range,varid_sing_range,output_dir
 

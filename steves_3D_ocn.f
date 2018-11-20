@@ -535,8 +535,8 @@ c
                   WRITE(restart_time,'(I5)')
      +                 FLOOR(kpp_const_fields%time)
                ENDIF
-               WRITE(restart_outfile,'(A12,A5)') 'KPP.restart.',
-     +              restart_time
+               WRITE(restart_outfile,'(A,I5)') TRIM(output_dir)//
+     + 		    'KPP.restart.',restart_time
                CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +              restart_outfile)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',0)
@@ -1425,10 +1425,10 @@ c     Initialize and read the output name list
       ntout_sing_mean(:)=1
       ntout_vec_range(:)=1
       ntout_sing_range(:)=1
-      output_file='KPPocean'
-      mean_output_file='KPPocean'
-      min_output_file='KPPocean'
-      max_output_file='KPPocean'
+      output_file=TRIM(output_dir)//'KPPocean'
+      mean_output_file=TRIM(output_dir)//'KPPocean'
+      min_output_file=TRIM(output_dir)//'KPPocean'
+      max_output_file=TRIM(output_dir)//'KPPocean'
 c
 c     Set up defaults for ndt_per_file (timesteps between creating
 c     new output files) depending on whether and how KPP is coupled.
@@ -1593,7 +1593,7 @@ c     Inputs
 c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=17) :: restart_outfile
+      CHARACTER(LEN=*) :: restart_outfile
 
 c     When the number of points in the model (NX*NY*NZP1) becomes
 c     quite large, we exceed the maximum size for Fortran unformatted
