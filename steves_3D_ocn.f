@@ -535,8 +535,8 @@ c
                   WRITE(restart_time,'(I5)')
      +                 FLOOR(kpp_const_fields%time)
                ENDIF
-               WRITE(restart_outfile,'(A,I5)') TRIM(output_dir)//
-     + 		    '/KPP.restart.',restart_time
+               restart_outfile=TRIM(output_dir)//
+     +		    '/KPP.restart.'//restart_time
                CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
      +              restart_outfile)
                CALL KPP_TIMER_TIME(kpp_timer,'Writing Restart File',0)
@@ -766,8 +766,8 @@ c
             WRITE(restart_time,'(I5)')
      +           FLOOR(kpp_const_fields%time)
          ENDIF
-         WRITE(restart_outfile,*) TRIM(output_dir)//
-     +	    '/KPP.restart.',restart_time
+         restart_outfile=TRIM(output_dir)//
+     +	    '/KPP.restart.'//restart_time
 	 WRITE(nuout,*) 'KPP: Writing restart file ',
      +		TRIM(restart_outfile)
          CALL WRITE_RESTART(kpp_3d_fields,kpp_const_fields,
@@ -1625,8 +1625,9 @@ c     %Us and %Xs are the largest fields, so they get their own file.
      +        kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(31)
       ELSE
-	 WRITE(6,*) 'KPP: Writing restart file ',restart_outfile//'.1.'
-         OPEN(31,FILE=restart_outfile//'.1',status='unknown',
+	 WRITE(6,*) 'KPP: Writing restart file ',
+     +		TRIM(restart_outfile)//'.1'
+         OPEN(31,FILE=TRIM(restart_outfile)//'.1',status='unknown',
      +        form='unformatted')
          WRITE(31) kpp_const_fields%time,kpp_3d_fields%U,
      +        kpp_3d_fields%X,kpp_3d_fields%CP,
@@ -1635,8 +1636,9 @@ c     %Us and %Xs are the largest fields, so they get their own file.
      +        kpp_3d_fields%Ssurf,
      +        kpp_3d_fields%Tref,kpp_3d_fields%old,kpp_3d_fields%new
          CLOSE(31)
-	 WRITE(6,*) 'KPP: Writing restart file ',restart_outfile//'.2'
-         OPEN(32,FILE=restart_outfile//'.2',status='unknown',
+	 WRITE(6,*) 'KPP: Writing restart file ',
+     +		TRIM(restart_outfile)//'.2'
+         OPEN(32,FILE=TRIM(restart_outfile)//'.2',status='unknown',
      +        form='unformatted')
          WRITE(32) kpp_3d_fields%Us,kpp_3d_fields%Xs,kpp_3d_fields%hmixd
          CLOSE(32)
