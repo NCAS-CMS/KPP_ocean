@@ -766,7 +766,7 @@ c
             WRITE(restart_time,'(I5)')
      +           FLOOR(kpp_const_fields%time)
          ENDIF
-         WRITE(restart_outfile,'(A,I5)') TRIM(output_dir)//
+         WRITE(restart_outfile,*) TRIM(output_dir)//
      +	    '/KPP.restart.',restart_time
 	 WRITE(nuout,*) 'KPP: Writing restart file ',
      +		TRIM(restart_outfile)
