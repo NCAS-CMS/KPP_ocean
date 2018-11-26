@@ -323,7 +323,7 @@ c
 #include "flx_in.com"
 
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER*200 fname
+      CHARACTER(LEN=*) fname
       INTEGER status,index(3)
 
       index(1)=1

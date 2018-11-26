@@ -12,7 +12,7 @@ F90=gfortran
 # C Preprocessor
 CPP=cpp
 # Flags for the Fortran compiler
-F90_FLAGS=-fopenmp -cpp -O3 -fdefault-real-8 -ffixed-line-length-72 -I.
+F90_FLAGS=-fopenmp -g -fcheck=all -cpp -O3 -fdefault-real-8 -ffixed-line-length-72 -I.
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=
 # Oasis 2 static library

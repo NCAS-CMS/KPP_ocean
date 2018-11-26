@@ -248,15 +248,15 @@ c
             WRITE(nuout,*) 'KPP: Called read_icein, ntime =',
      +           kpp_const_fields%ntime
          ENDIF
-         IF (L_UPD_CURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
-           CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
-           CALL read_currents(kpp_3d_fields,kpp_const_fields)
-           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
-           CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
-           WRITE(nuout,*) 'KPP: Called read_currents, ntime =',
-     +            kpp_const_fields%ntime
-         ENDIF
+!         IF (L_UPD_CURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
+!           CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+!           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+!           CALL read_currents(kpp_3d_fields,kpp_const_fields)
+!           CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+!           CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+!           WRITE(nuout,*) 'KPP: Called read_currents, ntime =',
+!     +            kpp_const_fields%ntime
+!         ENDIF
 
 !         IF (L_UPD_CLIMCURR .AND. MOD(ntime-1,ndtupdcurr) .EQ. 0) THEN
 !            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
