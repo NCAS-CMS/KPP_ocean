@@ -206,7 +206,7 @@ c#include "location.com"
      +        time_varids(1),'time_1','days',delta,' ')
          j=NZP1
          IF (zprof_vec(1) .gt. 0) j=zprofs_nvalid(zprof_vec(1))
-c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
+!         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
          IF (zflag(1).eq.0) THEN
             n_ddims=1
             CALL MY_NCDF_DEF_DIM(ncid,z_dimids(1),
@@ -382,9 +382,9 @@ c         WRITE(6,*) j,NZP1,zprofs_nvalid(j)
      +           0.5*kpp_const_fields%dto/kpp_const_fields%spd*
      +           dt_timeids(k)
          ENDDO
-c         WRITE(6,*) 'Writing time_out=',time_out(:)
-c         WRITE(6,*) 'ndt_per_file=',ndt_per_file,'time_varids(k)=',
-c     +        time_varids(k)
+!         WRITE(6,*) 'Writing time_out=',time_out(:)
+!         WRITE(6,*) 'ndt_per_file=',ndt_per_file,'time_varids(k)=',
+!     +        time_varids(k)
          status=NF_PUT_VARA_REAL(ncid,time_varids(k),
      +        (/1/),(/ndt_per_file/dt_timeids(k)+extra_time/),
      +        time_out)
@@ -519,8 +519,8 @@ c      status=NF_PUT_VAR1_REAL(ncid_out,time_id,nout,TOUT)
             temp_2d(:,:)=kpp_3d_fields%Tinc_ekadv(:,:)
          CASE(25)
             temp_2d(:,:)=kpp_3d_fields%Sinc_ekadv(:,:)
-c         CASE DEFAULT
-c            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
+         CASE DEFAULT
+            WRITE(6,*) 'You need to add more outputs in OUTPUT_INST'
          END SELECT
 
          IF (zprof .gt. 0) THEN
@@ -955,10 +955,10 @@ c     Increment counter for time dimension of NetCDF file
 !      allocate(field(NPTS,NZP1))
 !      allocate(vec(NPTS))
 
-      WRITE(6,*) 'In mean_output ',N_VAROUTS
+!      WRITE(6,*) 'In mean_output ',N_VAROUTS
       i=1
       DO ivar=1,N_VAROUTS         
-         WRITE(6,*) ivar
+!         WRITE(6,*) ivar
          IF (ndt_varout_mean(ivar) .gt. 0) THEN
 c            WRITE(6,*) 'Computing means for ivar = ',ivar,'i=',i
 c            WRITE(6,*) 'ndt_varout_mean(ivar)=',ndt_varout_mean(ivar)

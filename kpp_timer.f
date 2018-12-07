@@ -93,7 +93,7 @@
       ELSEIF (flag .eq. 0) THEN
          current_timer=kpp_timer%timer_number_allocated+1
          kpp_timer%timer_number_allocated=current_timer
-         WRITE(6,*) name
+         !WRITE(6,*) name
          kpp_timer%timer_all_names(current_timer)=name
       ENDIF
       

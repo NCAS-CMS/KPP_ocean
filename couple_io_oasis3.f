@@ -97,10 +97,10 @@ c
       DO i=1,my_jpfldin
          CALL prism_get_proto(il_var_id_in(i),
      +        time_in_seconds,temporary,ierror)
-         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
-     +        ' received ierror = ',ierror
-         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
-     +        ' unweighted global sum = ',SUM(temporary)
+!         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
+!     +        ' received ierror = ',ierror
+!         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
+!     +        ' unweighted global sum = ',SUM(temporary)
          IF (ierror.NE.PRISM_Ok .and. ierror .LT. PRISM_Recvd) THEN
             WRITE(il_mparout) 'KPP: Received error from ',
      +           'PRISM_Get_Proto =',ierror,' receiving variable ',
@@ -179,14 +179,14 @@ c
          ENDDO
          weights = weights/SUM(weights)
          runoff_mean = SUM(runoff*weights)
-         WRITE(6,*) 'KPP: Domain-mean freshwater flux river '//
-     +        ' runoff at time ',time_in_seconds,' seconds = ',
-     +        runoff_mean,' mm/s'
+!         WRITE(6,*) 'KPP: Domain-mean freshwater flux river '//
+!     +        ' runoff at time ',time_in_seconds,' seconds = ',
+!     +        runoff_mean,' mm/s'
          kpp_3d_fields%runoff_incr = runoff_mean
          runoff_mean = SUM(kpp_3d_fields%runoff_incr*weights)
-         WRITE(6,*) 'KPP: Domain-mean increment to P minus E '//
-     +        ' at time ',time_in_seconds,' seconds = ',
-     +        runoff_mean,' mm/s'
+!         WRITE(6,*) 'KPP: Domain-mean increment to P minus E '//
+!     +        ' at time ',time_in_seconds,' seconds = ',
+!     +        runoff_mean,' mm/s'
       ELSE
          kpp_3d_fields%runoff_incr(:)=0
          runoff_mean=0
@@ -300,15 +300,15 @@ c     Note: the time in the send needs to be the time at the end
 c     of this timestep.
 c     
       time_in_seconds=NINT(kpp_const_fields%ntime*kpp_const_fields%dto)
-      WRITE(nuout,*) 'KPP: Time for coupling out is ',
-     +     time_in_seconds,' seconds'
+!      WRITE(nuout,*) 'KPP: Time for coupling out is ',
+!     +     time_in_seconds,' seconds'
 c
 c     Use the coupling weight to modify the SSTs before passing
 c     back to the coupler.
 c     N.B. : We want to do this whether or not the user has specified
 c     coupling weights.  Cplwght is automatically set IF (.NOT. L_CPLWGHT)
 c      
-      WRITE(nuout,*) 'KPP: Creating coupled output fields'
+!      WRITE(nuout,*) 'KPP: Creating coupled output fields'
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
             ipoint_globe = (jy-1)*NX_GLOBE+ix
@@ -384,8 +384,8 @@ c
          ENDDO
       ENDDO
       IF (L_OUTKELVIN) SST = SST+TK0
-      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
-      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
+!      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
+!      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
 
       DO i=1,jpfldout
 c     
@@ -457,9 +457,9 @@ c
             WRITE(nuout,*) 'KPP: Aborting coupled integration ...'
             CALL prism_abort_proto(il_comp_id,'couple_io_oasis3.f',
      +           'send')
-         ELSE
-            WRITE(nuout,*) 'KPP: Successfully called ',
-     +           'PRISM_Put_Proto for variable ',cl_writ(i)
+!         ELSE
+!            WRITE(nuout,*) 'KPP: Successfully called ',
+!     +           'PRISM_Put_Proto for variable ',cl_writ(i)
          ENDIF
       ENDDO
 c

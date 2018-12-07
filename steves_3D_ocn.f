@@ -389,7 +389,7 @@ c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 !$OMP& SHARED(kpp_timer,ocnT_file,sal_file,ifirst,jfirst)      
         tid=OMP_GET_THREAD_NUM()
 !$OMP CRITICAL
-         WRITE(6,*) 'Thread ',tid
+!         WRITE(6,*) 'Thread ',tid
          WRITE(trans_timer_name,'(A17,I2)') 'KPP 3D/2D thread ',tid
          WRITE(phys_timer_name,'(A19,I2)') 'KPP Physics thread ',tid
 !$OMP END CRITICAL
