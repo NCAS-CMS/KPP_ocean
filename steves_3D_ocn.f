@@ -381,7 +381,7 @@ c
      +        kpp_const_fields%dto/kpp_const_fields%spd
          WRITE(nuout,*) 'KPP: Entering ocnstep loop, ntime=',ntime
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
-         WRITE(nuout,*) 'KPP: called KPP_TIMER_TIME'
+!         WRITE(nuout,*) 'KPP: called KPP_TIMER_TIME'
 c         CALL KPP_TIMER_TIME(kpp_timer,'KPP Physics (all)',1)
 #ifdef OPENMP
 !$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)

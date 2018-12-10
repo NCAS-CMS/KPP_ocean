@@ -446,8 +446,8 @@ c     in the "namcouple" file either).
 c
             WRITE(nuout,*) 'KPP: Unexpected CASE DEFAULT for i=',i
          END SELECT
-         WRITE(nuout,*) 'KPP: Calling PRISM_Put_Proto ',
-     +        'for variable ',cl_writ(i)         
+!         WRITE(nuout,*) 'KPP: Calling PRISM_Put_Proto ',
+!     +        'for variable ',cl_writ(i)         
          CALL prism_put_proto(il_var_id_out(i),
      +        time_in_seconds,temporary,ierror)
          IF (ierror.NE.PRISM_Ok.and.ierror.LT.PRISM_Sent) THEN

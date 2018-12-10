@@ -100,7 +100,7 @@ c NPK 17/5/13
       IF (kpp_const_fields%L_SLAB) THEN
          rmsd_threshold = (/4,4,100,100/)
       ELSE
-         rmsd_threshold = (/4,4,10,10/)
+         rmsd_threshold = (/4,4,100,100/)
       ENDIF      
 c Change slab depth for Columbia ITCZ experiments within specified bounds
       IF (kpp_const_fields%L_SLAB .and.
@@ -275,16 +275,16 @@ c     use shallower hmix
                   endif
                endif
             endif
-            if( iter.gt.(itermax+1) ) then
-               write(nuout,1009) kpp_const_fields%ntime, ! comment out for hmix data
-     +              kpp_2d_fields%dlon,kpp_2d_fields%dlat,
-     +              hmixe,hmixn,
-     +              hmixn-hmixe,kmixn,iter
- 1009          format('  long iteration at',i6,' steps',/,
-     +              ' location=(',f7.2,',',f6.2,')',/,
-     +              '  hmixest=',f7.2,' hmixnew=',f7.2,' diff=',f6.1,
-     +              ' kmixn=',i3,' iteration=',i3)
-            endif
+!            if( iter.gt.(itermax+1) ) then
+!               write(nuout,1009) kpp_const_fields%ntime, ! comment out for hmix data
+!     +              kpp_2d_fields%dlon,kpp_2d_fields%dlat,
+!     +              hmixe,hmixn,
+!     +              hmixn-hmixe,kmixn,iter
+! 1009          format('  long iteration at',i6,' steps',/,
+!     +              ' location=(',f7.2,',',f6.2,')',/,
+!     +              '  hmixest=',f7.2,' hmixnew=',f7.2,' diff=',f6.1,
+!     +              ' kmixn=',i3,' iteration=',i3)
+!            endif
          ENDIF
 c     Trap for profiles that are very different from original profile
 c     or clearly erroneous, to detect rare instances of instability
@@ -340,7 +340,7 @@ c     NPK 16/5/2013
             DO k=1,4
                rmsd(k)=SQRT(rmsd(k))
                IF (rmsd(k).ge.rmsd_threshold(k)) THEN
-                  WRITE(6,*) k,rmsd(k),rmsd_threshold(k)
+                  !WRITE(6,*) k,rmsd(k),rmsd_threshold(k)
                   kpp_2d_fields%comp_flag=.TRUE.
                   kpp_2d_fields%f=kpp_2d_fields%f*1.01
                ENDIF
@@ -353,11 +353,11 @@ c     NPK 16/5/2013
      +           comp_iter_max,' iterations.'
             WRITE(6,*) 'At point lat = ',
      +           kpp_2d_fields%dlat,' lon =',kpp_2d_fields%dlon,': '
-            WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
-            WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
-            WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
-            WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
-            WRITE(6,*) 'hmix = ',hmixn,kmixn
+            !WRITE(6,*) 'U = ',kpp_2d_fields%U(:,1)
+            !WRITE(6,*) 'V = ',kpp_2d_fields%U(:,2)
+            !WRITE(6,*) 'T = ',kpp_2d_fields%X(:,1)
+            !WRITE(6,*) 'S = ',kpp_2d_fields%X(:,2)
+            !WRITE(6,*) 'hmix = ',hmixn,kmixn
          ENDIF
       ENDDO
 c     End of trapping code.
@@ -883,9 +883,9 @@ c     L_SFCORR_WITHZ (see above).
 
          call tridmat(cu,cc,cl,rhs,Xo(:,n),NZ,kpp_2d_fields%X(:,n))
  200  continue
-      IF (ABS(kpp_2d_fields%hmix) .gt. 1000)
-     +     WRITE(6,*) 'hmix = ',kpp_2d_fields%hmix
-      return
+!      IF (ABS(kpp_2d_fields%hmix) .gt. 1000)
+!     +     WRITE(6,*) 'hmix = ',kpp_2d_fields%hmix
+!      return
       end
 
 ************************************************************************
