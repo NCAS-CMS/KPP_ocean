@@ -87,7 +87,7 @@ c into the main program.  NPK 17/08/10 - R3
 !$OMP END PARALLEL
       nthreads=OMP_GET_NUM_THREADS()
       WRITE(6,*) 'Initialising ',nthreads,'timers'
-      IF (nthreads .eq. 0 .or. nthreads .ge. 100) THEN
+      IF (nthreads .le. 1 .or. nthreads .ge. 100) THEN
 #ifdef NEXCS
 #define omp_nthreads 36
 #elif defined ARCHER
