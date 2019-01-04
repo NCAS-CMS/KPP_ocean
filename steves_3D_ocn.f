@@ -1449,17 +1449,19 @@ c
 #endif /*COUPLE*/
       READ(75,NAME_OUTPUT)
       write(nuout,*) 'Read Namelist OUTPUT'   
-      IF (output_dir .eq. 'none') THEN
-         output_file='KPPocean'
-         mean_output_file='KPPocean'
-         min_output_file='KPPocean'
-         max_output_file='KPPocean'
-      ELSE
-         output_file=TRIM(output_dir)//'/KPPocean'
-         mean_output_file=TRIM(output_dir)//'/KPPocean'
-         min_output_file=TRIM(output_dir)//'/KPPocean'
-         max_output_file=TRIM(output_dir)//'/KPPocean'
-      ENDIF
+      IF (output_dir .eq. 'none') output_dir='.'
+!THEN
+!         output_file='KPPocean'
+!         mean_output_file='KPPocean'
+!         min_output_file='KPPocean'
+!     max_output_file='KPPocean'
+!         output_dir='.'        
+!     ELSE
+      output_file=TRIM(output_dir)//'/KPPocean'
+      mean_output_file=TRIM(output_dir)//'/KPPocean'
+      min_output_file=TRIM(output_dir)//'/KPPocean'
+      max_output_file=TRIM(output_dir)//'/KPPocean'
+ !     ENDIF
          
       zprofs_mask(:,0)=.TRUE.
       zprofs_mask(:,1:N_ZPROFS_MAX)=.FALSE.
