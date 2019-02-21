@@ -24,3 +24,7 @@
       LOGICAL L_DAMP_CURR
       INTEGER dtuvdamp
       common /curr_clim/ L_DAMP_CURR, dtuvdamp
+
+      LOGICAL L_RELAX_FILE
+      CHARACTER*200 relax_file
+      common /relax_file_in/ L_RELAX_FILE,relax_file

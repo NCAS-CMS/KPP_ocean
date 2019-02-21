@@ -2163,6 +2163,73 @@ c
       RETURN
       END
 
+      SUBROUTINE read_relax(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+
+#include "netcdf.inc"
+! Automatically includes parameter.inc!
+#include "kpp_3d_type.com"
+#include "relax_3d.com"
+#include "ocn_advec.com"
+      
+      INTEGER nuout,nuerr
+      PARAMETER (nuout=6,nuerr=0)
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+
+      INTEGER status,relax_ncid,count(2),start(2),relax_varid,
+     +     ipoint,ix,iy
+      REAL*4 relax_in(NX,NY),latitudes(NY),longitudes(NX)
+
+      WRITE(nuout,*) 'KPP: Opening relaxation timescale file'
+      status = NF_OPEN(relax_file,0,relax_ncid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Opened relaxation timescale file'
+
+      count(1)=NX
+      count(2)=NY
+      start(1)=1
+      start(2)=1
+
+      CALL determine_netcdf_boundaries_2d(relax_ncid,
+     +     'relaxation timescale',
+     +     'latitude','longitude',kpp_3d_fields%dlon(1),
+     +     kpp_3d_fields%dlat(1),start(1),start(2))
+
+      WRITE(nuout,*) 'KPP: Finding relaxation timescale variable'
+      status=NF_INQ_VARID(relax_ncid,'relax',relax_varid)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Found relaxation timescale variable'
+
+      WRITE(nuout,*) 'KPP: Reading relaxation timescale variable'
+      status=NF_GET_VARA_REAL(relax_ncid,relax_varid,start,count,
+     +     relax_in)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Read relaxation timescale variable'
+
+      
+      DO ix=1,NX
+         DO iy=1,NY
+            ipoint=(iy-1)*nx+ix
+            IF (relax_in(ix,iy) .gt. 0)
+     +           relax_in(ix,iy)=1.0/(relax_in(ix,iy)*
+     +           kpp_const_fields%spd)
+            IF (L_RELAX_SST)
+     +           kpp_3d_fields%relax_sst(ipoint)=relax_in(ix,iy)
+            IF (L_RELAX_SAL)
+     +           kpp_3d_fields%relax_sal(ipoint)=relax_in(ix,iy)
+            IF (L_RELAX_OCNT)
+     +           kpp_3d_fields%relax_ocnT(ipoint)=relax_in(ix,iy)
+            IF (L_RELAX_CURR)
+     +           kpp_3d_fields%relax_curr(ipoint)=relax_in(ix,iy)
+         ENDDO
+      ENDDO
+      WRITE(6,*) kpp_3d_fields%relax_ocnT
+
+      RETURN
+      END SUBROUTINE read_relax
+            
+      
       SUBROUTINE read_currents(kpp_3D_fields,kpp_const_fields)
         IMPLICIT NONE
 

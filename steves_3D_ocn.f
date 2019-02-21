@@ -913,7 +913,8 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_TIMES/ dtsec,startt,finalt,ndtocn
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
-     +     L_RELAX_OCNT,relax_ocnt_in, L_RELAX_CURR, relax_curr_in
+     +     L_RELAX_OCNT,relax_ocnt_in, L_RELAX_CURR, relax_curr_in,
+     +     L_RELAX_FILE,relax_file
       NAMELIST/NAME_PARAS/ paras_file,L_JERLOV
       NAMELIST/NAME_OUTPUT/ ndt_varout_inst,ndt_singout_inst,
      +     output_file,L_RESTARTW,restart_outfile,ndt_varout_mean,
@@ -1185,7 +1186,7 @@ c     Initialize and read the advection namelist
          relax_curr_in(iy)=0.0
       ENDDO
       READ(75,NAME_ADVEC)
-      WRITE(6,*) 'relax_curr_in = ',relax_curr_in
+      !WRITE(6,*) 'relax_curr_in = ',relax_curr_in
       IF (L_ADVECT) THEN
          CALL init_advect(kpp_3d_fields)
       ELSE
@@ -1792,56 +1793,60 @@ c
       REAL sst_in(NX_GLOBE,NY_GLOBE,1)
       COMMON /save_sstin/ sst_in
 
-      DO iy=1,ny
-         IF (L_RELAX_SST .and. relax_sst_in(iy) .EQ. 0.0) THEN
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_sst(ipoint)=0.0
-            ENDDO
-         ELSE
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_sst(ipoint)=1./(relax_sst_in(iy)*
-     +              kpp_const_fields%spd)
-            ENDDO
-         ENDIF
-         IF (L_RELAX_SAL .and. relax_sal_in(iy) .EQ. 0.0) THEN
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_sal(ipoint)=0.0
-            ENDDO
-         ELSE
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_sal(ipoint)=1./(relax_sal_in(iy)*
-     +              kpp_const_fields%spd)
-            ENDDO
-         ENDIF
-         IF (L_RELAX_OCNT .and. relax_ocnt_in(iy) .EQ. 0.0) THEN
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_ocnT(ipoint)=0.0
-            ENDDO
-         ELSE
-            DO ix=1,nx
-               ipoint=(iy-1)*nx+ix
-               kpp_3d_fields%relax_ocnT(ipoint)=1./(relax_ocnT_in(iy)*
-     +              kpp_const_fields%spd)
-            ENDDO
-         ENDIF
-         IF (L_RELAX_CURR .and. relax_curr_in(iy) .EQ. 0.0) THEN
-            DO ix=1,nx
-              ipoint=(iy-1)*nx+ix
-              kpp_3d_fields%relax_curr(ipoint)=0.0
-            ENDDO
-         ELSE
-            DO ix=1,nx
-              ipoint=(iy-1)*nx+ix
-              kpp_3d_fields%relax_curr(ipoint)=1./(relax_curr_in(iy)*
-     +              kpp_const_fields%spd)
-            ENDDO
-         ENDIF
-      ENDDO
+      IF (L_RELAX_FILE) THEN
+         CALL read_relax(kpp_3d_fields,kpp_const_fields)
+      ELSE         
+         DO iy=1,ny
+            IF (L_RELAX_SST .and. relax_sst_in(iy) .EQ. 0.0) THEN
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_sst(ipoint)=0.0
+               ENDDO
+            ELSE
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_sst(ipoint)=1./(relax_sst_in(iy)*
+     +                 kpp_const_fields%spd)
+               ENDDO
+            ENDIF
+            IF (L_RELAX_SAL .and. relax_sal_in(iy) .EQ. 0.0) THEN
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_sal(ipoint)=0.0
+               ENDDO
+            ELSE
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_sal(ipoint)=1./(relax_sal_in(iy)*
+     +                 kpp_const_fields%spd)
+               ENDDO
+            ENDIF
+            IF (L_RELAX_OCNT .and. relax_ocnt_in(iy) .EQ. 0.0) THEN
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_ocnT(ipoint)=0.0
+               ENDDO
+            ELSE
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_ocnT(ipoint)=1./
+     +                 (relax_ocnT_in(iy)*kpp_const_fields%spd)
+               ENDDO
+            ENDIF
+            IF (L_RELAX_CURR .and. relax_curr_in(iy) .EQ. 0.0) THEN
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_curr(ipoint)=0.0
+               ENDDO
+            ELSE
+               DO ix=1,nx
+                  ipoint=(iy-1)*nx+ix
+                  kpp_3d_fields%relax_curr(ipoint)=1./
+     +                 (relax_curr_in(iy)*kpp_const_fields%spd)
+               ENDDO
+            ENDIF
+         ENDDO
+      ENDIF
       CALL upd_sst0(kpp_3d_fields)
       DO iy=1,ny
          DO ix=1,nx
@@ -1850,7 +1855,7 @@ c
             kpp_3d_fields%scorr(ipoint,:)=0.0
          ENDDO
       ENDDO
-
+      
       write(nuout,*) 'calculated SST0, fcorr and scorr'
 
       RETURN
