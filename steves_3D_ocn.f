@@ -53,6 +53,7 @@ c      USE kpp_type_mod
 #include "sstclim.com"
 #include "ocn_advec.com"
 #include "flx_in.com"
+#include "proc_pars.com"      
 
 * Local variables
 #ifdef NOALLOC
@@ -372,6 +373,17 @@ c     NPK 24/08/11 - R3b3
             CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
             CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
             WRITE(nuout,*) 'KPP: Interpolated ocean temperatures,'//
+     +           ' ntime =',kpp_const_fields%ntime
+         ENDIF
+
+         IF (L_VARY_OPT .AND. MOD(ntime-1,ndtupdopt) .EQ. 0) THEN
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',1)
+            CALL read_optical(kpp_3d_fields,kpp_const_fields)
+            CALL update_optical(kpp_3d_fields,kpp_const_fields)
+            CALL KPP_TIMER_TIME(kpp_timer,'Update ancillaries',0)
+            CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+            WRITE(nuout,*) 'KPP: Called read_optical,'//
      +           ' ntime =',kpp_const_fields%ntime
          ENDIF
 c
@@ -915,7 +927,8 @@ c     +     bottom_temp(:)
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
      +     L_RELAX_OCNT,relax_ocnt_in, L_RELAX_CURR, relax_curr_in,
      +     L_RELAX_FILE,relax_file
-      NAMELIST/NAME_PARAS/ paras_file,L_JERLOV
+      NAMELIST/NAME_PARAS/ paras_file,L_JERLOV,L_VARY_OPT,
+     +     L_PERIODIC_OPT,opt_period,ndtupdopt
       NAMELIST/NAME_OUTPUT/ ndt_varout_inst,ndt_singout_inst,
      +     output_file,L_RESTARTW,restart_outfile,ndt_varout_mean,
      &     ndt_singout_mean,L_OUTPUT_MEAN,L_OUTPUT_INST,L_OUTPUT_RANGE,
@@ -1204,12 +1217,22 @@ c     Initialize and read the advection namelist
 c     Initialize and read the paras namelist
       paras_file='none'
       L_JERLOV=.TRUE.
+      L_VARY_OPT=.FALSE.
+      L_PERIODIC_OPT=.FALSE.
+      opt_period=0      
       READ(75,NAME_PARAS)
       IF (L_JERLOV .and. paras_file .eq. 'none') 
      +     paras_file='aqua_paras.nc'      
-      CALL init_paras(kpp_3d_fields)
       write(nuout,*) 'KPP : Read Namelist PARAS'
 
+      IF (L_VARY_OPT) THEN
+         CALL read_optical(kpp_3d_fields,kpp_const_fields)
+      ELSE
+         CALL init_paras(kpp_3d_fields)
+      ENDIF
+      kpp_const_fields%L_VARY_OPT=L_VARY_OPT
+      CALL update_optical(kpp_3d_fields,kpp_const_fields)
+      
 c     Initialize and read the forcing namelist
       L_FLUXDATA=.FALSE.
       L_UPD_FLUXDATA=.TRUE.

@@ -228,7 +228,7 @@ c      WRITE(6,*) 'L_REST=',L_REST
 
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
-
+      
       INTEGER k
       REAL SWDK, dm(0:NZ)
 c      REAL SWDK_OPT(NPTS,0:NZ)
@@ -255,10 +255,12 @@ c      WRITE(6,*) 'ntime = ',kpp_const_fields%ntime
          ELSE
             dm = kpp_const_fields%dm
          ENDIF
-         DO k=0,NZ
-            kpp_2d_fields%swdk_opt(k)=swdk(-dm(k),
-     +           kpp_2d_fields%jerlov)           
-         ENDDO
+         IF (.NOT. kpp_const_fields%L_VARY_OPT) THEN
+            DO k=0,NZ
+               kpp_2d_fields%swdk_opt(k)=swdk(-dm(k),
+     +              kpp_2d_fields%jerlov) 
+            ENDDO
+         ENDIF
       ENDIF
       IF (kpp_const_fields%ntime .ge. 1) THEN
          DO k=0,NZ
@@ -305,3 +307,42 @@ c      write(nuout,*) 'time=',ftime,' mon=',mon,' j=',j
       return
       end
 **************************************************************
+
+      SUBROUTINE update_optical(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+#include "kpp_3d_type.com"
+
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER :: ipt,z,max
+      parameter(max=5)
+      real Rfac(max),a1(max),a2(max)
+c         types =  I       IA      IB      II      III
+c             j =  1       2       3       4       5
+      data Rfac /  0.58 ,  0.62 ,  0.67 ,  0.77 ,  0.78 /
+      data a1   /  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /
+      data a2   / 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /
+                
+      ! Recompute double exponential on demand
+      IF (kpp_const_fields%L_VARY_OPT) THEN
+         DO ipt=1,NPTS
+            DO z=0,NZ
+               kpp_3d_fields%swdk_opt(ipt,z) = kpp_3d_fields%Rfac(ipt)*
+     +            dexp(dble(-kpp_const_fields%dm(z)/
+     +            kpp_3d_fields%h1(ipt)))+(1.0-kpp_3d_fields%Rfac(ipt))*
+     +            dexp(dble(-kpp_const_fields%dm(z)/
+     +            kpp_3d_fields%h2(ipt)))
+            ENDDO
+         ENDDO
+      ELSE
+         DO ipt=1,NPTS
+            kpp_3d_fields%rfac(ipt)=Rfac(kpp_3d_fields%jerlov(ipt))
+            kpp_3d_fields%h1(ipt)=a1(kpp_3d_fields%jerlov(ipt))
+            kpp_3d_fields%h2(ipt)=a2(kpp_3d_fields%jerlov(ipt))
+         ENDDO
+      ENDIF
+         
+      RETURN
+      END
+            
+      

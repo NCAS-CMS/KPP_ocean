@@ -1449,16 +1449,18 @@ c#endif
       end
 
 *********************************************************************
-      subroutine swfrac( fact, z, jwtype, swdk )
+      subroutine swfrac( fact, z, kpp_2d_fields, swdk )
 c     compute fraction of solar short-wave flux penetrating to specified
 c     depth (times fact) due to exponential decay in  Jerlov water type
 c     reference : two band solar absorption model of simpson and
 c     paulson (1977)
 
       IMPLICIT NONE
+#include "kpp_3d_type.com"
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
 
+      TYPE(kpp_2d_type) :: kpp_2d_fields
       integer nwtype
       parameter(nwtype=5) ! max number of different water types
 c
@@ -1492,10 +1494,14 @@ c
 c
 c      do 100 i = ipt,ipt
 
-         r1      = MAX(z*fact/a1(jwtype), rmin)
-	 r2      = MAX(z*fact/a2(jwtype), rmin)
-         swdk =      rfac(jwtype)  * exp(r1)
-     $            + (1.-rfac(jwtype)) * exp(r2)
+c         r1      = MAX(z*fact/a1(jwtype), rmin)
+c	 r2      = MAX(z*fact/a2(jwtype), rmin)
+c         swdk =      rfac(jwtype)  * exp(r1)
+c     $        + (1.-rfac(jwtype)) * exp(r2)
+
+      r1 = MAX(z*fact/kpp_2d_fields%h1,rmin)
+      r2 = MAX(z*fact/kpp_2d_fields%h2,rmin)     
+      swdk = kpp_2d_fields%rfac*exp(r1)+(1-kpp_2d_fields%rfac)*exp(r2)
 
 c  100 continue
 
@@ -1670,12 +1676,19 @@ c
 c      IF ((kpp_const_fields%ntime .eq. 1) .and. (k .eq. 2)) THEN
       DO l=1,NZP1
 c     do 100 i = ipt,ipt
-         r1      = MAX(kpp_2d_fields%zm(l)*
-     +        fact/a1(kpp_2d_fields%jerlov), rmin)
-         r2      = MAX(kpp_2d_fields%zm(l)*
-     +        fact/a2(kpp_2d_fields%jerlov), rmin)
-         kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  *
-     +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)
+c         r1      = MAX(kpp_2d_fields%zm(l)*
+c     +        fact/a1(kpp_2d_fields%jerlov), rmin)
+         r1 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h1,rmin)
+         
+c         r2      = MAX(kpp_2d_fields%zm(l)*
+c     +        fact/a2(kpp_2d_fields%jerlov), rmin)
+         r2 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h2,rmin)
+         
+c         kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  *
+c     +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)
+         kpp_2d_fields%swfrac(l) = kpp_2d_fields%rfac*exp(r1)+
+     +        (1-kpp_2d_fields%rfac)*exp(r2)
+         
 c     100        continue
       ENDDO
 

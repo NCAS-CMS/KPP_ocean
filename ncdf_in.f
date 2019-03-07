@@ -2163,6 +2163,106 @@ c
       RETURN
       END
 
+      SUBROUTINE read_optical(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+
+#include "netcdf.inc"
+!     Automatically includes parameter.inc!
+#include "kpp_3d_type.com"
+#include "proc_pars.com"
+
+      INTEGER nuout,nuerr
+      PARAMETER(nuout=6,nuerr=0)
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+
+      INTEGER status,opt_ncid,count(3),start(3),rfac_varid,
+     +     ipoint,ix,iy,time_varid,h1_varid,h2_varid
+      REAL*4 latitudes(NY),longitudes(NX),rfac_in(NX,NY,1),
+     +     h1_in(NX,NY,1),h2_in(NX,NY,1),
+     +     opt_time,first_timein,last_timein,ndays_upd_opt,time_in
+
+      WRITE(nuout,*) 'KPP: Opening optical properties file'
+      status = NF_OPEN(paras_file,0,opt_ncid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Opened optical properties file'
+
+      count(1)=NX
+      count(2)=NY
+      count(3)=1
+      start(1)=1
+      start(2)=1
+      start(3)=1
+
+      CALL determine_netcdf_boundaries(opt_ncid,'optical properties',
+     +     'latitude','longitude','t',kpp_3d_fields%dlon(1),
+     +     kpp_3d_fields%dlat(1),start(1),start(2),
+     +     first_timein,last_timein,time_varid)
+
+      opt_time = kpp_const_fields%time+0.5*kpp_const_fields%dto/
+     +     kpp_const_fields%spd*ndtupdopt
+      ndays_upd_opt = ndtupdopt*kpp_const_fields%dto/
+     +     kpp_const_fields%spd
+
+      CALL determine_periodicity(L_PERIODIC_OPT,opt_period,
+     +     opt_time,first_timein,last_timein,ndays_upd_opt,
+     +     'scale depth of blue light','L_PERIODIC_OPT')
+
+      
+      WRITE(nuout,*) 'KPP: Finding red light coefficient variable'
+      status=NF_INQ_VARID(opt_ncid,'rfac',rfac_varid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Found red light coefficient variable'
+      
+      WRITE(nuout,*) 'KPP: Finding h1 scale depth variable'
+      status=NF_INQ_VARID(opt_ncid,'h1',h1_varid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Found h1 scale depth variable'
+
+      WRITE(nuout,*) 'KPP: Finding h2 scale depth variable'
+      status=NF_INQ_VARID(opt_ncid,'h2',h2_varid)
+      IF (status.NE.0) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Found h2 scale depth variable'    
+      
+      WRITE(nuout,*) 'KPP: Reading rfac for time ',opt_time
+      start(3)=NINT((opt_time-first_timein)*kpp_const_fields%spd/
+     +     (kpp_const_fields%dto*ndtupdopt))+1
+      WRITE(nuout,*) 'KPP: Reading rfac from position ',start(3)
+      status=NF_GET_VAR1_REAL(opt_ncid,time_varid,start(3),time_in)
+      IF (status.NE.NF_NOERR) CALL HANDLE_ERR(status)
+      IF (abs(time_in-opt_time) .GT. 0.01*kpp_const_fields%dtsec/
+     +     kpp_const_fields%spd) THEN
+         WRITE(nuerr,*) 'KPP: Cannot find time ',opt_time,
+     +        'in optical properties file.'
+         WRITE(nuerr,*) 'KPP: The closest I came was ',time_in
+         CALL MIXED_ABORT
+      ENDIF
+
+      status=NF_GET_VARA_REAL(opt_ncid,rfac_varid,start,count,rfac_in)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: Red light coeff read from position ',start(3)
+
+      status=NF_GET_VARA_REAL(opt_ncid,h1_varid,start,count,h1_in)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: h1 scale depth read from position ',start(3)
+
+      status=NF_GET_VARA_REAL(opt_ncid,h2_varid,start,count,h2_in)
+      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+      WRITE(nuout,*) 'KPP: h2 scale depth read from position ',start(3)
+      
+      DO ix=1,NX
+         DO iy=1,NY
+            ipoint=(iy-1)*NX+ix
+            kpp_3d_fields%rfac(ipoint)=rfac_in(ix,iy,1)
+            kpp_3d_fields%h1(ipoint)=h1_in(ix,iy,1)
+            kpp_3d_fields%h2(ipoint)=h2_in(ix,iy,1)
+         ENDDO
+      ENDDO
+      status=NF_CLOSE(opt_ncid)
+
+      RETURN
+      END
+      
       SUBROUTINE read_relax(kpp_3d_fields,kpp_const_fields)
       IMPLICIT NONE
 
@@ -2224,7 +2324,7 @@ c
      +           kpp_3d_fields%relax_curr(ipoint)=relax_in(ix,iy)
          ENDDO
       ENDDO
-      WRITE(6,*) kpp_3d_fields%relax_ocnT
+      !WRITE(6,*) kpp_3d_fields%relax_ocnT
 
       RETURN
       END SUBROUTINE read_relax

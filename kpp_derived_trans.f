@@ -172,13 +172,21 @@ c     at a specified point.
       temp=kpp_fields_3d%SSref(point) !Not updated within physics
       kpp_fields_2d%SSref=temp
 
+      temp=kpp_fields_3d%rfac(point)
+      kpp_fields_2d%rfac=temp
+      temp=kpp_fields_3d%h1(point)
+      kpp_fields_2d%h1=temp
+      temp=kpp_fields_3d%h2(point)
+      kpp_fields_2d%h2=temp
+      i=kpp_fields_3d%jerlov(point) ! Not updated within physics
+      kpp_fields_2d%jerlov=i
+      
       i=kpp_fields_3d%old(point)
       kpp_fields_2d%old=i
       i=kpp_fields_3d%new(point)
       kpp_fields_2d%new=i
-      i=kpp_fields_3d%jerlov(point) ! Not updated within physics
-      kpp_fields_2d%jerlov=i
-
+      
+      
       temp=kpp_fields_3d%dlat(point) !Not updated within physics
       kpp_fields_2d%dlat=temp
       temp=kpp_fields_3d%dlon(point) !Not updated within physics
@@ -407,6 +415,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_FCORR_NSOL=L_FCORR_NSOL
       kpp_const_fields%L_DIST_RUNOFF=L_DIST_RUNOFF
       kpp_const_fields%L_EKMAN_PUMP=L_EKMAN_PUMP
+      kpp_const_fields%L_VARY_OPT=L_VARY_OPT
 
       RETURN
       END

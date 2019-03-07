@@ -955,7 +955,7 @@ c     Increment counter for time dimension of NetCDF file
 !      allocate(field(NPTS,NZP1))
 !      allocate(vec(NPTS))
 
-!      WRITE(6,*) 'In mean_output ',N_VAROUTS
+      WRITE(6,*) 'In mean_output ',N_VAROUTS
       i=1
       DO ivar=1,N_VAROUTS         
 !         WRITE(6,*) ivar

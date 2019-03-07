@@ -412,7 +412,7 @@ c     &                hri
          
  200  continue
       
-      call swfrac(-1.0,hbl,kpp_2d_fields%jerlov,bfsfc)
+      call swfrac(-1.0,hbl,kpp_2d_fields,bfsfc)     
       
       bfsfc  = Bo + Bosol * (1. - bfsfc)
       stable = 0.5 + SIGN( 0.5, bfsfc)
