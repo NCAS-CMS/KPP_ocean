@@ -378,6 +378,19 @@ c     NPK 16/12/09 - R3
 c
             IF (.NOT. L_CLIM_SNOW_ON_ICE) THEN
                snowdepth(ipoint_globe)=0.00
+            ELSE IF (kpp_const_fields%L_SST_LAG_FUDGE) THEN
+c
+c     Send a lagged SST through the coupler using the snowdepth on ice field.
+c     NPK 08/03/19
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .LT. -1e-10) THEN
+                  snowdepth(ipoint_globe)=0.0
+               ELSE
+                  ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
+                  snowdepth(ipoint_globe)=kpp_3d_fields%sst_lag(ipoint)*
+     +                 kpp_3d_fields%cplwght(ipoint_globe)+
+     +                 SST_in(ix,jy,1)*
+     +                 (1.0-kpp_3d_fields%cplwght(ipoint_globe))
+               ENDIF
             ELSE
                snowdepth(ipoint_globe)=snowdepth_in(ix,jy,1)
             ENDIF
@@ -409,7 +422,7 @@ c
          CASE ('OSNWTN01')
 #ifdef TOYCLIM
             temporary=SNOWDEPTH
-#else
+#else            
             CALL ONED_GLOBAL_TWOD_GLOBAL(SNOWDEPTH,temporary)
 #endif            
          CASE ('OHICN01')

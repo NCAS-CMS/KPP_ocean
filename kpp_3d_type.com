@@ -50,7 +50,8 @@
      +     v_clim(NPTS,NZP1),relax_curr(npts),
      +	   clim_sst(NX_GLOBE,NY_GLOBE),anom_sst(NX_GLOBE,NY_GLOBE),
      +     clim_ice(NX_GLOBE,NY_GLOBE),anom_ice(NX_GLOBE,NY_GLOBE),
-     +	   Rfac(NPTS),h1(NPTS),h2(NPTS)
+     +	   Rfac(NPTS),h1(NPTS),h2(NPTS),sst_lag(NPTS),
+     +     sst_lag_tmp(NPTS)
       logical :: l_ocean(npts),l_initflag(npts)
       integer :: old(NPTS),old_pt,
      +     new(NPTS),new_pt,
@@ -118,7 +119,7 @@
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
 	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
-      integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max
+      integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max,sst_lag_len
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,
@@ -127,7 +128,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
-     +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT
+     +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

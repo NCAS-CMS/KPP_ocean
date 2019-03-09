@@ -389,6 +389,7 @@ c     values from the 2D variable.
       kpp_const_fields%slab_depth=slab_depth
       kpp_const_fields%ekmax=max_ekman_depth
       kpp_const_fields%ekadv_max=max_ekadv_depth
+      kpp_const_fields%sst_lag_len=sst_lag_len
 
       kpp_const_fields%LKPP=LKPP
       kpp_const_fields%LRI=LRI
@@ -416,6 +417,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_DIST_RUNOFF=L_DIST_RUNOFF
       kpp_const_fields%L_EKMAN_PUMP=L_EKMAN_PUMP
       kpp_const_fields%L_VARY_OPT=L_VARY_OPT
+      kpp_const_fields%L_SST_LAG_FUDGE=L_SST_LAG_FUDGE
 
       RETURN
       END

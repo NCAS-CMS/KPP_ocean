@@ -729,6 +729,8 @@ c     NPK March 2009 for CFS - R2
 c     NPK 18/09/09 for OASIS3 - R3
 c
 #ifdef COUPLE
+         IF (kpp_const_fields%L_SST_LAG_FUDGE) 
+     +        CALL upd_sst_lag(kpp_3d_fields,kpp_const_fields)            
          IF ((MOD(ntime,ndtocn) .EQ. 0)
 #ifdef OASIS2
      +        .AND. ntime .NE. nend*ndtocn) THEN
@@ -957,7 +959,8 @@ c     +     bottom_temp(:)
      &     L_CLIM_ICE_DEPTH,L_CLIM_SNOW_ON_ICE,L_OUTKELVIN,
      &     L_COUPLE_CURRENTS,currin_file,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
-     &     climsst_period,climice_period,L_DIST_RUNOFF,initflux_file
+     &     climsst_period,climice_period,L_DIST_RUNOFF,initflux_file,
+     &     L_SST_LAG_FUDGE,sst_lag_len
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1166,6 +1169,8 @@ c     Initialize and read the times namelist
 !      L_CLIMCURR=.FALSE.
       L_BAD_ICE_DEPTH=.FALSE.
       L_DIST_RUNOFF=.FALSE.
+      L_SST_LAG_FUDGE=.FALSE.
+      sst_lag_len=0
       ifirst=1
       ilast=nx
       jfirst=1
@@ -1576,9 +1581,13 @@ c
 c
       kpp_const_fields%ntime=0
       CALL wm_ws_lookup(kpp_const_fields)
-      WRITE(6,*) 'After wm_ws_lookup'
       CALL init_ocn(kpp_3d_fields,kpp_const_fields)
-      WRITE(6,*) 'After init_ocn'
+
+      IF (kpp_const_fields%L_SST_LAG_FUDGE) THEN
+         kpp_3d_fields%sst_lag = kpp_3d_fields%X(:,1,1)
+         kpp_3d_fields%sst_lag_tmp = 0.0
+      ENDIF
+
 c     Write out the data from the initial condition
       IF ( .NOT. L_RESTART .AND. L_OUTPUT_INST) THEN
          DO l=1,N_VAROUTS
@@ -1594,7 +1603,6 @@ c     Write out the data from the initial condition
      +           l+N_VAROUTS,varid_sing(l),0,ntout_sing_inst(l))
          ENDDO
       ENDIF
-      WRITE(6,*) 'After output_inst'
 
 c     Set the means to zero initially
       VEC_mean(:,:,:) = 0.
@@ -1606,7 +1614,7 @@ c     Set ranges to large values
       SCLR_range(:,:,2)=-2E20
 
       CLOSE(75)
-      WRITE(6,*) 'Returning from initialise'
+      WRITE(6,*) 'KPP: Returning from initialise'
 
       RETURN
       END
@@ -2264,6 +2272,27 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       kpp_3d_fields%sal_clim=next_sal*next_weight+
      +     prev_sal*prev_weight
       kpp_const_fields%time=true_time
+
+      RETURN
+      END
+
+      SUBROUTINE upd_sst_lag(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+
+#include "kpp_3d_type.com"
+#include "relax_3d.com"
+
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER :: i
+
+      kpp_3d_fields%sst_lag_tmp(i) = kpp_3d_fields%sst_lag_tmp(i) + 
+     +     kpp_3d_fields%X(i,1,1)/FLOAT(kpp_const_fields%sst_lag_len)
+      IF (MOD(kpp_const_fields%ntime,kpp_const_fields%sst_lag_len)
+     +     .eq.0 .and. kpp_const_fields%ntime .ne. 0) THEN
+         kpp_3d_fields%sst_lag=kpp_3d_fields%sst_lag_tmp
+         kpp_3d_fields%sst_lag_tmp=0.0
+      ENDIF
 
       RETURN
       END
