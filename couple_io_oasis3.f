@@ -387,19 +387,20 @@ c     NPK 08/03/19
                      snowdepth(ipoint_globe)=0.0
                   ELSE
                      ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
-                     snowdepth(ipoint_globe)=
+                     snowdepth(ipoint_globe)=TK0+
      +                    kpp_3d_fields%sst_lag(ipoint)*
      +                    kpp_3d_fields%cplwght(ipoint_globe)+
      +                    SST_in(ix,jy,1)*
      +                    (1.0-kpp_3d_fields%cplwght(ipoint_globe))
                   ENDIF
-                  WRITE(6,*) 'lagged SST: ',snowdepth
                ENDIF
             ELSE
                snowdepth(ipoint_globe)=snowdepth_in(ix,jy,1)
 	    ENDIF
          ENDDO
       ENDDO
+      IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
+
       IF (L_OUTKELVIN) SST = SST+TK0
 !      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
 !      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
