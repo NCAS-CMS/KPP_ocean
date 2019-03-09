@@ -382,7 +382,8 @@ c
 c     
 c     Send a lagged SST through the coupler using the snowdepth on ice field.
 c     NPK 08/03/19
-                  IF (kpp_3d_fields%cplwght(ipoint_globe) .LT. -1e-10) THEN
+                  IF (kpp_3d_fields%cplwght(ipoint_globe) 
+     +			.LT. -1e-10) THEN
                      snowdepth(ipoint_globe)=0.0
                   ELSE
                      ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
@@ -392,7 +393,7 @@ c     NPK 08/03/19
      +                    SST_in(ix,jy,1)*
      +                    (1.0-kpp_3d_fields%cplwght(ipoint_globe))
                   ENDIF
-                  WRITE(6,*) 'lagged SST: ',snowdpeth
+                  WRITE(6,*) 'lagged SST: ',snowdepth
                ENDIF
             ELSE
                snowdepth(ipoint_globe)=snowdepth_in(ix,jy,1)
