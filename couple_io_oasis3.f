@@ -401,7 +401,7 @@ c     NPK 08/03/19
 	    ENDIF
          ENDDO
       ENDDO
-      IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
+      !IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
 
       IF (L_OUTKELVIN) SST = SST+TK0
 !      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
