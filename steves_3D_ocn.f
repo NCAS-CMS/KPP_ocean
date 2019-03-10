@@ -729,8 +729,9 @@ c     NPK March 2009 for CFS - R2
 c     NPK 18/09/09 for OASIS3 - R3
 c
 #ifdef COUPLE
-         IF (kpp_const_fields%L_SST_LAG_FUDGE) 
-     +        CALL upd_sst_lag(kpp_3d_fields,kpp_const_fields)            
+         IF (kpp_const_fields%L_SST_LAG_FUDGE .or. 
+     +        kpp_const_fields%L_SST_LAG) 
+     +        CALL upd_sst_lag(kpp_3d_fields,kpp_const_fields)
          IF ((MOD(ntime,ndtocn) .EQ. 0)
 #ifdef OASIS2
      +        .AND. ntime .NE. nend*ndtocn) THEN
@@ -960,7 +961,7 @@ c     +     bottom_temp(:)
      &     L_COUPLE_CURRENTS,currin_file,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
      &     climsst_period,climice_period,L_DIST_RUNOFF,initflux_file,
-     &     L_SST_LAG_FUDGE,sst_lag_len
+     &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1169,6 +1170,7 @@ c     Initialize and read the times namelist
 !      L_CLIMCURR=.FALSE.
       L_BAD_ICE_DEPTH=.FALSE.
       L_DIST_RUNOFF=.FALSE.
+      L_SST_LAG=.FALSE.
       L_SST_LAG_FUDGE=.FALSE.
       sst_lag_len=0
       ifirst=1
@@ -1583,7 +1585,8 @@ c
       CALL wm_ws_lookup(kpp_const_fields)
       CALL init_ocn(kpp_3d_fields,kpp_const_fields)
 
-      IF (kpp_const_fields%L_SST_LAG_FUDGE) THEN
+      IF (kpp_const_fields%L_SST_LAG_FUDGE .or.
+     +	 kpp_const_fields%L_SST_LAG) THEN
          kpp_3d_fields%sst_lag = kpp_3d_fields%X(:,1,1)
          kpp_3d_fields%sst_lag_tmp = 0.0
       ENDIF

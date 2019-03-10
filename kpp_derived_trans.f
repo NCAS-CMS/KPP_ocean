@@ -418,6 +418,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_EKMAN_PUMP=L_EKMAN_PUMP
       kpp_const_fields%L_VARY_OPT=L_VARY_OPT
       kpp_const_fields%L_SST_LAG_FUDGE=L_SST_LAG_FUDGE
+      kpp_const_fields%L_SST_LAG=L_SST_LAG
 
       RETURN
       END

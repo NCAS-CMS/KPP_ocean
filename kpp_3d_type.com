@@ -128,7 +128,8 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_SFCORR,L_SFCORR_WITHZ,
      +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
-     +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE
+     +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE,
+     +     L_SST_LAG
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

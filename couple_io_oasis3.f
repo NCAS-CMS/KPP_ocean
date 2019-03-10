@@ -325,9 +325,15 @@ c               ENDIF
             ELSE
 c     Point is inside the coupling domain; set to weighted value
                ipoint=(jy-jfirst)*nx+(ix-ifirst)+1             
-               SST(ipoint_globe) = kpp_3d_fields%X(ipoint,1,1)*
+      	       IF (kpp_const_fields%L_SST_LAG) THEN
+	       SST(ipoint_globe) = kpp_3d_fields%sst_lag(ipoint)*
+     +		    kpp_3d_fields%cplwght(ipoint_globe)+SST_in(ix,jy,1)*
+     +		    (1-kpp_3d_fields%cplwght(ipoint_globe))
+  	       ELSE
+	       SST(ipoint_globe) = kpp_3d_fields%X(ipoint,1,1)*
      +              kpp_3d_fields%cplwght(ipoint_globe)+SST_in(ix,jy,1)*
      +              (1-kpp_3d_fields%cplwght(ipoint_globe))
+	       ENDIF
                IF (L_COUPLE_CURRENTS) THEN
                   SURF_CURR_X(ipoint_globe)=kpp_3d_fields%U(ipoint,1,1)*
      +                 kpp_3d_fields%cplwght(ipoint_globe)
