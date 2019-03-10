@@ -392,7 +392,9 @@ c     NPK 08/03/19
      +                    kpp_3d_fields%cplwght(ipoint_globe)+
      +                    SST_in(ix,jy,1)*
      +                    (1.0-kpp_3d_fields%cplwght(ipoint_globe))
-                  ENDIF
+                     snowdepth(ipoint_globe)=
+			  snowdepth(ipoint_globe)/1.0e6
+		  ENDIF
                ENDIF
             ELSE
                snowdepth(ipoint_globe)=snowdepth_in(ix,jy,1)
