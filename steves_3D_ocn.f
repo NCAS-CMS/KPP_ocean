@@ -2289,8 +2289,8 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER :: i
 
-      kpp_3d_fields%sst_lag_tmp(i) = kpp_3d_fields%sst_lag_tmp(i) + 
-     +     kpp_3d_fields%X(i,1,1)/FLOAT(kpp_const_fields%sst_lag_len)
+      kpp_3d_fields%sst_lag_tmp = kpp_3d_fields%sst_lag_tmp + 
+     +     kpp_3d_fields%X(:,1,1)/FLOAT(kpp_const_fields%sst_lag_len)
       IF (MOD(kpp_const_fields%ntime,kpp_const_fields%sst_lag_len)
      +     .eq.0 .and. kpp_const_fields%ntime .ne. 0) THEN
          kpp_3d_fields%sst_lag=kpp_3d_fields%sst_lag_tmp
