@@ -391,7 +391,7 @@ c
 c     Send a lagged SST through the coupler using the snowdepth on ice field.
 c     NPK 08/03/19
                   IF (kpp_3d_fields%cplwght(ipoint_globe) 
-     +			.LT. -1e-10) THEN
+     +			.LT. 1e-10 .or. .not. kpp_3d_fields%L_OCEAN(ipoint)) THEN
                      snowdepth(ipoint_globe)=0.0
                   ELSE
                      ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
@@ -410,7 +410,7 @@ c     NPK 08/03/19
          ENDDO
       ENDDO
       !IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
-
+ 
       IF (L_OUTKELVIN) SST = SST+TK0
 !      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
 !      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
