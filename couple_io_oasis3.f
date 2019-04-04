@@ -430,10 +430,10 @@ c
             temporary=SST
 #else
             CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)
-            IF (kpp_const_fields%L_SMOOTH_SST) THEN
+            IF (kpp_const_fields%L_SST_SMOOTH) THEN
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
                CALL smooth_sst_out(temporary,kpp_const_fields,
-     +              SST_smooth)
+     +              kpp_3d_fields,SST_smooth)
                temporary=SST_smooth
                deallocate(SST_smooth)
             ENDIF
@@ -711,66 +711,94 @@ c
       RETURN
       END      
 
-      SUBROUTINE smooth_sst_out(sst_in,kpp_const_fields,
+      SUBROUTINE smooth_sst_out(sst_in,kpp_3d_fields,kpp_const_fields,
      +     sst_out)
       IMPLICIT NONE
 
-#include "parameter.inc"
 #include "kpp_3d_type.com"
 
       TYPE(kpp_const_type) :: kpp_const_fields
+      TYPE(kpp_3d_type) :: kpp_3d_fields
       REAL sst_in(NX_GLOBE,NY_GLOBE), sst_out(NX_GLOBE,NY_GLOBE)
       REAL,allocatable :: sst_smooth(:)
       REAL weight
-      INTEGER ix,my_ix,jy,ifirst,ilast,jfirst,jlast
+      INTEGER ix,my_ix,jy,ifirst,ilast,jfirst,jlast,blend,ipoint_globe,
+     +     my_npts
 
       ifirst = kpp_const_fields%sst_smooth_ifirst
       ilast = kpp_const_fields%sst_smooth_ilast
       jfirst = kpp_const_fields%sst_smooth_jfirst
       jlast = kpp_const_fields%sst_smooth_jlast
       blend = kpp_const_fields%sst_smooth_blend
-
+      
       sst_out = sst_in
-      IF (L_SST_SMOOTH_X .and. .not. L_SST_SMOOTH_Y) THEN
+      IF (kpp_const_fields%L_SST_SMOOTH_X .and. .not. 
+     +     kpp_const_fields%L_SST_SMOOTH_Y) THEN
 !     Smooth in X.  Need a separate smoothed value at each Y point (mean over all X).
          allocate(sst_smooth(jfirst:jlast))
          DO jy=jfirst,jlast
-            sst_smooth(jy) = SUM(sst_in(ifirst:ilast,jy))/
-     +           FLOAT(ilast-ifirst+1)            
+            my_npts = 0
+            DO ix=ifirst,ilast
+               ipoint_globe = (jy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
+                  sst_smooth(jy) = sst_smooth(jy)+sst_in(ix,jy)
+                  my_npts = my_npts+1
+               ENDIF
+            ENDDO
+            IF (my_npts .gt. 0) THEN 
+               sst_smooth(jy) = sst_smooth(jy)/FLOAT(my_npts)
+            ELSE
+               sst_smooth(jy) = -999.0
+            ENDIF
          ENDDO
          IF (blend .gt. 0) THEN
             DO jy=jfirst-blend,jfirst
                IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
-                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+                  WRITE(0,*) 'KPP: Blending region for smoothed SST is', 
      +                 ' outside global domain. Abort !'
                   CALL MIXED_ABORT
                ELSE
                   weight = ABS(jy-jfirst)/FLOAT(blend)
-                  sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight +
+                  IF (sst_smooth(jy) .gt. -100.0)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight+
      +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jlast,jlast+blend
                IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
-                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+                  WRITE(0,*) 'KPP: Blending region for smoothed SST is', 
      +                 ' outside global domain. Abort !'
                   CALL MIXED_ABORT
                ELSE
                   weight = ABS(jy-jlast)/FLOAT(blend)
-                  sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight +
+                  IF (sst_smooth(jy) .gt. -100.0)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight+
      +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jfirst,jlast
-               sst_out(ifirst:ilast,jy) = sst_smooth(jy)
+               IF (sst_smooth(jy) .gt. -100.0)
+     +              sst_out(ifirst:ilast,jy) = sst_smooth(jy)
             ENDDO
          ENDIF
-      ELSE IF (L_SST_SMOOTH_Y .and. .not. L_SST_SMOOTH_X) THEN
+      ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. .not. 
+     +        kpp_const_fields%L_SST_SMOOTH_X) THEN
 !     Smooth in Y. Need a separate smoothed value at each X point (mean over all Y).
          allocate(sst_smooth(ifirst:ilast))
          DO ix=ifirst,ilast
-            sst_smooth(ix) =
-     +           SUM(sst_in(ix,jfirst:jlast))/FLOAT(jlast-jfirst+1)
+            my_npts=0
+            DO jy=jfirst,jlast
+               ipoint_globe = (jy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
+                  sst_smooth(ix) = sst_smooth(ix) + sst_in(ix,jy)
+                  my_npts = my_npts+1
+               ENDIF
+            ENDDO
+            IF (my_npts .gt. 0) THEN
+               sst_smooth(ix) = sst_smooth(ix) / FLOAT(my_npts)
+            ELSE
+               sst_smooth(ix) = -999.0
+            ENDIF
          ENDDO
          IF (blend .gt. 0) THEN
             DO ix=ifirst-blend,ifirst
@@ -782,8 +810,9 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight +
-     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)               
+               IF (sst_smooth(ix) .gt. -100.0) 
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight+
+     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)   
             ENDDO
             DO ix=ilast,ilast+blend
                weight = ABS(ix-ilast)/FLOAT(blend)
@@ -794,19 +823,40 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight +
+               IF (sst_smooth(ix) .gt. -100.0)               
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight+
      +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
             ENDDO
             DO ix=ifirst,ilast
-               sst_out(ix,jfirst:jlast) = sst_smooth(ix)
+               IF (sst_smooth(ix) .gt. -100.0)
+     +              sst_out(ix,jfirst:jlast) = sst_smooth(ix)
             ENDDO
          ENDIF
-      ELSE IF (L_SST_SMOOTH_Y .and. L_SST_SMOOTH_X) THEN
+      ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. 
+     +        kpp_const_fields%L_SST_SMOOTH_X) THEN
          allocate(sst_smooth(1))
 !     Smooth in both X and Y. Need one value.
-         sst_smooth = SUM(sst_in(ifirst:ilast,jfirst:jlast))/
-     +        FLOAT((ilast-ifirst+1)*(jlast-jfirst+1))
-         sst_out(ifirst:ilast,jfirst:jlast) = sst_smooth
+         my_npts=0
+         DO ix=ifirst,ilast
+            DO jy=jfirst,jlast
+               ipoint_globe = (jy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
+                  sst_smooth(1) = sst_smooth(1) + sst_in(ix,jy)
+                  my_npts = my_npts+1
+               ENDIF
+            ENDDO
+         ENDDO
+         IF (my_npts .gt. 0) THEN 
+            sst_smooth(1) = sst_smooth(1)/FLOAT(my_npts)
+         ELSE
+            sst_smooth(1) = -999.0
+         ENDIF
+         DO ix=ifirst,ilast
+            DO jy=jfirst,jlast
+               IF (sst_smooth(1) .gt. -100.0) 
+     +              sst_out(ix,jy) = sst_smooth(1)
+            ENDDO
+         ENDDO
          IF (blend .gt. 0) THEN
             DO ix=ifirst-blend,ifirst
                weight = ABS(ix-ifirst)/FLOAT(blend)
@@ -817,7 +867,8 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
+               IF (sst_smooth(1) .gt. -100.0)
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
      +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)               
             ENDDO
             DO ix=ilast,ilast+blend
@@ -829,28 +880,31 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
+               IF (sst_smooth(1) .gt. -100.0)
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
      +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
             ENDDO
             DO jy=jfirst-blend,jfirst
                IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
-                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+                  WRITE(0,*) 'KPP: Blending region for smoothed SST is', 
      +                 ' outside global domain. Abort !'
                   CALL MIXED_ABORT
                ELSE
                   weight = ABS(jy-jfirst)/FLOAT(blend)
-                  sst_out(ifirst:ilast,jy) = sst_smooth*weight +
+                  IF (sst_smooth(1) .gt. -100.0)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth*weight +
      +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jlast,jlast+blend
                IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
-                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+                  WRITE(0,*) 'KPP: Blending region for smoothed SST is', 
      +                 ' outside global domain. Abort !'
                   CALL MIXED_ABORT
                ELSE
                   weight = ABS(jy-jlast)/FLOAT(blend)
-                  sst_out(ifirst:ilast,jy) = sst_smooth*weight +
+                  IF (sst_smooth(1) .gt. -100.0)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth*weight +
      +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
