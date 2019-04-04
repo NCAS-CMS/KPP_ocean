@@ -910,6 +910,8 @@ c
             ENDDO
          ENDIF
       ENDIF 
+
+      deallocate(sst_smooth)
             
       RETURN
       END SUBROUTINE smooth_sst_out
