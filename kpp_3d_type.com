@@ -118,8 +118,10 @@
      +     iso_thresh,slab_depth
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
-	real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
-      integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max,sst_lag_len
+      real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
+      integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max,sst_lag_len,
+     +     sst_smooth_ifirst,sst_smooth_ilast,sst_smooth_jfirst,
+     +     sst_smooth_jlast,sst_smooth_blend
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,
@@ -129,7 +131,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_RELAX_SAL,L_RELAX_OCNT,L_DIST_RUNOFF,
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
      +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE,
-     +     L_SST_LAG
+     +     L_SST_LAG,L_SST_SMOOTH,L_SST_SMOOTH_X,L_SST_SMOOTH_Y
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

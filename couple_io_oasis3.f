@@ -288,6 +288,8 @@ c     Other local variables
 c     Note: "time_in_seconds" must be INTEGER to agree with the
 c     definition in OASIS3.
 c
+c     Temporary variable to hold smooth SST
+      REAL, allocatable :: SST_smooth(:,:)
       INTEGER i,ix,jy,ipoint_globe,ipoint,ierror
       INTEGER(KIND=4) time_in_seconds
 c
@@ -411,9 +413,10 @@ c     NPK 08/03/19
       ENDDO
       !IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
  
-      IF (L_OUTKELVIN) SST = SST+TK0
-!      WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
-!      WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
+      IF (L_OUTKELVIN) SST = SST+TK0     
+      
+!     WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
+!     WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
 
       DO i=1,jpfldout
 c     
@@ -427,6 +430,13 @@ c
             temporary=SST
 #else
             CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)
+            IF (kpp_const_fields%L_SMOOTH_SST) THEN
+               allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
+               CALL smooth_sst_out(temporary,kpp_const_fields,
+     +              SST_smooth)
+               temporary=SST_smooth
+               deallocate(SST_smooth)
+            ENDIF
 #endif
          CASE('OFRZN01')
 #ifdef TOYCLIM
@@ -701,5 +711,154 @@ c
       RETURN
       END      
 
+      SUBROUTINE smooth_sst_out(sst_in,kpp_const_fields,
+     +     sst_out)
+      IMPLICIT NONE
+
+#include "parameter.inc"
+#include "kpp_3d_type.com"
+
+      TYPE(kpp_const_type) :: kpp_const_fields
+      REAL sst_in(NX_GLOBE,NY_GLOBE), sst_out(NX_GLOBE,NY_GLOBE)
+      REAL,allocatable :: sst_smooth(:)
+      REAL weight
+      INTEGER ix,my_ix,jy,ifirst,ilast,jfirst,jlast
+
+      ifirst = kpp_const_fields%sst_smooth_ifirst
+      ilast = kpp_const_fields%sst_smooth_ilast
+      jfirst = kpp_const_fields%sst_smooth_jfirst
+      jlast = kpp_const_fields%sst_smooth_jlast
+      blend = kpp_const_fields%sst_smooth_blend
+
+      sst_out = sst_in
+      IF (L_SST_SMOOTH_X .and. .not. L_SST_SMOOTH_Y) THEN
+!     Smooth in X.  Need a separate smoothed value at each Y point (mean over all X).
+         allocate(sst_smooth(jfirst:jlast))
+         DO jy=jfirst,jlast
+            sst_smooth(jy) = SUM(sst_in(ifirst:ilast,jy))/
+     +           FLOAT(ilast-ifirst+1)            
+         ENDDO
+         IF (blend .gt. 0) THEN
+            DO jy=jfirst-blend,jfirst
+               IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
+                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+     +                 ' outside global domain. Abort !'
+                  CALL MIXED_ABORT
+               ELSE
+                  weight = ABS(jy-jfirst)/FLOAT(blend)
+                  sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight +
+     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+               ENDIF
+            ENDDO
+            DO jy=jlast,jlast+blend
+               IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
+                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+     +                 ' outside global domain. Abort !'
+                  CALL MIXED_ABORT
+               ELSE
+                  weight = ABS(jy-jlast)/FLOAT(blend)
+                  sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight +
+     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+               ENDIF
+            ENDDO
+            DO jy=jfirst,jlast
+               sst_out(ifirst:ilast,jy) = sst_smooth(jy)
+            ENDDO
+         ENDIF
+      ELSE IF (L_SST_SMOOTH_Y .and. .not. L_SST_SMOOTH_X) THEN
+!     Smooth in Y. Need a separate smoothed value at each X point (mean over all Y).
+         allocate(sst_smooth(ifirst:ilast))
+         DO ix=ifirst,ilast
+            sst_smooth(ix) =
+     +           SUM(sst_in(ix,jfirst:jlast))/FLOAT(jlast-jfirst+1)
+         ENDDO
+         IF (blend .gt. 0) THEN
+            DO ix=ifirst-blend,ifirst
+               weight = ABS(ix-ifirst)/FLOAT(blend)
+               IF (ix .lt. 1) THEN
+                  my_ix = ix + NX_GLOBE
+               ELSE IF (ix .gt. NX_GLOBE) THEN
+                  my_ix = ix - NX_GLOBE
+               ELSE
+                  my_ix = ix
+               ENDIF
+               sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight +
+     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)               
+            ENDDO
+            DO ix=ilast,ilast+blend
+               weight = ABS(ix-ilast)/FLOAT(blend)
+               IF (ix .lt. 1) THEN
+                  my_ix = ix + NX_GLOBE
+               ELSE IF (ix .gt. NX_GLOBE) THEN
+                  my_ix = ix - NX_GLOBE
+               ELSE
+                  my_ix = ix
+               ENDIF
+               sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight +
+     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
+            ENDDO
+            DO ix=ifirst,ilast
+               sst_out(ix,jfirst:jlast) = sst_smooth(ix)
+            ENDDO
+         ENDIF
+      ELSE IF (L_SST_SMOOTH_Y .and. L_SST_SMOOTH_X) THEN
+         allocate(sst_smooth(1))
+!     Smooth in both X and Y. Need one value.
+         sst_smooth = SUM(sst_in(ifirst:ilast,jfirst:jlast))/
+     +        FLOAT((ilast-ifirst+1)*(jlast-jfirst+1))
+         sst_out(ifirst:ilast,jfirst:jlast) = sst_smooth
+         IF (blend .gt. 0) THEN
+            DO ix=ifirst-blend,ifirst
+               weight = ABS(ix-ifirst)/FLOAT(blend)
+               IF (ix .lt. 1) THEN
+                  my_ix = ix + NX_GLOBE
+               ELSE IF (ix .gt. NX_GLOBE) THEN
+                  my_ix = ix - NX_GLOBE
+               ELSE
+                  my_ix = ix
+               ENDIF
+               sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
+     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)               
+            ENDDO
+            DO ix=ilast,ilast+blend
+               weight = ABS(ix-ilast)/FLOAT(blend)
+               IF (ix .lt. 1) THEN
+                  my_ix = ix + NX_GLOBE
+               ELSE IF (ix .gt. NX_GLOBE) THEN
+                  my_ix = ix - NX_GLOBE
+               ELSE
+                  my_ix = ix
+               ENDIF
+               sst_out(my_ix,jfirst:jlast) = sst_smooth*weight +
+     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
+            ENDDO
+            DO jy=jfirst-blend,jfirst
+               IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
+                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+     +                 ' outside global domain. Abort !'
+                  CALL MIXED_ABORT
+               ELSE
+                  weight = ABS(jy-jfirst)/FLOAT(blend)
+                  sst_out(ifirst:ilast,jy) = sst_smooth*weight +
+     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+               ENDIF
+            ENDDO
+            DO jy=jlast,jlast+blend
+               IF (jy .lt. 1 .or. jy .gt. NY_GLOBE) THEN
+                  WRITE(0,*) 'KPP : Blending region for smoothed SST is', 
+     +                 ' outside global domain. Abort !'
+                  CALL MIXED_ABORT
+               ELSE
+                  weight = ABS(jy-jlast)/FLOAT(blend)
+                  sst_out(ifirst:ilast,jy) = sst_smooth*weight +
+     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+               ENDIF
+            ENDDO
+         ENDIF
+      ENDIF 
+            
+      RETURN
+      END SUBROUTINE smooth_sst_out
+      
 #endif /*OASIS3*/
 #endif /*COUPLE*/

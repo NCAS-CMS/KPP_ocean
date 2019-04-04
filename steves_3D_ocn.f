@@ -961,7 +961,10 @@ c     +     bottom_temp(:)
      &     L_COUPLE_CURRENTS,currin_file,
      &     ndtupdcurr,L_PERIODIC_CLIMICE,L_PERIODIC_CLIMSST,
      &     climsst_period,climice_period,L_DIST_RUNOFF,initflux_file,
-     &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len
+     &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len,L_SST_SMOOTH,
+     &     L_SST_SMOOTH_X,L_SST_SMOOTH_Y,sst_smooth_ifirst,
+     &     sst_smooth_ilast,sst_smooth_jfirst,sst_smooth_jlast,
+     &     sst_smooth_blend
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1177,11 +1180,37 @@ c     Initialize and read the times namelist
       ilast=nx
       jfirst=1
       jfirst=ny
+      L_SST_SMOOTH = .FALSE.
+      L_SST_SMOOTH_X = .FALSE.
+      L_SST_SMOOTH_Y = .FALSE.
+      sst_smooth_ifirst = 0
+      sst_smooth_jfirst = 0
+      sst_smooth_ilast = 0
+      sst_smooth_jlast = 0
+      sst_smooth_blend = 0
       initflux_file='none'
       READ(75,NAME_COUPLE)
       IF (L_COUPLE .and. initflux_file .eq. 'none')
      +     initflux_file='kpp_initfluxes.nc'
       write(nuout,*) 'KPP : Read Namelist COUPLE'
+
+      IF ((L_SST_SMOOTH) .and. (L_SST_SMOOTH_X.or.L_SST_SMOOTH_Y)) THEN
+         IF (sst_smooth_ifirst .eq. 0 .or. sst_smooth_jfirst .eq. 0
+     +        .or. sst_smooth_ilast .eq. 0 .or. sst_smooth_jlast .eq. 0)
+     +        THEN
+            WRITE(nuerr,*) 'KPP : Setting L_SST_SMOOTH_X or ',
+     +           'L_SST_SMOOTH_Y requires setting all of ',
+     +           'sst_smooth_ifirst, sst_smooth_ilast, ',
+     +           'sst_smooth_jfirst and sst_smooth_jlast.'
+            CALL MIXED_ABORT
+         ENDIF
+      ELSE IF (L_SST_SMOOTH .and. .not. L_SST_SMOOTH_X .and.
+     +        .not. L_SST_SMOOTH_Y) THEN
+         WRITE(nuerr,*) 'KPP : You have set L_SST_SMOOTH but have',
+     +        ' not set either L_SST_SMOOTH_X or L_SST_SMOOTH_Y ',
+     +        'so no smoothing will be performed.  Please reconsider.'
+      ENDIF
+                       
 c      IF (L_CLIMSST) CALL read_sstin
 c      IF (L_CLIMICE) CALL read_icein
 c      IF (L_CLIMCURR) CALL read_surface_currents

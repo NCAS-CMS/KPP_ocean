@@ -390,6 +390,11 @@ c     values from the 2D variable.
       kpp_const_fields%ekmax=max_ekman_depth
       kpp_const_fields%ekadv_max=max_ekadv_depth
       kpp_const_fields%sst_lag_len=sst_lag_len
+      kpp_const_fields%sst_smooth_ifirst=sst_smooth_ifirst
+      kpp_const_fields%sst_smooth_jfirst=sst_smooth_jfirst
+      kpp_const_fields%sst_smooth_ilast=sst_smooth_ilast
+      kpp_const_fields%sst_smooth_jlast=sst_smooth_jlast
+      kpp_const_fields%sst_smooth_blend=sst_smooth_blend
 
       kpp_const_fields%LKPP=LKPP
       kpp_const_fields%LRI=LRI
@@ -419,6 +424,9 @@ c     values from the 2D variable.
       kpp_const_fields%L_VARY_OPT=L_VARY_OPT
       kpp_const_fields%L_SST_LAG_FUDGE=L_SST_LAG_FUDGE
       kpp_const_fields%L_SST_LAG=L_SST_LAG
+      kpp_const_fields%L_SST_SMOOTH=L_SST_SMOOTH
+      kpp_const_fields%L_SST_SMOOTH_X=L_SST_SMOOTH_X
+      kpp_const_fields%L_SST_SMOOTH_Y=L_SST_SMOOTH_Y
 
       RETURN
       END
