@@ -745,6 +745,7 @@ c
          allocate(sst_smooth(jfirst:jlast))
          DO jy=jfirst,jlast
             my_npts = 0
+            sst_smooth(jy)=0
             DO ix=ifirst,ilast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
@@ -788,6 +789,7 @@ c
      +              sst_out(ifirst:ilast,jy) = sst_smooth(jy)
             ENDDO
          ENDIF
+         deallocate(sst_smooth)
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. .not. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN
 !     Smooth in Y. Need a separate smoothed value at each X point (mean over all Y).
@@ -795,14 +797,15 @@ c
      +      ,' and between ',ifirst,' and ',ilast
 	 allocate(sst_smooth(ifirst:ilast))
          DO ix=ifirst,ilast
+            sst_smooth(ix)=0
             my_npts=0
-            DO jy=jfirst,jlast
+            DO jy=jfirst,jlast              
                ipoint_globe = (jy-1)*NX_GLOBE+ix
-               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN                  
                   sst_smooth(ix) = sst_smooth(ix) + sst_in(ix,jy)
-                  WRITE(6,*) 'KPP: At ',ix,',',jy,' sst_in = ',
-     +                 sst_in(ix,jy),' cplwght=',
-     +                 kpp_3d_fields%cplwght(ipoint_globe)
+!                  WRITE(6,*) 'KPP: At ',ix,',',jy,' sst_in = ',
+!     +                 sst_in(ix,jy),' cplwght=',
+!     +                 kpp_3d_fields%cplwght(ipoint_globe)
                   my_npts = my_npts+1
                ENDIF
             ENDDO
@@ -860,6 +863,7 @@ c
                ENDIF
             ENDDO
          ENDIF
+         deallocate(sst_smooth)
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN
          allocate(sst_smooth(1))
@@ -867,6 +871,7 @@ c
      +        ,jlast,' and between ',ifirst,' and ',ilast
 !     Smooth in both X and Y. Need one value.
          my_npts=0
+         sst_smooth(1)=0
          DO ix=ifirst,ilast
             DO jy=jfirst,jlast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
@@ -939,9 +944,8 @@ c
                ENDIF
             ENDDO
          ENDIF
-      ENDIF 
-
-      deallocate(sst_smooth)
+         deallocate(sst_smooth)
+      ENDIF
             
       RETURN
       END SUBROUTINE smooth_sst_out
