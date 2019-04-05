@@ -431,7 +431,7 @@ c
 #else
             CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)
             IF (kpp_const_fields%L_SST_SMOOTH) THEN
-	       WRITE(6.*) 'KPP : Smoothing SST'
+	       WRITE(6,*) 'KPP : Smoothing SST'
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
                CALL smooth_sst_out(temporary,kpp_const_fields,
      +              kpp_3d_fields,SST_smooth)
@@ -762,7 +762,7 @@ c
                   weight = ABS(jy-jfirst)/FLOAT(blend)
                   IF (sst_smooth(jy) .gt. -100.0)
      +                 sst_out(ifirst:ilast,jy) = sst_smooth(jfirst)
-     +                 weight*sst_in(ifirst:ilast,jy)*(1.0-weight)
+     +                 *weight+sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jlast,jlast+blend
@@ -774,7 +774,7 @@ c
                   weight = ABS(jy-jlast)/FLOAT(blend)
                   IF (sst_smooth(jy) .gt. -100.0)
      +                 sst_out(ifirst:ilast,jy) = sst_smooth(jlast)
-     +                 weight*sst_in(ifirst:ilast,jy)*(1.0-weight)
+     +                 *weight+sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jfirst,jlast
@@ -828,7 +828,7 @@ c
                   my_ix = ix
                ENDIF
                IF (sst_smooth(ix) .gt. -100.0)               
-     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ilast)
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ilast)*
      +		    weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
             ENDDO
             DO ix=ifirst,ilast
