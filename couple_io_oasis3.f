@@ -431,6 +431,7 @@ c
 #else
             CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)
             IF (kpp_const_fields%L_SST_SMOOTH) THEN
+	       WRITE(6.*) 'KPP : Smoothing SST'
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
                CALL smooth_sst_out(temporary,kpp_const_fields,
      +              kpp_3d_fields,SST_smooth)
@@ -760,8 +761,8 @@ c
                ELSE
                   weight = ABS(jy-jfirst)/FLOAT(blend)
                   IF (sst_smooth(jy) .gt. -100.0)
-     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight+
-     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jfirst)
+     +                 weight*sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jlast,jlast+blend
@@ -772,8 +773,8 @@ c
                ELSE
                   weight = ABS(jy-jlast)/FLOAT(blend)
                   IF (sst_smooth(jy) .gt. -100.0)
-     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jy)*weight+
-     +                 sst_in(ifirst:ilast,jy)*(1.0-weight)
+     +                 sst_out(ifirst:ilast,jy) = sst_smooth(jlast)
+     +                 weight*sst_in(ifirst:ilast,jy)*(1.0-weight)
                ENDIF
             ENDDO
             DO jy=jfirst,jlast
@@ -784,7 +785,9 @@ c
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. .not. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN
 !     Smooth in Y. Need a separate smoothed value at each X point (mean over all Y).
-         allocate(sst_smooth(ifirst:ilast))
+         WRITE(6,*) 'KPP: Smooth SST in Y between ',jfirst,' and ',jlast
+     +      ,' and between ',ifirst,' and ',ilast
+	 allocate(sst_smooth(ifirst:ilast))
          DO ix=ifirst,ilast
             my_npts=0
             DO jy=jfirst,jlast
@@ -796,6 +799,7 @@ c
             ENDDO
             IF (my_npts .gt. 0) THEN
                sst_smooth(ix) = sst_smooth(ix) / FLOAT(my_npts)
+               WRITE(6,*) 'KPP: At ',ix,' sst_smooth = ',sst_smooth(ix)
             ELSE
                sst_smooth(ix) = -999.0
             ENDIF
@@ -811,8 +815,8 @@ c
                   my_ix = ix
                ENDIF
                IF (sst_smooth(ix) .gt. -100.0) 
-     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight+
-     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)   
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ifirst)*
+     +		    weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)   
             ENDDO
             DO ix=ilast,ilast+blend
                weight = ABS(ix-ilast)/FLOAT(blend)
@@ -824,8 +828,8 @@ c
                   my_ix = ix
                ENDIF
                IF (sst_smooth(ix) .gt. -100.0)               
-     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ix)*weight+
-     +              sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
+     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ilast)
+     +		    weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
             ENDDO
             DO ix=ifirst,ilast
                IF (sst_smooth(ix) .gt. -100.0)
