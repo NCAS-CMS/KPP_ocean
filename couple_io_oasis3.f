@@ -800,12 +800,18 @@ c
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
                   sst_smooth(ix) = sst_smooth(ix) + sst_in(ix,jy)
+                  WRITE(6,*) 'KPP: At ',ix,',',jy,' sst_in = ',
+     +                 sst_in(ix,jy),' cplwght=',
+     +                 kpp_3d_fields%cplwght(ipoint_globe)
                   my_npts = my_npts+1
                ENDIF
             ENDDO
             IF (my_npts .gt. 0) THEN
                sst_smooth(ix) = sst_smooth(ix) / FLOAT(my_npts)
                WRITE(6,*) 'KPP: At ',ix,' sst_smooth = ',sst_smooth(ix)
+               WRITE(6,*) 'KPP: At ',ix,' my_npts = ',my_npts
+               WRITE(6,*) 'KPP: At ',ix,' sst_in= ',
+     +              sst_in(ix,jfirst:jlast)
             ELSE
                sst_smooth(ix) = -999.0
             ENDIF
@@ -820,9 +826,13 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               IF (sst_smooth(ix) .gt. -100.0) 
-     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ifirst)*
-     +		    weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)   
+               IF (sst_smooth(ix) .gt. -100.0 .and. 
+     +              sst_smooth(ix) .lt. 1000) THEN
+                  sst_out(my_ix,jfirst:jlast) = sst_smooth(ifirst)*
+     +                 weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)
+                  WRITE(6,*) 'KPP: At ',ix,' sst_out = ',
+     +                 sst_out(my_ix,jfirst:jlast)
+               ENDIF
             ENDDO
             DO ix=ilast,ilast+blend
                weight = ABS(ix-ilast)/FLOAT(blend)
@@ -833,13 +843,21 @@ c
                ELSE
                   my_ix = ix
                ENDIF
-               IF (sst_smooth(ix) .gt. -100.0)               
-     +              sst_out(my_ix,jfirst:jlast) = sst_smooth(ilast)*
-     +		    weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
+               IF (sst_smooth(ix) .gt. -100.0 .and.
+     +              sst_smooth(ix) .lt. 1000) THEN
+                  sst_out(my_ix,jfirst:jlast) = sst_smooth(ilast)*
+     +                 weight+sst_in(my_ix,jfirst:jlast)*(1.0-weight)  
+                  WRITE(6,*) 'KPP: At ',ix,' sst_out = ',
+     +                 sst_out(my_ix,jfirst:jlast)
+               ENDIF
             ENDDO
             DO ix=ifirst,ilast
-               IF (sst_smooth(ix) .gt. -100.0)
-     +              sst_out(ix,jfirst:jlast) = sst_smooth(ix)
+               IF (sst_smooth(ix) .gt. -100.0 .and.
+     +              sst_smooth(ix) .lt. 1000) THEN
+                  sst_out(ix,jfirst:jlast) = sst_smooth(ix)
+                  WRITE(6,*) 'KPP: At ',ix,' sst_out = ',
+     +                 sst_out(ix,jfirst:jlast)
+               ENDIF
             ENDDO
          ENDIF
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. 
