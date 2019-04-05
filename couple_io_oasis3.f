@@ -433,8 +433,8 @@ c
             IF (kpp_const_fields%L_SST_SMOOTH) THEN
 	       WRITE(6,*) 'KPP : Smoothing SST'
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
-               CALL smooth_sst_out(temporary,kpp_const_fields,
-     +              kpp_3d_fields,SST_smooth)
+               CALL smooth_sst_out(temporary,kpp_3d_fields,
+     +              kpp_const_fields,SST_smooth)
                temporary=SST_smooth
                deallocate(SST_smooth)
             ENDIF
@@ -718,8 +718,8 @@ c
 
 #include "kpp_3d_type.com"
 
-      TYPE(kpp_const_type) :: kpp_const_fields
-      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type), intent(in) :: kpp_const_fields
+      TYPE(kpp_3d_type),intent(in) :: kpp_3d_fields
       REAL sst_in(NX_GLOBE,NY_GLOBE), sst_out(NX_GLOBE,NY_GLOBE)
       REAL,allocatable :: sst_smooth(:)
       REAL weight
@@ -732,10 +732,16 @@ c
       jlast = kpp_const_fields%sst_smooth_jlast
       blend = kpp_const_fields%sst_smooth_blend
       
+      WRITE(6,*) 'KPP: L_SST_SMOOTH= ',kpp_const_fields%L_SST_SMOOTH
+      WRITE(6,*) 'KPP: L_SST_SMOOTH_X= ',kpp_const_fields%L_SST_SMOOTH_X
+      WRITE(6,*) 'KPP: L_SST_SMOOTH_Y= ',kpp_const_fields%L_SST_SMOOTH_Y
+
       sst_out = sst_in
       IF (kpp_const_fields%L_SST_SMOOTH_X .and. .not. 
      +     kpp_const_fields%L_SST_SMOOTH_Y) THEN
 !     Smooth in X.  Need a separate smoothed value at each Y point (mean over all X).
+         WRITE(6,*) 'KPP: Smooth SST in X between ',jfirst,' and ',jlast
+     +        ,' and between ',ifirst,' and ',ilast
          allocate(sst_smooth(jfirst:jlast))
          DO jy=jfirst,jlast
             my_npts = 0
@@ -839,6 +845,8 @@ c
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN
          allocate(sst_smooth(1))
+         WRITE(6,*) 'KPP: Smooth SST in X and Y between ',jfirst,' and '
+     +        ,jlast,' and between ',ifirst,' and ',ilast
 !     Smooth in both X and Y. Need one value.
          my_npts=0
          DO ix=ifirst,ilast
