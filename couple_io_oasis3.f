@@ -768,11 +768,13 @@ c
          WRITE(6,*) 'KPP: Smooth SST in Y between ',jfirst,' and ',jlast
      +        ,' and between ',ifirst,' and ',ilast
          DO ix=ifirst,ilast
+            sst_smooth(ix,:) = 0
             my_npts=0
             DO jy=jfirst,jlast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN          
-                  sst_smooth(ix,1) = sst_smooth(ix,1) + sst_in(ix,jy)
+                  sst_smooth(ix,jfirst) = sst_smooth(ix,jfirst) + 
+     +                 sst_in(ix,jy)
 !                  WRITE(6,*) 'KPP: At ',ix,',',jy,' sst_in = ',
 !     +                 sst_in(ix,jy),' cplwght=',
 !     +                 kpp_3d_fields%cplwght(ipoint_globe)
@@ -780,8 +782,12 @@ c
                ENDIF
             ENDDO
             IF (my_npts .gt. 0) THEN
-               sst_smooth(ix,:) = sst_smooth(ix,1) / FLOAT(my_npts)
-               WRITE(6,*) 'KPP: At ',ix,' sst_smooth= ',sst_smooth(ix,1)
+               DO jy=jfirst,jlast
+                  sst_smooth(ix,jy) = sst_smooth(ix,jfirst) / 
+     +                 FLOAT(my_npts)
+               ENDDO
+               WRITE(6,*) 'KPP: At ',ix,' sst_smooth= ',
+     +              sst_smooth(ix,jfirst)
                WRITE(6,*) 'KPP: At ',ix,' my_npts = ',my_npts
                WRITE(6,*) 'KPP: At ',ix,' sst_in= ',
      +              sst_in(ix,jfirst:jlast)
