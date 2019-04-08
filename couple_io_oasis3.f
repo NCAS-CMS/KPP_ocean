@@ -770,7 +770,7 @@ c
          DO ix=ifirst,ilast
             sst_smooth(ix,:)=0
             my_npts=0
-            DO jy=jfirst,jlast              
+            DO jy=jfirst,jlast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN                  
                   sst_smooth(ix,:) = sst_smooth(ix,:) + sst_in(ix,jy)
@@ -893,7 +893,7 @@ c
          ENDIF               
       ENDDO
       DO ix=1,NX_GLOBE
-         DO jy=1,NX_GLOBE
+         DO jy=1,NY_GLOBE
             IF (weight(ix,jy) .eq. 0) THEN
                sst_out(ix,jy) = sst_in(ix,jy)
             ELSE IF (weight(ix,jy) .eq. 1) THEN
@@ -904,11 +904,14 @@ c
                my_ix = MIN(my_ix,ilast)
                my_jy = MAX(jfirst,jy)
                my_jy = MIN(my_jy,jlast)
-               WRITE(6,*) 'KPP: Smooth SST at ',my_ix,',',my_jy
+               WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
+     +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
+               WRITE(6,*) 'KPP: ',sst_tmp
                sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +              (1.0-weight(ix,jy))*sst_in(ix,jy)
-               WRITE(6,*) 'KPP: ',sst_tmp,sst_in,sst_out,weight
+               WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),sst_out(ix,jy),
+     +              weight(ix,jy)
             ENDIF
          ENDDO
       ENDDO
