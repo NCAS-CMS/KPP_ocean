@@ -849,7 +849,7 @@ c
          ELSE
             my_ix = ix
          ENDIF
-         DO jy=jfirst-blend,jfirst+blend            
+         DO jy=jfirst-blend,jlast+blend            
             weight(ix,jy) = MAX(weight(ix,jy),
      +           1.0-ABS(ix-ifirst)/FLOAT(blend))
          ENDDO
@@ -863,7 +863,7 @@ c
          ELSE
             my_ix = ix
          ENDIF
-         DO jy=jfirst-blend,jfirst+blend
+         DO jy=jfirst-blend,jlast+blend
             weight(ix,jy) = MAX(weight(ix,jy),
      +           1.0-ABS(ix-ilast)/FLOAT(blend))
          ENDDO
@@ -875,7 +875,7 @@ c
      +           ' outside global domain. Abort !'
             CALL MIXED_ABORT
          ELSE
-            DO ix=ifirst-blend,ifirst+blend
+            DO ix=ifirst-blend,ilast+blend
                weight(ix,jy) = MAX(weight(ix,jy),
      +              1.0-ABS(jy-jfirst)/FLOAT(blend))
             ENDDO
@@ -888,7 +888,7 @@ c
      +           ' outside global domain. Abort !'
             CALL MIXED_ABORT
          ELSE
-            DO ix=ifirst-blend,ifirst+blend
+            DO ix=ifirst-blend,ilast+blend
                weight(ix,jy) = MAX(weight(ix,jy),
      +              1.0-ABS(jy-jlast)/FLOAT(blend))
             ENDDO
@@ -910,7 +910,7 @@ c
      +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
                IF (sst_tmp .gt. -100 .and. sst_tmp .lt. 1000) THEN
-                  WRITE(6,*) 'KPP: ',sst_tmp
+!                  WRITE(6,*) 'KPP: ',sst_tmp
                   sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +                 (1.0-weight(ix,jy))*sst_in(ix,jy)
                   WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),
