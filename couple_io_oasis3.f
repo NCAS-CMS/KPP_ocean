@@ -853,7 +853,7 @@ c
          ENDDO
       ENDDO
 ! East boundary
-      DO ix=ifirst+blend,ifirst
+      DO ix=ilast,ilast+blend
          IF (ix .lt. 1) THEN
             my_ix = ix + NX_GLOBE
          ELSE IF (ix .gt. NX_GLOBE) THEN
@@ -907,11 +907,13 @@ c
                WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
      +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
-               WRITE(6,*) 'KPP: ',sst_tmp
-               sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
-     +              (1.0-weight(ix,jy))*sst_in(ix,jy)
-               WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),sst_out(ix,jy),
-     +              weight(ix,jy)
+               IF (sst_tmp .gt. -100 .and. sst_temp .lt. 1000) THEN
+                  WRITE(6,*) 'KPP: ',sst_tmp
+                  sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
+     +                 (1.0-weight(ix,jy))*sst_in(ix,jy)
+                  WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),
+     +                 sst_out(ix,jy),weight(ix,jy)
+               ENDIF
             ENDIF
          ENDDO
       ENDDO
