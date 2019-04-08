@@ -907,7 +907,7 @@ c
                WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
      +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
-               IF (sst_tmp .gt. -100 .and. sst_temp .lt. 1000) THEN
+               IF (sst_tmp .gt. -100 .and. sst_tmp .lt. 1000) THEN
                   WRITE(6,*) 'KPP: ',sst_tmp
                   sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +                 (1.0-weight(ix,jy))*sst_in(ix,jy)
