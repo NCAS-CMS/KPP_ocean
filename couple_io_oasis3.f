@@ -782,12 +782,9 @@ c
                ENDIF
             ENDDO
             IF (my_npts .gt. 0) THEN
-               DO jy=jfirst,jlast
-                  sst_smooth(ix,jy) = sst_smooth(ix,jfirst) / 
-     +                 FLOAT(my_npts)
-               ENDDO
+               sst_smooth(ix,:) = sst_smooth(ix,jfirst)/FLOAT(my_npts)
                WRITE(6,*) 'KPP: At ',ix,' sst_smooth= ',
-     +              sst_smooth(ix,jfirst)
+     +              sst_smooth(ix,:)
                WRITE(6,*) 'KPP: At ',ix,' my_npts = ',my_npts
                WRITE(6,*) 'KPP: At ',ix,' sst_in= ',
      +              sst_in(ix,jfirst:jlast)
