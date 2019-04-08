@@ -902,11 +902,13 @@ c
      +              weight(ix,jy) .lt. 1) THEN
                my_ix = MAX(ifirst,ix)
                my_ix = MIN(my_ix,ilast)
-               my_jy = MAX(jfirst,ix)
+               my_jy = MAX(jfirst,jy)
                my_jy = MIN(my_jy,jlast)
+               WRITE(6,*) 'KPP: Smooth SST at ',my_ix,',',my_jy
                sst_tmp = sst_smooth(my_ix,my_jy)
                sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +              (1.0-weight(ix,jy))*sst_in(ix,jy)
+               WRITE(6,*) 'KPP: ',sst_tmp,sst_in,sst_out,weight
             ENDIF
          ENDDO
       ENDDO
