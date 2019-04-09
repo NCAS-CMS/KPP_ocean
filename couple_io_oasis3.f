@@ -761,7 +761,7 @@ c
          ENDDO
          IF (blend .gt. 0) 
      +        CALL smooth_blended_sst(sst_in,sst_smooth,sst_out,
-     +        kpp_const_fields,ifirst,ilast,jfirst,jlast)  
+     +        kpp_3d_fields,kpp_const_fields,ifirst,ilast,jfirst,jlast)  
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. .not. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN
 !     Smooth in Y. Need a separate smoothed value at each X point (mean over all Y).
@@ -794,7 +794,7 @@ c
          ENDDO         
          IF (blend .gt. 0)
      +        CALL smooth_blended_sst(sst_in,sst_smooth,sst_out,
-     +        kpp_const_fields,ifirst,ilast,jfirst,jlast)
+     +        kpp_3d_fields,kpp_const_fields,ifirst,ilast,jfirst,jlast)
       ELSE IF (kpp_const_fields%L_SST_SMOOTH_Y .and. 
      +        kpp_const_fields%L_SST_SMOOTH_X) THEN         
          WRITE(6,*) 'KPP: Smooth SST in X and Y between ',jfirst,' and '
@@ -812,7 +812,7 @@ c
          ENDDO
          IF (blend .gt. 0) 
      +        CALL smooth_blended_sst(sst_in,sst_smooth,sst_out,
-     +        kpp_const_fields,ifirst,ilast,jfirst,jlast)    
+     +        kpp_3d_fields,kpp_const_fields,ifirst,ilast,jfirst,jlast)    
       ENDIF
       deallocate(sst_smooth)
             
@@ -820,7 +820,7 @@ c
       END SUBROUTINE smooth_sst_out
 
       SUBROUTINE smooth_blended_sst(sst_in,sst_smooth,sst_out,
-     +     kpp_const_fields,ifirst,ilast,jfirst,jlast)
+     +     kpp_3d_fields,kpp_const_fields,ifirst,ilast,jfirst,jlast)
       IMPLICIT NONE
 
 #include "kpp_3d_type.com"
@@ -829,8 +829,10 @@ c
       REAL, intent(in) :: sst_smooth(ifirst:ilast,jfirst:jlast)
       REAL, intent(out) :: sst_out(NX_GLOBE,NY_GLOBE)
       REAL :: weight(NX_GLOBE,NY_GLOBE),sst_tmp
+      TYPE(kpp_3d_type),intent(in) :: kpp_3d_fields
       TYPE(kpp_const_type), intent(in) :: kpp_const_fields
-      INTEGER :: ifirst, ilast, jfirst, jlast, blend, ix, jy,my_ix,my_jy
+      INTEGER :: ifirst, ilast, jfirst, jlast, blend, ix,jy,my_ix,my_jy,
+     +     ipoint_globe
       INTEGER, intent(in) :: ifirst,ilast,jfirst,jlast
 
       blend = kpp_const_fields%sst_smooth_blend
@@ -849,7 +851,7 @@ c
          ELSE
             my_ix = ix
          ENDIF
-         DO jy=jfirst-blend,jlast+blend            
+         DO jy=jfirst,jlast
             weight(ix,jy) = MAX(weight(ix,jy),
      +           1.0-ABS(ix-ifirst)/FLOAT(blend))
          ENDDO
@@ -863,7 +865,7 @@ c
          ELSE
             my_ix = ix
          ENDIF
-         DO jy=jfirst-blend,jlast+blend
+         DO jy=jfirst,jlast
             weight(ix,jy) = MAX(weight(ix,jy),
      +           1.0-ABS(ix-ilast)/FLOAT(blend))
          ENDDO
@@ -875,7 +877,7 @@ c
      +           ' outside global domain. Abort !'
             CALL MIXED_ABORT
          ELSE
-            DO ix=ifirst-blend,ilast+blend
+            DO ix=ifirst,ilast
                weight(ix,jy) = MAX(weight(ix,jy),
      +              1.0-ABS(jy-jfirst)/FLOAT(blend))
             ENDDO
@@ -888,12 +890,38 @@ c
      +           ' outside global domain. Abort !'
             CALL MIXED_ABORT
          ELSE
-            DO ix=ifirst-blend,ilast+blend
+            DO ix=ifirst,ilast
                weight(ix,jy) = MAX(weight(ix,jy),
      +              1.0-ABS(jy-jlast)/FLOAT(blend))
             ENDDO
          ENDIF               
       ENDDO
+
+      DO ix=ifirst-blend,ifirst
+! Southwest corner         
+         DO jy=jfirst-blend,jfirst
+            weight(ix,jy) = MIN(weight(ifirst,jy),
+     +           weight(ix,jfirst))
+         ENDDO
+! Northwest corner         
+         DO jy=jlast,jlast+blend
+            weight(ix,jy) = MIN(weight(ifirst,jy),
+     +           weight(ix,jlast))
+         ENDDO
+      ENDDO
+      DO ix=ilast,ilast+blend
+! Southeast corner
+         DO jy=jfirst-blend,jfirst
+            weight(ix,jy) = MIN(weight(ilast,jy),
+     +           weight(ix,jfirst))
+         ENDDO
+! Northeast corner
+         DO jy=jlast,jlast+blend
+            weight(ix,jy) = MIN(weight(ilast,jy),
+     +           weight(ix,jlast))
+         ENDDO
+      ENDDO
+
       DO ix=1,NX_GLOBE
          DO jy=1,NY_GLOBE
             IF (weight(ix,jy) .eq. 0) THEN
@@ -909,8 +937,10 @@ c
                WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
      +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
-               IF (sst_tmp .gt. -100 .and. sst_tmp .lt. 1000) THEN
-!                  WRITE(6,*) 'KPP: ',sst_tmp
+               ipoint_globe = (jy-1)*NX_GLOBE+ix
+               IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0 .and.
+     +              sst_tmp .gt. -100 .and. sst_tmp .lt. 1000) THEN
+!     WRITE(6,*) 'KPP: ',sst_tmp
                   sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +                 (1.0-weight(ix,jy))*sst_in(ix,jy)
                   WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),
