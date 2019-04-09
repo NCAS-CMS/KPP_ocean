@@ -732,10 +732,6 @@ c
       jlast = kpp_const_fields%sst_smooth_jlast
       blend = kpp_const_fields%sst_smooth_blend
       
-      WRITE(6,*) 'KPP: L_SST_SMOOTH= ',kpp_const_fields%L_SST_SMOOTH
-      WRITE(6,*) 'KPP: L_SST_SMOOTH_X= ',kpp_const_fields%L_SST_SMOOTH_X
-      WRITE(6,*) 'KPP: L_SST_SMOOTH_Y= ',kpp_const_fields%L_SST_SMOOTH_Y
-
       sst_out = sst_in
       allocate(sst_smooth(ifirst:ilast,jfirst:jlast))
       sst_smooth(:,:) = 0
@@ -749,12 +745,13 @@ c
             DO ix=ifirst,ilast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
-                  sst_smooth(:,jy) = sst_smooth(:,jy)+sst_in(ix,jy)
+                  sst_smooth(ifirst,jy) = sst_smooth(ifirst,jy) + 
+     +                 sst_in(ix,jy)
                   my_npts = my_npts+1
                ENDIF
             ENDDO
             IF (my_npts .gt. 0) THEN 
-               sst_smooth(:,jy) = sst_smooth(:,jy)/FLOAT(my_npts)
+               sst_smooth(:,jy) = sst_smooth(ifirst,jy)/FLOAT(my_npts)
             ELSE
                sst_smooth(:,jy) = -999.0
             ENDIF
@@ -775,19 +772,11 @@ c
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN          
                   sst_smooth(ix,jfirst) = sst_smooth(ix,jfirst) + 
      +                 sst_in(ix,jy)
-!                  WRITE(6,*) 'KPP: At ',ix,',',jy,' sst_in = ',
-!     +                 sst_in(ix,jy),' cplwght=',
-!     +                 kpp_3d_fields%cplwght(ipoint_globe)
                   my_npts = my_npts+1
                ENDIF
             ENDDO
             IF (my_npts .gt. 0) THEN
                sst_smooth(ix,:) = sst_smooth(ix,jfirst)/FLOAT(my_npts)
-               WRITE(6,*) 'KPP: At ',ix,' sst_smooth= ',
-     +              sst_smooth(ix,:)
-               WRITE(6,*) 'KPP: At ',ix,' my_npts = ',my_npts
-               WRITE(6,*) 'KPP: At ',ix,' sst_in= ',
-     +              sst_in(ix,jfirst:jlast)
             ELSE
                sst_smooth(ix,:) = -999.0
             ENDIF
@@ -805,11 +794,17 @@ c
             DO jy=jfirst,jlast
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0) THEN
-                  sst_smooth(:,:) = sst_smooth(:,:) + sst_in(ix,jy)
+                  sst_smooth(ifirst,jfirst) = sst_smooth(ifirst,jfirst)+
+     +                 sst_in(ix,jy)
                   my_npts = my_npts+1
                ENDIF
-            ENDDO
+            ENDDO            
          ENDDO
+         IF (my_npts .gt. 0) THEN
+            sst_smooth(:,:) = sst_smooth(ifirst,jfirst)/FLOAT(my_npts)
+         ELSE
+            sst_smooth(:,:) = -999.0
+         ENDIF
          IF (blend .gt. 0) 
      +        CALL smooth_blended_sst(sst_in,sst_smooth,sst_out,
      +        kpp_3d_fields,kpp_const_fields,ifirst,ilast,jfirst,jlast)    
@@ -831,8 +826,7 @@ c
       REAL :: weight(NX_GLOBE,NY_GLOBE),sst_tmp
       TYPE(kpp_3d_type),intent(in) :: kpp_3d_fields
       TYPE(kpp_const_type), intent(in) :: kpp_const_fields
-      INTEGER :: ifirst, ilast, jfirst, jlast, blend, ix,jy,my_ix,my_jy,
-     +     ipoint_globe
+      INTEGER :: blend, ix,jy,my_ix,my_jy,ipoint_globe
       INTEGER, intent(in) :: ifirst,ilast,jfirst,jlast
 
       blend = kpp_const_fields%sst_smooth_blend
@@ -934,8 +928,8 @@ c
                my_ix = MIN(my_ix,ilast)
                my_jy = MAX(jfirst,jy)
                my_jy = MIN(my_jy,jlast)
-               WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
-     +              ' using ',my_ix,',',my_jy 
+!               WRITE(6,*) 'KPP: Smooth SST at ',ix,',',jy,
+!     +              ' using ',my_ix,',',my_jy 
                sst_tmp = sst_smooth(my_ix,my_jy)
                ipoint_globe = (jy-1)*NX_GLOBE+ix
                IF (kpp_3d_fields%cplwght(ipoint_globe) .gt. 0 .and.
@@ -943,8 +937,8 @@ c
 !     WRITE(6,*) 'KPP: ',sst_tmp
                   sst_out(ix,jy) = weight(ix,jy)*sst_tmp +
      +                 (1.0-weight(ix,jy))*sst_in(ix,jy)
-                  WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),
-     +                 sst_out(ix,jy),weight(ix,jy)
+!                  WRITE(6,*) 'KPP: ',sst_tmp,sst_in(ix,jy),
+!     +                 sst_out(ix,jy),weight(ix,jy)
                ENDIF
             ENDIF
          ENDDO
