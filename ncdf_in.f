@@ -278,10 +278,12 @@ c
          write(nuerr,*) 'You have to interpolate'
       ENDIF
 
+      deallocate(var_in)
+      deallocate(z_in)
+
 !     Read a global SST field and persist that as the climatological SST
 !     or SST anomaly through the simulation
       IF (L_PERSIST_SST .or. L_PERSIST_SST_ANOM) THEN
-         deallocate(var_in)
          allocate(var_in(NX_GLOBE,NY_GLOBE,1))
          start(:) = 1
          count(1) = NX_GLOBE
@@ -298,7 +300,6 @@ c
 !     Read a global ice field and persist that as the climatological ice
 !     or ice anomaly through the simulation
       IF (L_PERSIST_ICE .or. L_PERSIST_ICE_ANOM) THEN
-	deallocate(var_in)
 	allocate(var_in(NX_GLOBE,NY_GLOBE,1))
 	start(:)=1
 	count(1)=NX_GLOBE
