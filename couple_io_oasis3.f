@@ -448,7 +448,7 @@ c
                CALL smooth_sst_out(temporary,kpp_3d_fields,
      +              kpp_const_fields,SST_smooth)
                IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN                  
-                  WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
+                  !WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
                   ! Add smoothed anomaly (sst_smooth) to climatology (SST_in)
                   temporary = SST_in(:,:,1) + SST_smooth
                   deallocate(SST_anom)
