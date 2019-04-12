@@ -450,7 +450,8 @@ c
                IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN                  
                   !WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
                   ! Add smoothed anomaly (sst_smooth) to climatology (SST_in)
-                  temporary = SST_in(:,:,1) + SST_smooth
+                  ! Make sure to also remove unsmoothed anomaly!
+                  temporary = SST_in(:,:,1) + (SST_smooth - SST_anom)
                   deallocate(SST_anom)
                ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
                   temporary=SST_smooth
