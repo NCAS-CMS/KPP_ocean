@@ -964,7 +964,7 @@ c     +     bottom_temp(:)
      &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len,L_SST_SMOOTH,
      &     L_SST_SMOOTH_X,L_SST_SMOOTH_Y,sst_smooth_ifirst,
      &     sst_smooth_ilast,sst_smooth_jfirst,sst_smooth_jlast,
-     &     sst_smooth_blend
+     &     sst_smooth_blend,L_SST_SMOOTH_ANOM
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1183,6 +1183,7 @@ c     Initialize and read the times namelist
       L_SST_SMOOTH = .FALSE.
       L_SST_SMOOTH_X = .FALSE.
       L_SST_SMOOTH_Y = .FALSE.
+      L_SST_SMOOTH_ANOM = .FALSE.
       sst_smooth_ifirst = 0
       sst_smooth_jfirst = 0
       sst_smooth_ilast = 0
@@ -1383,14 +1384,14 @@ c      ENDIF
       ENDIF
       WRITE(6,*) kpp_3d_fields%dlon(1)
       IF (L_CLIMSST .and. L_PERSIST_SST) THEN
-	WRITE(6,*) 'Persisting the initial SST (full field) is',
-     &	' incompatible with reading SST climatologies.'
-	CALL MIXED_ABORT 
+         WRITE(6,*) 'Persisting the initial SST (full field) is',
+     &        ' incompatible with reading SST climatologies.'
+         CALL MIXED_ABORT 
       ELSEIF (L_CLIMSST) THEN
-	CALL read_sstin(kpp_3d_fields,kpp_const_fields)
-c	If persisting the initial SST anomaly, then store initial clim SST
-c	so that it doesn't get overwritten when initial conditions are read
-	IF (L_PERSIST_SST_ANOM) kpp_3d_fields%clim_sst = sst_in
+         CALL read_sstin(kpp_3d_fields,kpp_const_fields)
+c     If persisting the initial SST anomaly, then store initial clim SST
+c     so that it doesn't get overwritten when initial conditions are read
+         IF (L_PERSIST_SST_ANOM) kpp_3d_fields%clim_sst = sst_in
       ENDIF
       IF (L_CLIMICE .and. L_PERSIST_ICE) THEN 
 	WRITE(6,*) 'Persisting the initial ice (full field) is ',
