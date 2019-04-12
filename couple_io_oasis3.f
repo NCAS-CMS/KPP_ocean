@@ -441,12 +441,15 @@ c
             IF (kpp_const_fields%L_SST_SMOOTH .or. 
      +           kpp_const_fields%L_SST_SMOOTH_ANOM) THEN
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
-               IF (kpp_const_fields%L_SST_SMOOTH_ANOM) 
-     +              WRITE(6,*) 'KPP: Smoothing SST anomaly'
-               IF (kpp_const_fields%L_SST_SMOOTH)
-     +              WRITE(6,*) 'KPP: Smoothing SST'
-               CALL smooth_sst_out(temporary,kpp_3d_fields,
-     +              kpp_const_fields,SST_smooth)
+               IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN
+                  WRITE(6,*) 'KPP: Smoothing SST anomaly'
+                  CALL smooth_sst_out(SST_anom,kpp_3d_fields,
+     +                 kpp_const_fields,SST_smooth)               
+               ELSE IF(kpp_const_fields%L_SST_SMOOTH) THEN
+                  WRITE(6,*) 'KPP: Smoothing SST'
+                  CALL smooth_sst_out(temporary,kpp_3d_fields,
+     +                 kpp_const_fields,SST_smooth)
+               ENDIF
                IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN                  
                   !WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
                   ! Add smoothed anomaly (sst_smooth) to climatology (SST_in)
