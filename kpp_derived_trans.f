@@ -427,6 +427,7 @@ c     values from the 2D variable.
       kpp_const_fields%L_SST_SMOOTH=L_SST_SMOOTH
       kpp_const_fields%L_SST_SMOOTH_X=L_SST_SMOOTH_X
       kpp_const_fields%L_SST_SMOOTH_Y=L_SST_SMOOTH_Y
+      kpp_const_fields%L_SST_SMOOTH_ANOM=L_SST_SMOOTH_ANOM
 
       RETURN
       END

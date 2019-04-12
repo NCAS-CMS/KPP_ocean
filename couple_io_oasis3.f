@@ -288,8 +288,9 @@ c     Other local variables
 c     Note: "time_in_seconds" must be INTEGER to agree with the
 c     definition in OASIS3.
 c
-c     Temporary variable to hold smooth SST
-      REAL, allocatable :: SST_smooth(:,:)
+c     Temporary variable to hold smoothed SST and SST anomaly
+      REAL, allocatable :: SST_smooth(:,:), SST_anom(:,:)
+c     Temporary variable to hold SST anomaly
       INTEGER i,ix,jy,ipoint_globe,ipoint,ierror
       INTEGER(KIND=4) time_in_seconds
 c
@@ -428,14 +429,32 @@ c
          CASE('OCN_SST')
 #ifdef TOYCLIM
             temporary=SST
-#else
-            CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)
-            IF (kpp_const_fields%L_SST_SMOOTH) THEN
-	       WRITE(6,*) 'KPP : Smoothing SST'
+#else               
+
+            CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)           
+            IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN
+               allocate(SST_anom(NX_GLOBE,NY_GLOBE))
+! Take SST anomaly from climatological SST provided
+               SST_anom = temporary - SST_in(:,:,1)
+            ELSE              
+            ENDIF
+            IF (kpp_const_fields%L_SST_SMOOTH .or. 
+     +           kpp_const_fields%L_SST_SMOOTH_ANOM) THEN
                allocate(SST_smooth(NX_GLOBE,NY_GLOBE))
+               IF (kpp_const_fields%L_SST_SMOOTH_ANOM) 
+     +              WRITE(6,*) 'KPP: Smoothing SST anomaly'
+               IF (kpp_const_fields%L_SST_SMOOTH)
+     +              WRITE(6,*) 'KPP: Smoothing SST'
                CALL smooth_sst_out(temporary,kpp_3d_fields,
      +              kpp_const_fields,SST_smooth)
-               temporary=SST_smooth
+               IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN                  
+                  WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
+                  ! Add smoothed anomaly (sst_smooth) to climatology (SST_in)
+                  temporary = SST_in(:,:,1) + SST_smooth
+                  deallocate(SST_anom)
+               ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
+                  temporary=SST_smooth
+               ENDIF              
                deallocate(SST_smooth)
             ENDIF
 #endif
