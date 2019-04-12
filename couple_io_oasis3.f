@@ -451,9 +451,9 @@ c
                   !WRITE(6,*) 'KPP: Smoothed SST anomaly = ',SST_smooth                  
                   ! Add smoothed anomaly (sst_smooth) to climatology (SST_in)
                   ! Make sure to also remove unsmoothed anomaly!
-                  WRITE(6,*) 'SST_in = ',SST_in(:,160,1)
-                  WRITE(6,*) 'SST_smooth = ',SST_smooth(:,160)
-                  WRITE(6,*) 'SST_anom = ',SST_anom(:,160)
+                  !WRITE(6,*) 'SST_in = ',SST_in(:,160,1)
+                  !WRITE(6,*) 'SST_smooth = ',SST_smooth(:,160)
+                  !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)
                   temporary = SST_in(:,:,1) + (SST_smooth - SST_anom)
                   deallocate(SST_anom)
                ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
@@ -462,7 +462,7 @@ c
                deallocate(SST_smooth)
             ENDIF
             IF (L_OUTKELVIN) temporary=temporary+TK0
-            WRITE(6,*) 'temporary = ',temporary(:,160)
+            !WRITE(6,*) 'temporary = ',temporary(:,160)
 #endif
          CASE('OFRZN01')
 #ifdef TOYCLIM
