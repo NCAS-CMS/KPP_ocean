@@ -292,6 +292,7 @@ c
          status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          SST_in = var_in - offset_sst
+	 deallocate(var_in)
       ENDIF
 
 !     Read a global ice field and persist that as the climatological ice
@@ -308,6 +309,7 @@ c
 	status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
 	IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 	ice_in = var_in
+	deallocate(var_in)
       ENDIF
 
       RETURN
@@ -1600,7 +1602,7 @@ c
 	    ELSE
 		sst_in(ix,iy,1) = var_in(ix,iy,1)-offset_sst
 	    ENDIF
-	    IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
+!	    IF (.NOT. L_CLIMICE) ice_in(ix,iy,1)=0.0
 	 ENDDO
       ENDDO
 c     This is for the aqua-planet version; it sets the first

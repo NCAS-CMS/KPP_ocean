@@ -964,7 +964,7 @@ c     +     bottom_temp(:)
      &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len,L_SST_SMOOTH,
      &     L_SST_SMOOTH_X,L_SST_SMOOTH_Y,sst_smooth_ifirst,
      &     sst_smooth_ilast,sst_smooth_jfirst,sst_smooth_jlast,
-     &     sst_smooth_blend,L_SST_SMOOTH_ANOM
+     &     sst_smooth_blend,L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1175,6 +1175,7 @@ c     Initialize and read the times namelist
       L_DIST_RUNOFF=.FALSE.
       L_SST_LAG=.FALSE.
       L_SST_LAG_FUDGE=.FALSE.
+      L_SST_ANOM_FUDGE=.FALSE.
       sst_lag_len=0
       ifirst=1
       ilast=nx
@@ -1457,6 +1458,7 @@ c    Compute initial SST anomaly from climatology
 	   WRITE(6,*) 'Persisting the initial ice anomaly ',
      &	   '(L_PERSIST_ICE_ANOM) requires reading climatological ice ',
      &     '(L_CLIMICE)'
+           CALL MIXED_ABORT
 	ENDIF
       ENDIF
 c     Currently, L_INTERP_OCNT implies L_PERIODIC_OCNT to deal with times
