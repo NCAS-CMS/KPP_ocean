@@ -413,9 +413,7 @@ c     NPK 08/03/19
          ENDDO
       ENDDO
       !IF (L_SST_LAG_FUDGE) WRITE(6,*) 'Lagged SST: ',snowdepth 
- 
-      IF (L_OUTKELVIN) SST = SST+TK0     
-      
+       
 !     WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
 !     WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
 
@@ -430,7 +428,6 @@ c
 #ifdef TOYCLIM
             temporary=SST
 #else               
-
             CALL ONED_GLOBAL_TWOD_GLOBAL(SST,temporary)           
             IF (kpp_const_fields%L_SST_SMOOTH_ANOM) THEN
                allocate(SST_anom(NX_GLOBE,NY_GLOBE))
@@ -458,9 +455,10 @@ c
                   deallocate(SST_anom)
                ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
                   temporary=SST_smooth
-               ENDIF              
+               ENDIF
                deallocate(SST_smooth)
-            ENDIF
+            ENDIF            
+            IF (L_OUTKELVIN) temporary=temporary+TK0
 #endif
          CASE('OFRZN01')
 #ifdef TOYCLIM
