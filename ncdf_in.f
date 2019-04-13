@@ -11,6 +11,7 @@
 #include "initialcon.com"
 c#include "location.com"
 #include "constants.com"
+#include "ocn_advec.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -311,6 +312,11 @@ c
 	IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
 	ice_in = var_in
 	deallocate(var_in)
+      ENDIF
+
+      IF (L_RELAX_INIT) THEN
+	kpp_3d_fields%ocnT_clim = kpp_3d_fields%X(:,:,1)
+	kpp_3d_fields%sal_clim = kpp_3d_fields%X(:,:,2)
       ENDIF
 
       RETURN

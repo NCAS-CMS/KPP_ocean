@@ -6,9 +6,9 @@ c      REAL advection(npts,maxmodeadv,2)
       common/ ocn advec / 
      &     L_ADVECT,advect_file,ncid_advec
 
-      LOGICAL L_RELAX_SST,L_RELAX_CALCONLY
+      LOGICAL L_RELAX_SST,L_RELAX_CALCONLY,L_RELAX_INIT
 c      REAL relax_sst(npts),SST0(npts),fcorr(npts)
       REAL relax_sst_in(ny)
 
       common/ ocn_relax / relax_sst_in, 
-     &   L_RELAX_SST,L_RELAX_CALCONLY
+     &   L_RELAX_SST,L_RELAX_CALCONLY,L_RELAX_INIT
