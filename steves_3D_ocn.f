@@ -929,7 +929,7 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_ADVEC/ L_ADVECT,advect_file,L_RELAX_SST,
      &     relax_sst_in,relax_sal_in,L_RELAX_CALCONLY,L_RELAX_SAL,
      +     L_RELAX_OCNT,relax_ocnt_in, L_RELAX_CURR, relax_curr_in,
-     +     L_RELAX_FILE,relax_file
+     +     L_RELAX_FILE,relax_file,L_RELAX_INIT
       NAMELIST/NAME_PARAS/ paras_file,L_JERLOV,L_VARY_OPT,
      +     L_PERIODIC_OPT,opt_period,ndtupdopt
       NAMELIST/NAME_OUTPUT/ ndt_varout_inst,ndt_singout_inst,
@@ -1231,6 +1231,7 @@ c     Initialize and read the advection namelist
       L_ADVECT=.FALSE.
       L_RELAX_SST=.FALSE.
       L_RELAX_CALCONLY=.FALSE.
+      L_RELAX_INIT=.FALSE.
       DO iy=1,ny
          relax_sst_in(iy)=0.0
          relax_sal_in(iy)=0.0
@@ -1431,9 +1432,9 @@ c	so that it doesn't get overwritten when initial conditions are read
      +        bottom_temp)
       ENDIF
       CALL init_flx(kpp_3d_fields)
-      IF (L_RELAX_SAL)
+      IF (L_RELAX_SAL .and. .not. L_RELAX_INIT)
      +     CALL read_salinity(kpp_3d_fields,kpp_const_fields)
-      IF (L_RELAX_OCNT)
+      IF (L_RELAX_OCNT .and. .not. L_RELAX_INIT)
      +     CALL read_ocean_temperatures(kpp_3d_fields,kpp_const_fields)
       IF (L_NO_ISOTHERM .AND. .NOT. L_RELAX_SAL
      +     .AND. .NOT. L_RELAX_OCNT) THEN
