@@ -454,7 +454,7 @@ c
                   !WRITE(6,*) 'SST_in = ',SST_in(:,160,1)
                   !WRITE(6,*) 'SST_smooth = ',SST_smooth(:,160)
                   !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)
-                  temporary = SST_in(:,:,1) + (SST_smooth - SST_anom)
+                  temporary = SST_in(:,:,1) + SST_smooth
 		  SST_smooth = temporary
                   deallocate(SST_anom)
                ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
