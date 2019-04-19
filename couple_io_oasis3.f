@@ -453,9 +453,13 @@ c
                   ! Make sure to also remove unsmoothed anomaly!
                   !WRITE(6,*) 'SST_in = ',SST_in(:,160,1)
                   !WRITE(6,*) 'SST_smooth = ',SST_smooth(:,160)
-                  !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)
-                  temporary = SST_in(:,:,1) + SST_smooth
-		  SST_smooth = temporary
+                  !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)                  
+                  IF (kpp_const_fields%L_SST_ANOM_FUDGE) THEN
+                     ! DO NOT overwrite the SST passed to the coupler ("temporary")
+                     SST_smooth = SST_in(:,:,1) + SST_smooth ! Use this for overwriting SST
+                  ELSE
+                     temporary = SST_in(:,:,1) + SST_smooth
+                  ENDIF
                   deallocate(SST_anom)
                ELSE IF (kpp_const_fields%L_SST_SMOOTH) THEN               
                   temporary=SST_smooth
