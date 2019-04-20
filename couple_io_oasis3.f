@@ -456,7 +456,7 @@ c
                   !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)                  
                   IF (kpp_const_fields%L_SST_ANOM_FUDGE) THEN
                      ! DO NOT overwrite the SST passed to the coupler ("temporary")
-                     SST_smooth = SST_in(:,:,1) + SST_smooth ! Use this for overwriting SST
+                     SST_smooth = SST_in(:,:,1) + SST_smooth + TK0 ! Use this for overwriting SST
                   ELSE
                      temporary = SST_in(:,:,1) + SST_smooth
                   ENDIF
