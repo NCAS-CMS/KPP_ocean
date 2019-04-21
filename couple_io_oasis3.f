@@ -456,7 +456,7 @@ c
                   !WRITE(6,*) 'SST_anom = ',SST_anom(:,160)                  
                   IF (kpp_const_fields%L_SST_ANOM_FUDGE) THEN
                      ! DO NOT overwrite the SST passed to the coupler ("temporary")
-                     SST_smooth = SST_in(:,:,1) + SST_smooth + TK0 ! Use this for overwriting SST
+                     SST_smooth = SST_in(:,:,1) + SST_smooth ! Use this for overwriting SST
                   ELSE
                      temporary = SST_in(:,:,1) + SST_smooth
                   ENDIF
@@ -479,26 +479,33 @@ c
 #ifdef TOYCLIM
             temporary=SNOWDEPTH
 #else          
-            DO ix=1,NX_GLOBE
-	    DO jy=1,NY_GLOBE
-	    ipoint_globe=jy*NX_GLOBE+ix
-	    IF (kpp_const_fields%L_SST_ANOM_FUDGE) THEN
-	       IF (kpp_3d_fields%cplwght(ipoint_globe)
-     +         .LT. 1e-10 .or. .not. kpp_3d_fields%L_OCEAN(ipoint)) THEN
-                     snowdepth(ipoint_globe)=0.0
-               ELSE
-                  ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
-                  snowdepth(ipoint_globe)=TK0+
-     +                 SST_smooth(ix,jy)*
-     +                 kpp_3d_fields%cplwght(ipoint_globe)+
-     +                 SST_in(ix,jy,1)*
-     +                 (1.0-kpp_3d_fields%cplwght(ipoint_globe))
-                  snowdepth(ipoint_globe)=
-     +                 snowdepth(ipoint_globe)/1.0e6
-                ENDIF
+            IF (kpp_const_fields%L_SST_ANOM_FUDGE) THEN
+               DO ix=1,NX_GLOBE
+                  DO jy=1,NY_GLOBE
+                     ipoint_globe=jy*NX_GLOBE+ix
+                     IF (ix .ge. ifirst .and. ix .le. ilast .and.
+     +                    jy .ge. jfirst .and. jy .le. jlast) THEN                        
+                        ipoint=(jy-jfirst)*nx+(ix-ifirst)+1
+                        IF (kpp_3d_fields%cplwght(ipoint_globe).LT.1e-10 
+     +                  .or. .not. kpp_3d_fields%L_OCEAN(ipoint)) THEN 
+                           snowdepth(ipoint_globe)=0.0
+                        ELSE
+                           snowdepth(ipoint_globe)=TK0+
+     +                          SST_smooth(ix,jy)*
+     +                          kpp_3d_fields%cplwght(ipoint_globe)+
+     +                          SST_in(ix,jy,1)*(1.0-
+     +                          kpp_3d_fields%cplwght(ipoint_globe))
+                           snowdepth(ipoint_globe)=
+     +                          snowdepth(ipoint_globe)/1.0e6
+                        ENDIF
+                     ELSE
+                        snowdepth(ipoint_globe)=0.0
+                     ENDIF
+                  ENDDO
+               ENDDO
+            ELSE
+               snowdepth(:)=0.0
 	    ENDIF
-	    ENDDO
-	    ENDDO
             CALL ONED_GLOBAL_TWOD_GLOBAL(SNOWDEPTH,temporary)
 #endif            
          CASE ('OHICN01')
