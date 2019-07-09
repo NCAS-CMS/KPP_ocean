@@ -429,6 +429,17 @@ c     values from the 2D variable.
       kpp_const_fields%L_SST_SMOOTH_Y=L_SST_SMOOTH_Y
       kpp_const_fields%L_SST_SMOOTH_ANOM=L_SST_SMOOTH_ANOM
       kpp_const_fields%L_SST_ANOM_FUDGE=L_SST_ANOM_FUDGE
+
+      kpp_const_fields%L_BARRIER_REMOVE=L_BARRIER_REMOVE
+      kpp_const_fields%L_BARRIER_SALISO=L_BARRIER_SALISO
+      kpp_const_fields%L_BARRIER_SALVAVG=L_BARRIER_SALVAVG
+      kpp_const_fields%L_NO_EGTP=L_NO_EGTP
+      kpp_const_fields%barrier_dT=barrier_dT
+      kpp_const_fields%barrier_subdepth=barrier_subdepth
+      kpp_const_fields%barrier_ifirst=barrier_ifirst
+      kpp_const_fields%barrier_jfirst=barrier_jfirst
+      kpp_const_fields%barrier_ilast=barrier_ilast
+      kpp_const_fields%barrier_jlast=barrier_jlast
  
       RETURN
       END

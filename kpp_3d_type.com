@@ -121,7 +121,9 @@ c      real wst(0:891,0:49)      ! lookup table for ws
       real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
       integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max,sst_lag_len,
      +     sst_smooth_ifirst,sst_smooth_ilast,sst_smooth_jfirst,
-     +     sst_smooth_jlast,sst_smooth_blend
+     +     sst_smooth_jlast,sst_smooth_blend,barrier_dT,
+     +     barrier_subdepth,barrier_ifirst,barrier_ilast,barrier_jfirst,
+     +     barrier_jlast
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,
@@ -132,7 +134,8 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +     L_DAMP_CURR,L_SLAB,L_COLUMBIA_LAND,L_FCORR_NSOL,
      +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE,
      +     L_SST_LAG,L_SST_SMOOTH,L_SST_SMOOTH_X,L_SST_SMOOTH_Y,
-     +     L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE
+     +     L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE,L_BARRIER_REMOVE,
+     +     L_BARRIER_SALISO,L_BARRIER_SALVAVG,L_NO_EGTP
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

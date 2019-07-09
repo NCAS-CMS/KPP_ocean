@@ -25,7 +25,7 @@ c      USE kpp_type_mod
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "landsea.com"
-
+   
 #ifdef COUPLE
 
 #ifdef OASIS2
@@ -473,6 +473,11 @@ c	 WRITE(6,*) 'OpenMP thread ',tid,' finished main DO loop'
 !$OMP END PARALLEL
 #endif
          CALL KPP_TIMER_TIME(kpp_timer,'Top level',1)
+
+!     Remove barrier layers, if requested.
+!     NPK 09/07/19
+         IF (kpp_const_fields%L_BARRIER_REMOVE)
+     +        CALL remove_barrier_layers(kpp_3d_fields,kpp_const_fields)
 c
 c     Following the physics routines, update the temperature of the
 c     bottom layer, if necessary
@@ -918,7 +923,10 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_CONSTANTS/grav,vonk,sbc,twopi,onepi,TK0,spd,dpy,
      &     epsw,albocn,EL,SL,FL,FLSN
       NAMELIST/NAME_PROCSWIT/LKPP,LRI,LDD,LICE,
-     &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref,L_EKMAN_PUMP
+     &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref,L_EKMAN_PUMP,
+     &     L_BARRIER_REMOVE,L_BARRIER_SALISO,L_BARRIER_SALVAVG,
+     &     L_NO_EGTP,barrier_dT,barrier_subdepth,barrier_ifirst,
+     &     barrier_ilast,barrier_jfirst,barrier_jlast
       NAMELIST/NAME_DOMAIN/DMAX,alon,alat,delta_lat,delta_lon,
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
      &     L_SLAB,L_COLUMBIA_LAND,slab_depth
@@ -1011,6 +1019,16 @@ c     Initialize and read the processes namelist
       LRHS=.FALSE.
       L_SSref=.TRUE.
       L_EKMAN_PUMP=.FALSE.
+      L_BARRIER_REMOVE=.FALSE.
+      L_BARRIER_SALVAVG=.FALSE.
+      L_BARRIER_SALISO=.FALSE.
+      L_NO_EGTP=.FALSE.
+      barrier_dT=0
+      barrier_subdepth=0
+      barrier_ifirst=0
+      barrier_jfirst=0
+      barrier_ilast=0
+      barrier_jlast=0
       READ(75,NAME_PROCSWIT)
       WRITE(nuout,*) 'KPP : Read Namelist PROCSWIT'
 c
@@ -2320,7 +2338,6 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      INTEGER :: i
 
       kpp_3d_fields%sst_lag_tmp = kpp_3d_fields%sst_lag_tmp + 
      +     kpp_3d_fields%X(:,1,1)/FLOAT(kpp_const_fields%sst_lag_len)
@@ -2332,3 +2349,71 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 
       RETURN
       END
+
+      SUBROUTINE remove_barrier_layers(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+      
+#include "kpp_3d_type.com"
+#include "couple.com"
+
+      TYPE(kpp_3d_type) :: kpp_3d_fields
+      TYPE(kpp_const_type) :: kpp_const_fields
+      INTEGER :: ix,jy,ipt,k,sub_pt,iso_pt
+      LOGICAL :: iso_found
+      REAL :: vavg_sal
+
+!     Find depth of sub-surface layer used as base point for isothermal layer calculation
+      DO k=1,NZP1
+         IF (kpp_const_fields%zm(k) .ge. 
+     +        kpp_const_fields%barrier_subdepth) sub_pt = k
+      ENDDO
+              
+      DO ix=1,NX_GLOBE
+         DO jy=1,NY_GLOBE
+            ipt=(jy-jfirst)*nx+
+     +           (ix-ifirst)+1
+            IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
+     +           ix .ge. kpp_const_fields%barrier_ifirst .and. 
+     +           ix .le. kpp_const_fields%barrier_ilast .and.
+     +           jy .ge. kpp_const_fields%barrier_jfirst .and.
+     +           jy .le. kpp_const_fields%barrier_jlast) THEN
+!     Find isothermal layer
+               iso_found=.FALSE.
+               k=sub_pt
+               DO WHILE (.NOT. iso_found)
+                  IF (kpp_3d_fields%X(ipt,sub_pt,1)-
+     +                 kpp_3d_fields%X(ipt,k,1) .ge. 
+     +                 kpp_const_fields%barrier_dT) THEN
+                     iso_found=.TRUE.
+                     iso_pt = k
+                     k = k+1
+                     IF (k .gt. NZP1) THEN
+                        WRITE(6,*) 'KPP: Barrier layer removal routine',
+     +                       ' hit bottom of model while searching for',
+     +                       ' base of isothermal layer (temperature',
+     +                       ' difference of ',
+     +                       kpp_const_fields%barrier_dT,' with layer',
+     +                       sub_pt,'. This suggests an isothermal',
+     +                       ' column. Aborting.'
+                        CALL MIXED_ABORT
+                     ENDIF
+                  ENDIF
+               ENDDO
+               IF (kpp_const_fields%l_barrier_saliso) THEN
+                  kpp_3d_fields%X(ipt,sub_pt:iso_pt,2) = 
+     +                 kpp_3d_fields%X(ipt,iso_pt,2)
+               ELSE IF (kpp_const_fields%l_barrier_salvavg) THEN
+                  vavg_sal = 0
+                  DO k=sub_pt,iso_pt
+                     vavg_sal = vavg_sal + kpp_3d_fields%X(ipt,k,2)*
+     +                    kpp_const_fields%hm(k)
+                  ENDDO
+                  vavg_sal = vavg_sal / ABS(kpp_const_fields%zm(iso_pt)-
+     +                 kpp_const_fields%zm(sub_pt))
+               ENDIF
+            ENDIF
+         ENDDO
+      ENDDO
+
+      RETURN
+      END SUBROUTINE remove_barrier_layers

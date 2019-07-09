@@ -192,6 +192,11 @@ c
          runoff_mean=0
       ENDIF
       DO i=1,NPTS
+         ! Remove any flux of freshwater out of the ocean
+         IF (kpp_const_fields%L_NO_EGTP) THEN
+            IF (rain(i)+kpp_3d_fields%runoff_incr(i) .lt. evap(i)) 
+     +           evap(i) = rain(i)+kpp_3d_fields%runoff_incr(i)
+         ENDIF
          PminusE(i)=rain(i)+kpp_3d_fields%runoff_incr(i)-evap(i)
       ENDDO
 
