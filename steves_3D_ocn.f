@@ -476,8 +476,11 @@ c	 WRITE(6,*) 'OpenMP thread ',tid,' finished main DO loop'
 
 !     Remove barrier layers, if requested.
 !     NPK 09/07/19
-         IF (kpp_const_fields%L_BARRIER_REMOVE)
-     +        CALL remove_barrier_layers(kpp_3d_fields,kpp_const_fields)
+         IF (kpp_const_fields%L_BARRIER_REMOVE) THEN
+            WRITE(6,*) 'KPP: Removing barrier layers'
+            CALL remove_barrier_layers(kpp_3d_fields,kpp_const_fields)
+            WRITE(6,*) 'KPP: Removed barrier layers'
+         ENDIF
 c
 c     Following the physics routines, update the temperature of the
 c     bottom layer, if necessary
@@ -925,7 +928,7 @@ c     +     bottom_temp(:)
       NAMELIST/NAME_PROCSWIT/LKPP,LRI,LDD,LICE,
      &     LBIO,LNBFLX,LTGRID,LRHS,L_SSref,L_EKMAN_PUMP,
      &     L_BARRIER_REMOVE,L_BARRIER_SALISO,L_BARRIER_SALVAVG,
-     &     L_NO_EGTP,barrier_dT,barrier_subdepth,barrier_ifirst,
+     &     L_NO_EGTP,barrier_dt,barrier_subdepth,barrier_ifirst,
      &     barrier_ilast,barrier_jfirst,barrier_jlast
       NAMELIST/NAME_DOMAIN/DMAX,alon,alat,delta_lat,delta_lon,
      &     L_STRETCHGRID,dscale,L_REGGRID,L_VGRID_FILE,vgrid_file,
@@ -1023,7 +1026,7 @@ c     Initialize and read the processes namelist
       L_BARRIER_SALVAVG=.FALSE.
       L_BARRIER_SALISO=.FALSE.
       L_NO_EGTP=.FALSE.
-      barrier_dT=0
+      barrier_dt=0
       barrier_subdepth=0
       barrier_ifirst=0
       barrier_jfirst=0
@@ -2360,18 +2363,21 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       TYPE(kpp_const_type) :: kpp_const_fields
       INTEGER :: ix,jy,ipt,k,sub_pt,iso_pt
       LOGICAL :: iso_found
-      REAL :: vavg_sal
+      REAL :: vavg_sal,dz_sum
 
 !     Find depth of sub-surface layer used as base point for isothermal layer calculation
+!      WRITE(6,*) 'KPP: Searching for top point for isothermal layer.'
       DO k=1,NZP1
          IF (kpp_const_fields%zm(k) .ge. 
      +        kpp_const_fields%barrier_subdepth) sub_pt = k
       ENDDO
+!      WRITE(6,*) 'KPP: Found top point at level ',sub_pt,' depth = ',
+!     +     kpp_const_fields%zm(sub_pt)
               
-      DO ix=1,NX_GLOBE
-         DO jy=1,NY_GLOBE
+      DO ix=ifirst,ilast
+         DO jy=jfirst,jlast            
             ipt=(jy-jfirst)*nx+
-     +           (ix-ifirst)+1
+     +           (ix-ifirst)
             IF (kpp_3d_fields%L_OCEAN(ipt) .and. 
      +           ix .ge. kpp_const_fields%barrier_ifirst .and. 
      +           ix .le. kpp_const_fields%barrier_ilast .and.
@@ -2380,40 +2386,60 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
 !     Find isothermal layer
                iso_found=.FALSE.
                k=sub_pt
+!     WRITE(6,*) 'KPP: Searching for bottom point ',
+!     +              'start at layer ',k
                DO WHILE (.NOT. iso_found)
                   IF (kpp_3d_fields%X(ipt,sub_pt,1)-
-     +                 kpp_3d_fields%X(ipt,k,1) .ge. 
-     +                 kpp_const_fields%barrier_dT) THEN
+     +                 kpp_3d_fields%X(ipt,k,1) .ge.
+     +                 kpp_const_fields%barrier_dt) THEN                     
+!     WRITE(6,*) 'KPP: Testing layer ',k,' diff=',
+!     +                    kpp_3d_fields%X(ipt,sub_pt,1)-
+!     +                    kpp_3d_fields%X(ipt,k,1)
                      iso_found=.TRUE.
-                     iso_pt = k
+                     iso_pt = k-1
+                  ELSE
                      k = k+1
-                     IF (k .gt. NZP1) THEN
-                        WRITE(6,*) 'KPP: Barrier layer removal routine',
-     +                       ' hit bottom of model while searching for',
-     +                       ' base of isothermal layer (temperature',
-     +                       ' difference of ',
-     +                       kpp_const_fields%barrier_dT,' with layer',
-     +                       sub_pt,'. This suggests an isothermal',
-     +                       ' column. Aborting.'
-                        CALL MIXED_ABORT
-                     ENDIF
                   ENDIF
+                  IF (k .gt. NZP1 .or. kpp_const_fields%zm(k) .lt. 
+     +                 kpp_3d_fields%ocdepth(ipt)) THEN
+!     WRITE(6,*) 'KPP: Barrier layer removal routine',
+!     +                    ' hit bottom of model while searching for',
+!     +                    ' base of isothermal layer (temperature',
+!     +                    ' difference of ',
+!     +                    kpp_const_fields%barrier_dt,' with layer',
+!     +                    sub_pt,'). This suggests an isothermal',
+!     +                    ' column at point ',ipt,'. Will homogenise ',
+!     +                    ' salinity throughout column.'
+                     iso_found=.TRUE.
+                     iso_pt=k-1
+                  ENDIF               
                ENDDO
+!     WRITE(6,*) 'KPP: Found bottom point at layer ',iso_pt,
+!     +              ' and depth ',kpp_const_fields%zm(iso_pt)
                IF (kpp_const_fields%l_barrier_saliso) THEN
+!     WRITE(6,*) 'KPP: Setting to bottom salinity =',
+!     +                 kpp_3d_fields%X(ipt,iso_pt,2)
                   kpp_3d_fields%X(ipt,sub_pt:iso_pt,2) = 
      +                 kpp_3d_fields%X(ipt,iso_pt,2)
                ELSE IF (kpp_const_fields%l_barrier_salvavg) THEN
                   vavg_sal = 0
+                  dz_sum=0
                   DO k=sub_pt,iso_pt
                      vavg_sal = vavg_sal + kpp_3d_fields%X(ipt,k,2)*
-     +                    kpp_const_fields%hm(k)
+     +                    ABS(kpp_const_fields%hm(k))
+                     dz_sum=dz_sum+ABS(kpp_const_fields%hm(k))
                   ENDDO
-                  vavg_sal = vavg_sal / ABS(kpp_const_fields%zm(iso_pt)-
-     +                 kpp_const_fields%zm(sub_pt))
+!     Avoid dividing by infinity if the isothermal layer is only one point.		 
+                  IF (sub_pt .lt. iso_pt) THEN
+                     vavg_sal = vavg_sal / dz_sum
+                     kpp_3d_fields%X(ipt,sub_pt:iso_pt,2)=vavg_sal
+!     WRITE(6,*) 'KPP: Setting to vavg salinity =',vavg_sal
+                  ENDIF
                ENDIF
-            ENDIF
+            ENDIF           
          ENDDO
       ENDDO
-
+      WRITE(6,*) 'KPP: Finished removing barrier layers.'      
+      
       RETURN
       END SUBROUTINE remove_barrier_layers

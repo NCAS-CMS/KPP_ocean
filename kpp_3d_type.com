@@ -115,15 +115,14 @@
      +     grav,vonk,TK0,sbc,epsw,
      +     albocn,sice,EL,SL,FL,FLSN,dto,time,
      +     startt,finalt,dtsec,
-     +     iso_thresh,slab_depth
+     +     iso_thresh,slab_depth,barrier_dT,barrier_subdepth
 c      real wmt(0:891,0:49)      ! lookup table for wm
 c      real wst(0:891,0:49)      ! lookup table for ws
       real, allocatable :: wmt(:,:),wst(:,:),tri(:,:,:)
       integer :: ntime,iso_bot,dt_uvdamp,ekmax,ekadv_max,sst_lag_len,
      +     sst_smooth_ifirst,sst_smooth_ilast,sst_smooth_jfirst,
-     +     sst_smooth_jlast,sst_smooth_blend,barrier_dT,
-     +     barrier_subdepth,barrier_ifirst,barrier_ilast,barrier_jfirst,
-     +     barrier_jlast
+     +     sst_smooth_jlast,sst_smooth_blend,barrier_ifirst,
+     +     barrier_ilast,barrier_jfirst,barrier_jlast
       logical :: LKPP,LRI,LDD,LICE,LBIO,
      +     LTGRID,LNBFLX,LRHS,L_SSref,
      +     L_RELAX_SST,

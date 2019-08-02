@@ -30,6 +30,7 @@ c
 #include "kpp_oasis3.inc"
 #include "times.com"
 #include "constants.com"
+#include "couple.com"
       TYPE(kpp_const_type) :: kpp_const_fields
       TYPE(kpp_3d_type) :: kpp_3d_fields
 c
@@ -59,7 +60,7 @@ c
 #endif
       REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean,
      +     weights(NPTS)
-      INTEGER i,j,ierror,npts_ocean,my_jpfldin
+      INTEGER i,ix,j,jy,ipt,ierror,npts_ocean,my_jpfldin
       INTEGER(KIND=4) time_in_seconds
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -191,13 +192,25 @@ c
          kpp_3d_fields%runoff_incr(:)=0
          runoff_mean=0
       ENDIF
-      DO i=1,NPTS
-         ! Remove any flux of freshwater out of the ocean
-         IF (kpp_const_fields%L_NO_EGTP) THEN
-            IF (rain(i)+kpp_3d_fields%runoff_incr(i) .lt. evap(i)) 
-     +           evap(i) = rain(i)+kpp_3d_fields%runoff_incr(i)
-         ENDIF
-         PminusE(i)=rain(i)+kpp_3d_fields%runoff_incr(i)-evap(i)
+      DO ix=ifirst,ilast
+         DO jy=jfirst,jlast
+            ipt=(jy-jfirst)*NX+(ix-ifirst)+1
+            IF (kpp_3d_fields%L_OCEAN(ipt) .and.
+     +           kpp_const_fields%L_NO_EGTP .and. 
+     +           ix .ge. kpp_const_fields%barrier_ifirst .and. 
+     +           ix .le. kpp_const_fields%barrier_ilast .and.
+     +           jy .ge. kpp_const_fields%barrier_jfirst .and.
+     +           jy .le. kpp_const_fields%barrier_jlast) THEN
+!     Remove any flux of freshwater out of the ocean
+               IF (rain(ipt)+kpp_3d_fields%runoff_incr(ipt)
+     +              .lt. evap(ipt)) 
+     +              evap(ipt) = rain(ipt)+kpp_3d_fields%runoff_incr(ipt)
+            ENDIF
+         ENDDO
+      ENDDO
+      DO ipt=1,NPTS
+         PminusE(ipt)=rain(ipt)+
+     +        kpp_3d_fields%runoff_incr(ipt)-evap(ipt)
       ENDDO
 
 !     Set curl of wind stress to zero for now.  Need to add
