@@ -88,7 +88,7 @@ c
       curl_tau(:)=0.0     
       
       DO i=1,kpp_const_fields%fin
-         CALL prism_get_proto(il_var_id_in(i),
+         CALL prism_get_proto(kpp_const_fields%il_var_id_in(i),
      +        time_in_seconds,temporary,ierror)
 !         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
 !     +        ' received ierror = ',ierror
@@ -97,12 +97,13 @@ c
          IF (ierror.NE.PRISM_Ok .and. ierror .LT. PRISM_Recvd) THEN
             WRITE(il_mparout) 'KPP: Received error from ',
      +           'PRISM_Get_Proto =',ierror,' receiving variable ',
-     +           cl_read(i),' at model time ',time_in_seconds,' sec.'
+     +           kpp_const_fields%cl_read(i),' at model time ',
+     +           time_in_seconds,' sec.'
             WRITE(il_mparout) 'KPP: Aborting coupled integration ...'
             CALL prism_abort_proto(il_comp_id,'couple_io_oasis3.f',
      +           'get')
          ELSE
-            SELECT CASE (cl_read(i))
+            SELECT CASE (kpp_const_fields%cl_read(i))
 c
 c     For each field that we are coupling, use <TWOD_GLOBAL_ONED_REGIONAL>
 c     to transform that field from the global atmospheric grid to the
@@ -160,7 +161,7 @@ c
 
             CASE DEFAULT
                WRITE(il_mparout,*) 'KPP: Discarding field ',
-     +              cl_read(i)
+     +              kpp_const_fields%cl_read(i)
             END SELECT
          ENDIF
       ENDDO
@@ -433,7 +434,7 @@ c     Export each field to OASIS.  Use a SELECT CASE block to avoid
 c     repeated bits of code.  Use the "temporary" variable to transfer
 c     the SST and ICE fields to the OASIS "ip_realwp_p" TYPE.
 c     
-         SELECT CASE (cl_writ(i))
+         SELECT CASE (kpp_const_fields%cl_writ(i))
          CASE('OCN_SST')
 #ifdef TOYCLIM
             temporary=SST
@@ -554,12 +555,13 @@ c
          END SELECT
 !         WRITE(nuout,*) 'KPP: Calling PRISM_Put_Proto ',
 !     +        'for variable ',cl_writ(i)         
-         CALL prism_put_proto(il_var_id_out(i),
+         CALL prism_put_proto(kpp_const_fields%il_var_id_out(i),
      +        time_in_seconds,temporary,ierror)
          IF (ierror.NE.PRISM_Ok.and.ierror.LT.PRISM_Sent) THEN
             WRITE(nuout,*) 'KPP: Received error from ',
      +           'PRISM_Put_Proto =',ierror,' sending variable ',
-     +           cl_writ(i),' at model time ',time_in_seconds,' sec.'
+     +           kpp_const_fields%cl_writ(i),' at model time ',
+     +           time_in_seconds,' sec.'
             WRITE(nuout,*) 'KPP: Aborting coupled integration ...'
             CALL prism_abort_proto(il_comp_id,'couple_io_oasis3.f',
      +           'send')

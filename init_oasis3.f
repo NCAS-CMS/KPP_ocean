@@ -131,140 +131,141 @@ c
       ! Define the name of each field sent by the KPP model
       ! This needs to be the same name as in the <namcouple> file
       IF (kpp_const_fields%L_COUPLE_FLAGS) THEN
-         allocate(cl_writ(SUM(kpp_const_fields%couple_out_flags)))
-         allocate(il_var_id_out(SUM(kpp_const_fields%couple_out_flags)))
-         allocate(cl_read(SUM(kpp_const_fields%couple_in_flags)))
-         allocate(il_var_id_in(SUM(kpp_const_fields%couple_in_flags)))
-         DO i=1,jpfldout ! Maximum number of possible output fields
-            field=1
-            IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
-               SELECT CASE (i)
-               CASE (1)
-                  cl_writ(kpp_const_fields%fout)='OCN_SST'
-               CASE (2)
-                  cl_writ(kpp_const_fields%fout)='OFRZN01'
-               CASE (3)
-                  cl_writ(kpp_const_fields%fout)='OSNWTN01'
-               CASE (4)
-                  cl_writ(kpp_const_fields%fout)='OHICN01'
-               CASE (5)
-                  cl_writ(kpp_const_fields%fout)='SUNOCEAN'
-               CASE (6)
-                  cl_writ(kpp_const_fields%fout)='SVNOCEAN'
-               END SELECT
-               kpp_const_fields%fout=kpp_const_fields%fout+1
-            ENDIF
-         ENDDO
-         DO i=1,jpfldin ! Maximum number of possible input fields
-            kpp_const_fields%fin=1
-            IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
-               SELECT CASE (i)
-               CASE(1)
-                  cl_read(kpp_const_fields%fin)='HEATFLUX'
-               CASE(2)
-                  cl_read(kpp_const_fields%fin)='SOLAR'
-               CASE(3)
-#ifdef UM78
-                  cl_read(kpp_const_fields%fin)='WME'
-#endif
-#ifdef UM85
-		  cl_read(kpp_const_fields%fin)='RUNOFF'
-#endif
-               CASE(4)
-                  cl_read(kpp_const_fields%fin)='TRAIN'
-               CASE(5)
-                  cl_read(kpp_const_fields%fin)='TSNOW'
-               CASE(6)
-                  cl_read(kpp_const_fields%fin)='EVAP2D'
-               CASE(7)
-                  cl_read(kpp_const_fields%fin)='LHFLX'
-               CASE(8)
-                  cl_read(kpp_const_fields%fin)='TMLT01'
-               CASE(9)
-                  cl_read(kpp_const_fields%fin)='BMLT01'
-               CASE(10)
-                  cl_read(kpp_const_fields%fin)='TAUX'
-               CASE(11)
-                  cl_read(kpp_const_fields%fin)='TAUY'
-               END SELECT
-               kpp_const_fields%fin=kpp_const_fields%fin+1
-            ENDIF
-         ENDDO
+         allocate(kpp_const_fields%cl_writ(
+     +        SUM(kpp_const_fields%couple_out_flags)))
+         allocate(kpp_const_fields%il_var_id_out(
+     +        SUM(kpp_const_fields%couple_out_flags)))
+         allocate(kpp_const_fields%cl_read(
+     +        SUM(kpp_const_fields%couple_in_flags)))
+         allocate(kpp_const_fields%il_var_id_in(
+     +        SUM(kpp_const_fields%couple_in_flags)))
       ELSE
-         allocate(cl_writ(jpfldout))
-         allocate(il_var_id_out(jpfldout))
-         allocate(cl_read(jpfldin))
-         allocate(il_var_id_in(jpfldin))
-         cl_writ(1)='OCN_SST'
-         cl_writ(2)='OFRZN01'
-         cl_writ(3)='OSNWTN01'
-         cl_writ(4)='OHICN01'
-         cl_writ(5)='SUNOCEAN'
-         cl_writ(6)='SVNOCEAN'
-         kpp_const_fields%fout=jpfldout
+         allocate(kpp_const_fields%cl_writ(jpfldout))
+         allocate(kpp_const_fields%il_var_id_out(jpfldout))
+         allocate(kpp_const_fields%cl_read(jpfldin))
+         allocate(kpp_const_fields%il_var_id_in(jpfldin))
+         kpp_const_fields%couple_out_flags(:)=1
+         kpp_const_fields%couple_in_flags(:)=1
+      ENDIF
+      kpp_const_fields%il_var_id_in(:)=0
+      kpp_const_fields%il_var_id_out(:)=0
+      DO i=1,jpfldout           ! Maximum number of possible output fields
+         field=1
+         IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
+            SELECT CASE (i)
+            CASE (1)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)='OCN_SST'
+            CASE (2)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)='OFRZN01'
+            CASE (3)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)=
+     +              'OSNWTN01'
+            CASE (4)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)='OHICN01'
+            CASE (5)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)=
+     +              'SUNOCEAN'
+            CASE (6)
+               kpp_const_fields%cl_writ(kpp_const_fields%fout)=
+     +              'SVNOCEAN'
+            END SELECT
+            kpp_const_fields%fout=kpp_const_fields%fout+1
+         ENDIF
+      ENDDO
+      DO i=1,jpfldin            ! Maximum number of possible input fields
+         kpp_const_fields%fin=1
+         IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
+            SELECT CASE (i)
+            CASE(1)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)=
+     +              'HEATFLUX'
+            CASE(2)
 #ifdef UM78
-         cl_read(1)='HEATFLUX'
-         cl_read(2)='SOLAR'
-         cl_read(3)='WME'
-         cl_read(4)='TRAIN'
-         cl_read(5)='TSNOW'
-         cl_read(6)='EVAP2D'
-         cl_read(7)='LHFLX'
-         cl_read(8)='TMLT01'
-         cl_read(9)='BMLT01'
-         cl_read(10)='TAUX'
-         cl_read(11)='TAUY'
-         kpp_const_fields%fin=jpfldin
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='SOLAR'
 #endif
 #ifdef UM85
-         cl_read(1)='HEATFLUX'
-         cl_read(2)='PEN_SOL'
-         IF (kpp_const_fields%L_DIST_RUNOFF) THEN
-            cl_read(3)='RUNOFF'
-            cl_read(4)='TRAIN'
-            cl_read(5)='TSNOW'
-            cl_read(6)='EVAP2D'
-            cl_read(7)='TMLT01'
-            cl_read(8)='TAUX'
-            cl_read(9)='TAUY'
-            kpp_const_fields%fin=jpfldin
-         ELSE
-            cl_read(3)='TRAIN'
-            cl_read(4)='TSNOW'
-            cl_read(5)='EVAP2D'
-            cl_read(6)='TMLT01'         
-            cl_read(7)='TAUX'
-            cl_read(8)='TAUY'
-            kpp_const_fields%fin=jpfldin-1
-         ENDIF
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='PEN_SOL'
+#endif               
+            CASE(3)
+#ifdef UM78
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='WME'
 #endif
-      ENDIF
+#ifdef UM85
+               IF (kpp_const_fields%L_DIST_RUNOFF) THEN
+                  kpp_const_fields%cl_read(kpp_const_fields%fin)=
+     +                 'RUNOFF'
+               ELSE
+                  kpp_const_fields%couple_in_flags(i)=0
+               ENDIF
+#endif
+            CASE(4)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TRAIN'
+            CASE(5)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TSNOW'
+            CASE(6)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='EVAP2D'
+            CASE(7)
+#ifdef UM78
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='LHFLX'
+#endif
+#ifdef UM85
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TMLT01'
+#endif
+            CASE(8)
+#ifdef UM78
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TMLT01'
+#endif
+#ifdef UM85
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TAUX'
+#endif
+            CASE(9)
+#ifdef UM78
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='BMLT01'
+#endif
+#ifdef UM85
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TAUY'
+#endif
+#ifdef UM78
+            CASE(10)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TAUX'
+            CASE(11)
+               kpp_const_fields%cl_read(kpp_const_fields%fin)='TAUY'
+#endif
+            END SELECT
+            kpp_const_fields%fin=kpp_const_fields%fin+1
+         ENDIF
+      ENDDO
+     
 
       DO i=1,kpp_const_fields%fout
-         CALL prism_def_var_proto(il_var_id_out(i),cl_writ(i),
+         CALL prism_def_var_proto(kpp_const_fields%il_var_id_out(i),
+     +        kpp_const_fields%cl_writ(i),
      +        il_part_id,il_var_nodims,PRISM_Out,il_var_shape,
      +        PRISM_Real,ierror)
          IF (ierror.NE.PRISM_Ok) THEN
             WRITE(nuout,*) 'KPP: Received error from ',
      +           'PRISM_Def_Var_Proto = ',ierror,'for variable ',
-     +           cl_writ(i),' (output field)'
+     +           kpp_const_fields%cl_writ(i),' (output field)'
          ELSE
             WRITE(nuout,*) 'KPP: Called PRISM_Def_Var_Proto for ',
-     +           'variable ',cl_writ(i),' (output field)'
+     +           'variable ',kpp_const_fields%cl_writ(i),
+     +           ' (output field)'
          ENDIF
       ENDDO
 
       DO i=1,kpp_const_fields%fin
-         CALL prism_def_var_proto(il_var_id_in(i),cl_read(i),
+         CALL prism_def_var_proto(kpp_const_fields%il_var_id_in(i),
+     +        kpp_const_fields%cl_read(i),
      +        il_part_id,il_var_nodims,PRISM_In,il_var_shape,
      +        PRISM_Real,ierror)
          IF (ierror.NE.PRISM_Ok) THEN
             WRITE(nuout,*) 'KPP: Received error from ',
      +           'PRISM_Def_Var_Proto = ',ierror,'for variable',
-     +           cl_read(i),' (input field)'
+     +           kpp_const_fields%cl_read(i),' (input field)'
          ELSE
             WRITE(nuout,*) 'KPP: Called PRISM_Def_Var_Proto for ',
-     +           'variable ',cl_read(i),' (input field)'
+     +           'variable ',kpp_const_fields%cl_read(i),
+     +           ' (input field)'
          ENDIF
       ENDDO
 
