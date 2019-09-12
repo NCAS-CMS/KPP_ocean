@@ -175,6 +175,9 @@ c
       DO i=1,jpfldin            ! Maximum number of possible input fields
          IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
             kpp_const_fields%fin=kpp_const_fields%fin+1
+            WRITE(6,*) 'KPP: For input field ',i,' flag is ',
+     +           kpp_const_fields%couple_in_flags(i),' and fin is ',
+     +           kpp_const_fields%fin
             SELECT CASE (i)
             CASE(1)
                kpp_const_fields%cl_read(kpp_const_fields%fin)=
@@ -233,11 +236,11 @@ c
                kpp_const_fields%cl_read(kpp_const_fields%fin)='TAUY'
 #endif
             END SELECT
-            kpp_const_fields%fin=kpp_const_fields%fin+1
+            WRITE(6,*) 'KPP: Assigned name ',
+     +           kpp_const_fields%cl_read(kpp_const_fields%fin)
          ENDIF
       ENDDO
      
-
       DO i=1,kpp_const_fields%fout
          CALL prism_def_var_proto(kpp_const_fields%il_var_id_out(i),
      +        kpp_const_fields%cl_writ(i),
