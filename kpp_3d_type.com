@@ -1,5 +1,6 @@
 #include "parameter.inc"
 #include "kpp_timer.com"
+#include "kpp_oasis3.inc"
 	TYPE kpp_3D_type
 
 	real :: U(NPTS,NZP1,NVEL),
@@ -134,7 +135,10 @@ c      real wst(0:891,0:49)      ! lookup table for ws
      +	   L_EKMAN_PUMP,L_RELAX_CURR,L_VARY_OPT,L_SST_LAG_FUDGE,
      +     L_SST_LAG,L_SST_SMOOTH,L_SST_SMOOTH_X,L_SST_SMOOTH_Y,
      +     L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE,L_BARRIER_REMOVE,
-     +     L_BARRIER_SALISO,L_BARRIER_SALVAVG,L_NO_EGTP
+     +     L_BARRIER_SALISO,L_BARRIER_SALVAVG,L_NO_EGTP,
+     +     L_COUPLE_FLAGS
+      integer, dimension(jpfldout) :: couple_out_flags
+      integer, dimension(jpfldin) :: couple_in_flags
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type

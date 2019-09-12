@@ -129,14 +129,112 @@ c
       
       ! Define the name of each field sent by the KPP model
       ! This needs to be the same name as in the <namcouple> file
-      cl_writ(1)='OCN_SST'
-      cl_writ(2)='OFRZN01'
-      cl_writ(3)='OSNWTN01'
-      cl_writ(4)='OHICN01'
-      cl_writ(5)='SUNOCEAN'
-      cl_writ(6)='SVNOCEAN'
+      IF (L_COUPLE_FLAGS) THEN
+         allocate(cl_writ(SUM(kpp_const_fields%couple_out_flags)))
+         allocate(il_var_id_out(SUM(kpp_const_fields%couple_out_flags)))
+         allocate(cl_read(SUM(kpp_const_fields%couple_in_flags)))
+         allocate(il_var_id_in(SUM(kpp_const_fields%couple_in_flags)))
+         DO i=1,jpfldout ! Maximum number of possible output fields
+            field=1
+            IF (kpp_const_fields%couple_out_flags(i)) THEN
+               SELECT CASE (i)
+               CASE (1)
+                  cl_writ(fout)='OCN_SST'
+               CASE (2)
+                  cl_writ(fout)='OFRZN01'
+               CASE (3)
+                  cl_writ(fout)='OSNWTN01'
+               CASE (4)
+                  cl_writ(fout)='OHICN01'
+               CASE (5)
+                  cl_writ(fout)='SUNOCEAN'
+               CASE (6)
+                  cl_writ(fout)='SVNOCEAN'
+               END SELECT
+               fout=fout+1
+            ENDIF
+         ENDDO
+         DO i=1,jpfldin ! Maximum number of possible input fields
+            fin=1
+            IF (kpp_const_fields%couple_in_flags(i)) THEN
+               SELECT CASE (i)
+               CASE(1)
+                  cl_read(fin)='HEATFLUX'
+               CASE(2)
+                  cl_read(fin)='SOLAR'
+               CASE(3)
+                  cl_read(fin)='WME'
+               CASE(4)
+                  cl_read(fin)='TRAIN'
+               CASE(5)
+                  cl_read(fin)='TSNOW'
+               CASE(6)
+                  cl_read(fin)='EVAP2D'
+               CASE(7)
+                  cl_read(fin)='LHFLX'
+               CASE(8)
+                  cl_read(fin)='TMLT01'
+               CASE(9)
+                  cl_read(fin)='BMLT01'
+               CASE(10)
+                  cl_read(fin)='TAUX'
+               CASE(11)
+                  cl_read(fin)='TAUY'
+               END SELECT
+               fin=fin+1
+            ENDIF
+         ENDDO
+      ELSE
+         allocate(cl_writ(jpfldout))
+         allocate(il_var_id_out(jpfldout))
+         allocate(cl_read(jpfldin))
+         allocate(il_var_id_in(jpfldin))
+         cl_writ(1)='OCN_SST'
+         cl_writ(2)='OFRZN01'
+         cl_writ(3)='OSNWTN01'
+         cl_writ(4)='OHICN01'
+         cl_writ(5)='SUNOCEAN'
+         cl_writ(6)='SVNOCEAN'
+         fout=jpfldout
+#ifdef UM78
+         cl_read(1)='HEATFLUX'
+         cl_read(2)='SOLAR'
+         cl_read(3)='WME'
+         cl_read(4)='TRAIN'
+         cl_read(5)='TSNOW'
+         cl_read(6)='EVAP2D'
+         cl_read(7)='LHFLX'
+         cl_read(8)='TMLT01'
+         cl_read(9)='BMLT01'
+         cl_read(10)='TAUX'
+         cl_read(11)='TAUY'
+         fin=jpfldin
+#endif
+#ifdef UM85
+         cl_read(1)='HEATFLUX'
+         cl_read(2)='PEN_SOL'
+         IF (kpp_const_fields%L_DIST_RUNOFF) THEN
+            cl_read(3)='RUNOFF'
+            cl_read(4)='TRAIN'
+            cl_read(5)='TSNOW'
+            cl_read(6)='EVAP2D'
+            cl_read(7)='TMLT01'
+            cl_read(8)='TAUX'
+            cl_read(9)='TAUY'
+            fin=jpfldin
+         ELSE
+            cl_read(3)='TRAIN'
+            cl_read(4)='TSNOW'
+            cl_read(5)='EVAP2D'
+            cl_read(6)='TMLT01'         
+            cl_read(7)='TAUX'
+            cl_read(8)='TAUY'
+            fin=jpfldin-1
+         ENDIF
+#endif
+      ENDIF
 
-      DO i=1,jpfldout
+      DO i=1,fout
          CALL prism_def_var_proto(il_var_id_out(i),cl_writ(i),
      +        il_part_id,il_var_nodims,PRISM_Out,il_var_shape,
      +        PRISM_Real,ierror)
@@ -150,47 +248,7 @@ c
          ENDIF
       ENDDO
 
-#ifdef UM78
-      cl_read(1)='HEATFLUX'
-      cl_read(2)='SOLAR'
-      cl_read(3)='WME'
-      cl_read(4)='TRAIN'
-      cl_read(5)='TSNOW'
-      cl_read(6)='EVAP2D'
-      cl_read(7)='LHFLX'
-      cl_read(8)='TMLT01'
-      cl_read(9)='BMLT01'
-      cl_read(10)='TAUX'
-      cl_read(11)='TAUY'
-#endif
-#ifdef UM85
-      cl_read(1)='HEATFLUX'
-      cl_read(2)='PEN_SOL'
-      IF (kpp_const_fields%L_DIST_RUNOFF) THEN
-         cl_read(3)='RUNOFF'
-         cl_read(4)='TRAIN'
-         cl_read(5)='TSNOW'
-         cl_read(6)='EVAP2D'
-         cl_read(7)='TMLT01'
-         cl_read(8)='TAUX'
-         cl_read(9)='TAUY'
-      ELSE
-         cl_read(3)='TRAIN'
-         cl_read(4)='TSNOW'
-         cl_read(5)='EVAP2D'
-         cl_read(6)='TMLT01'         
-         cl_read(7)='TAUX'
-         cl_read(8)='TAUY'
-      ENDIF
-#endif
-! If not passing river runoff, need to reduce number of input
-! fields by one
-      IF (.NOT. kpp_const_fields%L_DIST_RUNOFF) THEN
-         my_jpfldin=jpfldin-1
-      ELSE
-         my_jpfldin=jpfldin
-      ENDIF
-      DO i=1,my_jpfldin
+      DO i=1,fin
          CALL prism_def_var_proto(il_var_id_in(i),cl_read(i),
      +        il_part_id,il_var_nodims,PRISM_In,il_var_shape,
      +        PRISM_Real,ierror)

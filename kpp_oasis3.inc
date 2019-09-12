@@ -3,13 +3,13 @@
 #ifdef UM78
       PARAMETER(jpfldin=11,jpfldout=6)
 #endif
-#ifdef UM85 
+#ifdef UM85
       PARAMETER(jpfldin=9,jpfldout=6)
 #endif
-      INTEGER il_var_id_out(jpfldout)     ! IDs for the outgoing fields
-      INTEGER il_var_id_in(jpfldin)       ! IDs for the incoming fields
-      CHARACTER*8 cl_writ(jpfldout)       ! Names of the fields sent by this model
-      CHARACTER*8 cl_read(jpfldin)        ! Names of the fields received by this model
+      INTEGER,allocatable :: il_var_id_out(:)          ! IDs for the outgoing fields
+      INTEGER,allocatable :: il_var_id_in(:)            ! IDs for the incoming fields
+      CHARACTER*8,allocatable :: cl_writ(:)    ! Names of the fields sent by this model
+      CHARACTER*8,allocatable :: cl_read(:)    ! Names of the fields received by this model
       INTEGER il_mparout
       INTEGER il_comp_id
 

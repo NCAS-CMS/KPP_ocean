@@ -975,7 +975,8 @@ c     +     bottom_temp(:)
      &     L_SST_LAG,L_SST_LAG_FUDGE,sst_lag_len,L_SST_SMOOTH,
      &     L_SST_SMOOTH_X,L_SST_SMOOTH_Y,sst_smooth_ifirst,
      &     sst_smooth_ilast,sst_smooth_jfirst,sst_smooth_jlast,
-     &     sst_smooth_blend,L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE
+     &     sst_smooth_blend,L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE,
+     &     L_COUPLE_FLAGS,couple_in_flags,couple_out_flags
       NAMELIST/NAME_LANDSEA/ L_LANDSEA,landsea_file
 c
 c     This is a bug fix for the IBM XLF compiler, which otherwise complains
@@ -1212,6 +1213,9 @@ c     Initialize and read the times namelist
       sst_smooth_jlast = 0
       sst_smooth_blend = 0
       initflux_file='none'
+      L_COUPLE_FLAGS = .FALSE.
+      couple_in_flags(:) = 1
+      couple_out_flags(:) = 1
       READ(75,NAME_COUPLE)
       IF (L_COUPLE .and. initflux_file .eq. 'none')
      +     initflux_file='kpp_initfluxes.nc'

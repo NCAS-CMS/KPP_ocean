@@ -440,6 +440,10 @@ c     values from the 2D variable.
       kpp_const_fields%barrier_jfirst=barrier_jfirst
       kpp_const_fields%barrier_ilast=barrier_ilast
       kpp_const_fields%barrier_jlast=barrier_jlast
+
+      kpp_const_fields%L_COUPLE_FLAGS = L_COUPLE_FLAGS
+      kpp_const_fields%couple_in_flags = couple_in_flags
+      kpp_const_fields%couple_out_flags = couple_out_flags
  
       RETURN
       END
