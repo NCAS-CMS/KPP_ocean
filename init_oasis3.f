@@ -149,6 +149,8 @@ c
       ENDIF
       kpp_const_fields%il_var_id_in(:)=0
       kpp_const_fields%il_var_id_out(:)=0
+      kpp_const_fields%fout=1
+      kpp_const_fields%fin=1
       DO i=1,jpfldout           ! Maximum number of possible output fields
          field=1
          IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
