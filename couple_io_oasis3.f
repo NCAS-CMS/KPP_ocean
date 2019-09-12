@@ -60,7 +60,7 @@ c
 #endif
       REAL rain(NPTS),evap(NPTS),runoff(NPTS),runoff_mean,
      +     weights(NPTS)
-      INTEGER i,ix,j,jy,ipt,ierror,npts_ocean,my_jpfldin
+      INTEGER i,ix,j,jy,ipt,ierror,npts_ocean
       INTEGER(KIND=4) time_in_seconds
       INTEGER nuout,nuerr
       PARAMETER (nuout=6,nuerr=0)
@@ -85,17 +85,9 @@ c
       PminusE(:)=0.0
       ustress(:)=0.0
       vstress(:)=0.0
-      curl_tau(:)=0.0
-
-      ! If not passing river runoff, need to reduce number of input
-      ! fields by one
-      IF (.NOT. kpp_const_fields%L_DIST_RUNOFF) THEN
-         my_jpfldin=jpfldin-1
-      ELSE
-         my_jpfldin=jpfldin
-      ENDIF
+      curl_tau(:)=0.0     
       
-      DO i=1,my_jpfldin
+      DO i=1,kpp_const_fields%fin
          CALL prism_get_proto(il_var_id_in(i),
      +        time_in_seconds,temporary,ierror)
 !         WRITE(6,*) 'KPP: For field number ',i,' called ',cl_read(i),
@@ -435,7 +427,7 @@ c     NPK 08/03/19
 !     WRITE(il_mparout,*) 'KPP: Finished creating coupled output fields'
 !     WRITE(nuout,*) 'KPP: Finished creating coupled output fields'
 
-      DO i=1,jpfldout
+      DO i=1,kpp_const_fields%fout
 c     
 c     Export each field to OASIS.  Use a SELECT CASE block to avoid
 c     repeated bits of code.  Use the "temporary" variable to transfer
@@ -724,6 +716,7 @@ c
       IMPLICIT NONE
 
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
       
       REAL global(NPTS_GLOBE),regional(NPTS)
@@ -749,6 +742,7 @@ c     NPK 28/9/09 - R3
 c
       IMPLICIT NONE
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
       
       REAL global(NX_GLOBE,NY_GLOBE),regional(NPTS)

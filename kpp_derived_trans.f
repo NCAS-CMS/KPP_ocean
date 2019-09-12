@@ -367,6 +367,7 @@ c     values from the 2D variable.
 #include "initialcon.com"
 #include "ocn_advec.com"
 #include "relax_3d.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       TYPE(kpp_const_type),intent(inout) :: kpp_const_fields

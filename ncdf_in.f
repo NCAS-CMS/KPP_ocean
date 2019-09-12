@@ -699,6 +699,7 @@ c      time=dummy_time
 
 #include <netcdf.inc>
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       INTEGER status
@@ -717,6 +718,7 @@ c      time=dummy_time
 
 #include <netcdf.inc>
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       INTEGER status
@@ -1486,6 +1488,7 @@ c#include "location.com"
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"
@@ -1647,6 +1650,7 @@ c     Written by Nick Klingaman, 11/01/08.
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"
@@ -1817,6 +1821,7 @@ c     longitude and time.
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"

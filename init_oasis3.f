@@ -49,6 +49,7 @@ c
       CHARACTER*8 choceout                ! Name for the log file for OASIS messages
 
       INTEGER ierror                      ! Integer error flag
+      INTEGER field                       ! Coupling field counter
 
       ! Initialize coupled environment
 
@@ -129,59 +130,59 @@ c
       
       ! Define the name of each field sent by the KPP model
       ! This needs to be the same name as in the <namcouple> file
-      IF (L_COUPLE_FLAGS) THEN
+      IF (kpp_const_fields%L_COUPLE_FLAGS) THEN
          allocate(cl_writ(SUM(kpp_const_fields%couple_out_flags)))
          allocate(il_var_id_out(SUM(kpp_const_fields%couple_out_flags)))
          allocate(cl_read(SUM(kpp_const_fields%couple_in_flags)))
          allocate(il_var_id_in(SUM(kpp_const_fields%couple_in_flags)))
          DO i=1,jpfldout ! Maximum number of possible output fields
             field=1
-            IF (kpp_const_fields%couple_out_flags(i)) THEN
+            IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
                SELECT CASE (i)
                CASE (1)
-                  cl_writ(fout)='OCN_SST'
+                  cl_writ(kpp_const_fields%fout)='OCN_SST'
                CASE (2)
-                  cl_writ(fout)='OFRZN01'
+                  cl_writ(kpp_const_fields%fout)='OFRZN01'
                CASE (3)
-                  cl_writ(fout)='OSNWTN01'
+                  cl_writ(kpp_const_fields%fout)='OSNWTN01'
                CASE (4)
-                  cl_writ(fout)='OHICN01'
+                  cl_writ(kpp_const_fields%fout)='OHICN01'
                CASE (5)
-                  cl_writ(fout)='SUNOCEAN'
+                  cl_writ(kpp_const_fields%fout)='SUNOCEAN'
                CASE (6)
-                  cl_writ(fout)='SVNOCEAN'
+                  cl_writ(kpp_const_fields%fout)='SVNOCEAN'
                END SELECT
-               fout=fout+1
+               kpp_const_fields%fout=kpp_const_fields%fout+1
             ENDIF
          ENDDO
          DO i=1,jpfldin ! Maximum number of possible input fields
-            fin=1
-            IF (kpp_const_fields%couple_in_flags(i)) THEN
+            kpp_const_fields%fin=1
+            IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
                SELECT CASE (i)
                CASE(1)
-                  cl_read(fin)='HEATFLUX'
+                  cl_read(kpp_const_fields%fin)='HEATFLUX'
                CASE(2)
-                  cl_read(fin)='SOLAR'
+                  cl_read(kpp_const_fields%fin)='SOLAR'
                CASE(3)
-                  cl_read(fin)='WME'
+                  cl_read(kpp_const_fields%fin)='WME'
                CASE(4)
-                  cl_read(fin)='TRAIN'
+                  cl_read(kpp_const_fields%fin)='TRAIN'
                CASE(5)
-                  cl_read(fin)='TSNOW'
+                  cl_read(kpp_const_fields%fin)='TSNOW'
                CASE(6)
-                  cl_read(fin)='EVAP2D'
+                  cl_read(kpp_const_fields%fin)='EVAP2D'
                CASE(7)
-                  cl_read(fin)='LHFLX'
+                  cl_read(kpp_const_fields%fin)='LHFLX'
                CASE(8)
-                  cl_read(fin)='TMLT01'
+                  cl_read(kpp_const_fields%fin)='TMLT01'
                CASE(9)
-                  cl_read(fin)='BMLT01'
+                  cl_read(kpp_const_fields%fin)='BMLT01'
                CASE(10)
-                  cl_read(fin)='TAUX'
+                  cl_read(kpp_const_fields%fin)='TAUX'
                CASE(11)
-                  cl_read(fin)='TAUY'
+                  cl_read(kpp_const_fields%fin)='TAUY'
                END SELECT
-               fin=fin+1
+               kpp_const_fields%fin=kpp_const_fields%fin+1
             ENDIF
          ENDDO
       ELSE
@@ -195,7 +196,7 @@ c
          cl_writ(4)='OHICN01'
          cl_writ(5)='SUNOCEAN'
          cl_writ(6)='SVNOCEAN'
-         fout=jpfldout
+         kpp_const_fields%fout=jpfldout
 #ifdef UM78
          cl_read(1)='HEATFLUX'
          cl_read(2)='SOLAR'
@@ -208,7 +209,7 @@ c
          cl_read(9)='BMLT01'
          cl_read(10)='TAUX'
          cl_read(11)='TAUY'
-         fin=jpfldin
+         kpp_const_fields%fin=jpfldin
 #endif
 #ifdef UM85
          cl_read(1)='HEATFLUX'
@@ -221,7 +222,7 @@ c
             cl_read(7)='TMLT01'
             cl_read(8)='TAUX'
             cl_read(9)='TAUY'
-            fin=jpfldin
+            kpp_const_fields%fin=jpfldin
          ELSE
             cl_read(3)='TRAIN'
             cl_read(4)='TSNOW'
@@ -229,12 +230,12 @@ c
             cl_read(6)='TMLT01'         
             cl_read(7)='TAUX'
             cl_read(8)='TAUY'
-            fin=jpfldin-1
+            kpp_const_fields%fin=jpfldin-1
          ENDIF
 #endif
       ENDIF
 
-      DO i=1,fout
+      DO i=1,kpp_const_fields%fout
          CALL prism_def_var_proto(il_var_id_out(i),cl_writ(i),
      +        il_part_id,il_var_nodims,PRISM_Out,il_var_shape,
      +        PRISM_Real,ierror)
@@ -248,7 +249,7 @@ c
          ENDIF
       ENDDO
 
-      DO i=1,fin
+      DO i=1,kpp_const_fields%fin
          CALL prism_def_var_proto(il_var_id_in(i),cl_read(i),
      +        il_part_id,il_var_nodims,PRISM_In,il_var_shape,
      +        PRISM_Real,ierror)

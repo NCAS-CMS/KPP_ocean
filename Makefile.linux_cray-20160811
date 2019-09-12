@@ -17,7 +17,7 @@ F90=ftn
 CPP=cpp
 
 # Flags for the Fortran compiler
-F90_FLAGS=-I. -eZ -f fixed -s real64 -m0
+F90_FLAGS=-I. -eZ -f fixed -s real64
 
 # Extra flag required to pass CPP macros through the Fortran compiler - currently required for only XLF.
 F90_CPP_FLAG=

@@ -1,4 +1,3 @@
-include "kpp_oasis3.inc"
       LOGICAL L_COUPLE,L_CPLWGHT,L_CLIMICE,L_OUTKELVIN,
      +     L_CLIM_ICE_DEPTH, L_PERIODIC_CLIMICE,
      +     L_CLIM_SNOW_ON_ICE,L_UPD_CLIMICE,L_COUPLE_CURRENTS,
@@ -23,4 +22,5 @@ include "kpp_oasis3.inc"
      +     L_SST_LAG_FUDGE,L_SST_LAG,L_SST_SMOOTH,L_SST_SMOOTH_Y,
      +     L_SST_SMOOTH_X,sst_smooth_ifirst,sst_smooth_ilast,
      +     sst_smooth_jfirst,sst_smooth_jlast,sst_smooth_blend,
-     +     L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE
+     +     L_SST_SMOOTH_ANOM,L_SST_ANOM_FUDGE,
+     +     L_COUPLE_FLAGS,couple_in_flags,couple_out_flags

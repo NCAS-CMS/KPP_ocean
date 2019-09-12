@@ -879,6 +879,7 @@ c      USE kpp_type_mod
 
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
 #include "landsea.com"
 #include "constants.com"
 #include "times.com"
@@ -1871,6 +1872,7 @@ c
 
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
 #include "constants.com"
 #include "ocn_advec.com"
 #include "couple.com"
@@ -1963,6 +1965,7 @@ c     Written by NPK 27/8/07
 
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
 #include "constants.com"
 #include "ocn_advec.com"
 #include "couple.com"
@@ -2361,6 +2364,7 @@ c value (-1*number of interations in of semi-implicit integration in ocn.f).
       IMPLICIT NONE
       
 #include "kpp_3d_type.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields

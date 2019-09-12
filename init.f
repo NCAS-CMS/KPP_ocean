@@ -493,6 +493,7 @@ c         ENDDO
       PARAMETER (nuout=6,nuerr=0)
 #include "kpp_3d_type.com"
 #include <netcdf.inc>
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
