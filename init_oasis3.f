@@ -164,7 +164,12 @@ c
                CASE(2)
                   cl_read(kpp_const_fields%fin)='SOLAR'
                CASE(3)
+#ifdef UM78
                   cl_read(kpp_const_fields%fin)='WME'
+#endif
+#ifdef UM85
+		  cl_read(kpp_const_fields%fin)='RUNOFF'
+#endif
                CASE(4)
                   cl_read(kpp_const_fields%fin)='TRAIN'
                CASE(5)
