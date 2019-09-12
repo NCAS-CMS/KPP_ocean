@@ -49,7 +49,6 @@ c
       CHARACTER*8 choceout                ! Name for the log file for OASIS messages
 
       INTEGER ierror                      ! Integer error flag
-      INTEGER field                       ! Coupling field counter
 
       ! Initialize coupled environment
 
@@ -152,7 +151,6 @@ c
       kpp_const_fields%fout=1
       kpp_const_fields%fin=1
       DO i=1,jpfldout           ! Maximum number of possible output fields
-         field=1
          IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
             SELECT CASE (i)
             CASE (1)
@@ -175,7 +173,6 @@ c
          ENDIF
       ENDDO
       DO i=1,jpfldin            ! Maximum number of possible input fields
-         kpp_const_fields%fin=1
          IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
             SELECT CASE (i)
             CASE(1)
