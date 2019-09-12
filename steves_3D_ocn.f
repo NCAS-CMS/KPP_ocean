@@ -1217,6 +1217,8 @@ c     Initialize and read the times namelist
       L_COUPLE_FLAGS = .FALSE.
       couple_in_flags(:) = 1
       couple_out_flags(:) = 1
+      allocate(kpp_const_fields%couple_in_flags(jpfldin))
+      allocate(kpp_const_fields%couple_out_flags(jpfldout))
       READ(75,NAME_COUPLE)
       IF (L_COUPLE .and. initflux_file .eq. 'none')
      +     initflux_file='kpp_initfluxes.nc'
