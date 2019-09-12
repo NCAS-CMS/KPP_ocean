@@ -1553,7 +1553,7 @@ c     Inputs
 c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=17) :: restart_outfile
+      CHARACTER(LEN=*) :: restart_outfile
 
 c     When the number of points in the model (NX*NY*NZP1) becomes
 c     quite large, we exceed the maximum size for Fortran unformatted
@@ -1605,7 +1605,7 @@ c     Inputs
 c
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
-      CHARACTER(LEN=17) :: restart_infile
+      CHARACTER(LEN=*) :: restart_infile
 
       WRITE(6,*) 'Total number of points = ',REAL(NPTS)*REAL(NZP1)
       IF ( REAL(NPTS)*REAL(NZP1) .LT. 3000000. ) THEN
