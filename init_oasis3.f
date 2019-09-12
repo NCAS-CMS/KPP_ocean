@@ -148,10 +148,11 @@ c
       ENDIF
       kpp_const_fields%il_var_id_in(:)=0
       kpp_const_fields%il_var_id_out(:)=0
-      kpp_const_fields%fout=1
-      kpp_const_fields%fin=1
+      kpp_const_fields%fout=0
+      kpp_const_fields%fin=0
       DO i=1,jpfldout           ! Maximum number of possible output fields
          IF (kpp_const_fields%couple_out_flags(i) .eq. 1) THEN
+            kpp_const_fields%fout=kpp_const_fields%fout+1
             SELECT CASE (i)
             CASE (1)
                kpp_const_fields%cl_writ(kpp_const_fields%fout)='OCN_SST'
@@ -169,11 +170,11 @@ c
                kpp_const_fields%cl_writ(kpp_const_fields%fout)=
      +              'SVNOCEAN'
             END SELECT
-            kpp_const_fields%fout=kpp_const_fields%fout+1
          ENDIF
       ENDDO
       DO i=1,jpfldin            ! Maximum number of possible input fields
          IF (kpp_const_fields%couple_in_flags(i) .eq. 1) THEN
+            kpp_const_fields%fin=kpp_const_fields%fin+1
             SELECT CASE (i)
             CASE(1)
                kpp_const_fields%cl_read(kpp_const_fields%fin)=
@@ -195,6 +196,7 @@ c
      +                 'RUNOFF'
                ELSE
                   kpp_const_fields%couple_in_flags(i)=0
+                  kpp_const_fields%fin=kpp_const_fields%fin-1
                ENDIF
 #endif
             CASE(4)
