@@ -8,7 +8,7 @@
       PARAMETER(NDIM  =  1 , NX = 129, NY = 73, NPTS = NX * NY )
 #else
 #ifdef OASIS3
-      PARAMETER(NDIM = 1, NX = 1, NY = 1, NPTS = NX*NY)
+      PARAMETER(NDIM = 1, NX = 456, NY = 514, NPTS = NX*NY)
 c     PARAMETER(NDIM = 1, NX = 81, NY = 52, NPTS = NX*NY)
 #else
        PARAMETER(NDIM  =  1 , NX = 432, NY = 210, NPTS = NX * NY )
