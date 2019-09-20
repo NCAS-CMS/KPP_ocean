@@ -94,7 +94,7 @@ c into the main program.  NPK 17/08/10 - R3
 #elif defined ARCHER
 #define omp_nthreads 24
 #else
-#define omp_nthreads 36
+#define omp_nthreads 2
 #endif
          nthreads=omp_nthreads
          WRITE(6,*) 'setting nthreads = ',nthreads
