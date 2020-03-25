@@ -8,7 +8,7 @@
       PARAMETER(NDIM  =  1 , NX = 129, NY = 73, NPTS = NX * NY )
 #else
 #ifdef OASIS3
-      PARAMETER(NDIM = 1, NX = 254, NY = 392, NPTS = NX*NY)
+      PARAMETER(NDIM = 1, NX = 262, NY = 392, NPTS = NX*NY)
 c     PARAMETER(NDIM = 1, NX = 81, NY = 52, NPTS = NX*NY)
 #else
        PARAMETER(NDIM  =  1 , NX = 432, NY = 210, NPTS = NX * NY )
@@ -59,7 +59,7 @@ c  Parameters for regional coupling
        PARAMETER (NX_GLOBE=288, NY_GLOBE=217)
 #else 
 #ifdef OASIS3
-       PARAMETER(NX_GLOBE=254, NY_GLOBE=392)
+       PARAMETER(NX_GLOBE=262, NY_GLOBE=392)
 c     PARAMETER (NX_GLOBE=182, NY_GLOBE=152)
 #else
        PARAMETER (NX_GLOBE=432, NY_GLOBE=325)
