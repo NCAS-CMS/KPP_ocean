@@ -183,7 +183,7 @@ c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
 
          status=NF_INQ_DIMID(ncid,'ztemp',dimid)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-         status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
+         status=NF_INQ_DIMLEN(ncid,dimid,nz_in)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          start(3)=1
          count(3)=nz_in
@@ -347,11 +347,6 @@ c
 
       RETURN
       END
-      
-      SUBROUTINE read_init_restart(kpp_3d_fields,kpp_const_fields)
-      IMPLICIT NONE
-      
-
 
       SUBROUTINE init_flxdata(fname,kpp_const_fields)
 
