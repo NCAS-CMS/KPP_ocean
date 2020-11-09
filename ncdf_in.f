@@ -12,6 +12,7 @@
 c#include "location.com"
 #include "constants.com"
 #include "ocn_advec.com"
+#include "couple.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
@@ -313,6 +314,9 @@ c
 	ice_in = var_in
 	deallocate(var_in)
       ENDIF
+
+      IF (.NOT. L_PERSIST_ICE .AND. .NOT. L_PERSIST_ICE_ANOM .AND.
+     +     .NOT. L_CLIMICE) ice_in = 0.0
 
       IF (L_RELAX_INIT) THEN
 	kpp_3d_fields%ocnT_clim = kpp_3d_fields%X(:,:,1)
