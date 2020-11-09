@@ -144,6 +144,7 @@ c local
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
       TYPE(kpp_const_type) :: kpp_const_fields
+      LOGICAL :: restart_flag
 
 
       IF ( .NOT. L_INITDATA ) THEN
@@ -165,7 +166,8 @@ c            enddo
 c         ENDDO
 c     
       ELSE
-         call read_init(kpp_3d_fields,kpp_const_fields)
+         restart_flag = .FALSE.
+         call read_init(kpp_3d_fields,kpp_const_fields,restart_flag)
       ENDIF
 c
 c Calculate and remove reference salinity      

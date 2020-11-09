@@ -1451,6 +1451,11 @@ c	so that it doesn't get overwritten when initial conditions are read
       IF (L_RESTART) THEN
          CALL READ_RESTART(kpp_3d_fields,kpp_const_fields,
      +        restart_infile)
+!     Read initial conditions again if required for persisting
+!     initial SST and sea ice (either as total values or anomalies)
+         IF (L_PERSIST_SST .OR. L_PERSIST_ICE .OR. 
+     +        L_PERSIST_SST_ANOM .OR. L_PERSIST_ICE_ANOM)
+         CALL read_init(kpp_3d_fields,kpp_const_fields,L_RESTART)
       ELSE
          CALL init_flds(kpp_3d_fields,kpp_const_fields)
          write(nuout,*) 'KPP : Temperature, salinity and currents ',

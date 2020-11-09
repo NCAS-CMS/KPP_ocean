@@ -1,4 +1,4 @@
-      SUBROUTINE read_init (kpp_3d_fields,kpp_const_fields)
+      SUBROUTINE read_init(kpp_3d_fields,kpp_const_fields,restart_flag)
 
       IMPLICIT NONE
       INTEGER nuout,nuerr
@@ -12,6 +12,7 @@
 c#include "location.com"
 #include "constants.com"
 #include "ocn_advec.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       TYPE(kpp_3d_type) :: kpp_3d_fields
@@ -32,6 +33,13 @@ c#include "location.com"
       REAL, dimension(NX_GLOBE,NY_GLOBE) :: usf_in,vsf_in
       COMMON /save_sstin/ SST_in,ICE_in,icedepth_in,snowdepth_in,
      +     usf_in,vsf_in
+
+!     Flag for whether this is a restart simulation.
+!     If so, will read only the SST and ice necessary to persist
+!     those either as climatologies or anomalies.
+!     Required for multi-step forecast runs where initial conditions
+!     are not saved.
+      LOGICAL restart_flag
 
       allocate(x_in(NX_GLOBE))
       allocate(y_in(NY_GLOBE))
@@ -81,207 +89,213 @@ c#include "location.com"
       start(2)=iy
       count(2)=ny
 
-      status=NF_INQ_DIMID(ncid,'zvel',dimid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      start(3)=1
-      count(3)=nz_in
+      IF (.NOT. restart_flag) THEN
+         status=NF_INQ_DIMID(ncid,'zvel',dimid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         start(3)=1
+         count(3)=nz_in
 
-      allocate(z_in(nz_in))
-      allocate(var_in(NX,NY,nz_in))
-      WRITE(6,*) start,count
-      status=NF_INQ_VARID(ncid,'zvel',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VAR_REAL(ncid,varid,z_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'u',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      write(nuout,*) 'KPP: read_init read initial u current'
+         allocate(z_in(nz_in))
+         allocate(var_in(NX,NY,nz_in))
+         WRITE(6,*) start,count
+         status=NF_INQ_VARID(ncid,'zvel',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VAR_REAL(ncid,varid,z_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_VARID(ncid,'u',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         write(nuout,*) 'KPP: read_init read initial u current'
 
-      IF (L_INTERPINIT) THEN
-         DO iy=1,ny
-            DO ix=1,nx
-               ipt=(iy-1)*nx+ix
-               kin=1
-               DO k=1,NZP1
-                  IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
-                     kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,1)
-                  ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
-                     kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,nz_in)
-                  ELSE
-                     DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
-                        kin=kin+1
-                     ENDDO
-                     deltaz=z_in(kin)-z_in(kin+1)
-                     deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
-                     kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,kin)+
-     &                    deltavar*(kpp_const_fields%zm(k)-z_in(kin))/
-     +                    deltaz
-                  ENDIF
+         IF (L_INTERPINIT) THEN
+            DO iy=1,ny
+               DO ix=1,nx
+                  ipt=(iy-1)*nx+ix
+                  kin=1
+                  DO k=1,NZP1
+                     IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
+                        kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,1)
+                     ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) 
+     +                       THEN 
+                        kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,nz_in)
+                     ELSE
+                        DO WHILE (z_in(kin+1).GT.kpp_const_fields%zm(k))
+                           kin=kin+1
+                        ENDDO
+                        deltaz=z_in(kin)-z_in(kin+1)
+                        deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
+                        kpp_3d_fields%U(ipt,k,1)=var_in(ix,iy,kin)+
+     &                       deltavar*(kpp_const_fields%zm(k)-z_in(kin))
+     +                       /deltaz
+                     ENDIF
+                  ENDDO
                ENDDO
             ENDDO
-         ENDDO
-c         U(ipt,:,1)=0.
-      ELSE
-         write(nuerr,*) 'You have to interpolate'
-      ENDIF
+c     U(ipt,:,1)=0.
+         ELSE
+            write(nuerr,*) 'You have to interpolate'
+         ENDIF
 
-      status=NF_INQ_VARID(ncid,'v',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: read_init read initial v current'
-
-      IF (L_INTERPINIT) THEN
-         DO iy=1,ny
-            DO ix=1,nx
-               ipt=(iy-1)*nx+ix
-               kin=1
-               DO k=1,NZP1
-                  IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
-                     kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,1)
-                  ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
-                     kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,nz_in)
-                  ELSE
-                     DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
-                        kin=kin+1
-                     ENDDO
-                     deltaz=z_in(kin)-z_in(kin+1)
-                     deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
-                     kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,kin)+
-     &                    deltavar*(kpp_const_fields%zm(k)-z_in(kin))/
-     +                    deltaz
-                  ENDIF
+         status=NF_INQ_VARID(ncid,'v',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         WRITE(nuout,*) 'KPP: read_init read initial v current'
+         
+         IF (L_INTERPINIT) THEN
+            DO iy=1,ny
+               DO ix=1,nx
+                  ipt=(iy-1)*nx+ix
+                  kin=1
+                  DO k=1,NZP1
+                     IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
+                        kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,1)
+                     ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) 
+     +                       THEN
+                        kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,nz_in)
+                     ELSE
+                        DO WHILE (z_in(kin+1).GT.kpp_const_fields%zm(k))
+                           kin=kin+1
+                        ENDDO
+                        deltaz=z_in(kin)-z_in(kin+1)
+                        deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
+                        kpp_3d_fields%U(ipt,k,2)=var_in(ix,iy,kin)+
+     &                       deltavar*(kpp_const_fields%zm(k)-z_in(kin))
+     +                       /deltaz
+                     ENDIF
+                  ENDDO
                ENDDO
             ENDDO
-         ENDDO
-c         U(ipt,:,2)=0.
-      ELSE
-         write(nuerr,*) 'You have to interpolate'
-      ENDIF
-      write(6,*) 'read_init interpolated v'
+c     U(ipt,:,2)=0.
+         ELSE
+            write(nuerr,*) 'You have to interpolate'
+         ENDIF
+         write(6,*) 'read_init interpolated v'
 c     Save initial currents in case they are needed to reinitalise
 c     dodgy profiles (see resetting routines in steves_3d_ocn.f)
-      kpp_3d_fields%U_init=kpp_3d_fields%U
+         kpp_3d_fields%U_init=kpp_3d_fields%U
+         
+         deallocate(z_in)
+         deallocate(var_in)
 
-      deallocate(z_in)
-      deallocate(var_in)
-
-      status=NF_INQ_DIMID(ncid,'ztemp',dimid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      start(3)=1
-      count(3)=nz_in
-
-      allocate(z_in(nz_in))
-      allocate(var_in(NX,NY,nz_in))
-
-      status=NF_INQ_VARID(ncid,'ztemp',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VAR_REAL(ncid,varid,z_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'temp',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: read_init read initial temperature'
-
-      IF (L_INTERPINIT) THEN
-         DO iy=1,ny
-            DO ix=1,nx
-               ipt=(iy-1)*nx+ix
-               kin=1
-               DO k=1,NZP1
-                  IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
-                     kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,1)
-                  ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
-                     kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,nz_in)
-                  ELSE
-                     DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
-                        kin=kin+1
-                     ENDDO
-                     deltaz=z_in(kin)-z_in(kin+1)
-                     deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
-                     kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,kin)+
-     &                    deltavar*(kpp_const_fields%zm(k)-z_in(kin))/
-     +                    deltaz
-                  ENDIF
+         status=NF_INQ_DIMID(ncid,'ztemp',dimid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         start(3)=1
+         count(3)=nz_in
+         
+         allocate(z_in(nz_in))
+         allocate(var_in(NX,NY,nz_in))
+         
+         status=NF_INQ_VARID(ncid,'ztemp',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VAR_REAL(ncid,varid,z_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_VARID(ncid,'temp',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         WRITE(nuout,*) 'KPP: read_init read initial temperature'
+         
+         IF (L_INTERPINIT) THEN
+            DO iy=1,ny
+               DO ix=1,nx
+                  ipt=(iy-1)*nx+ix
+                  kin=1
+                  DO k=1,NZP1
+                     IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
+                        kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,1)
+                     ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) 
+     +                       THEN
+                        kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,nz_in)
+                     ELSE
+                        DO WHILE (z_in(kin+1).GT.kpp_const_fields%zm(k))
+                           kin=kin+1
+                        ENDDO
+                        deltaz=z_in(kin)-z_in(kin+1)
+                        deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
+                        kpp_3d_fields%X(ipt,k,1)=var_in(ix,iy,kin)+
+     &                       deltavar*(kpp_const_fields%zm(k)-z_in(kin))
+     +                       /deltaz
+                     ENDIF
+                  ENDDO
                ENDDO
             ENDDO
-         ENDDO
-      ELSE
-         write(nuerr,*) 'KPP: You have to interpolate'
-      ENDIF
-c
+         ELSE
+            write(nuerr,*) 'KPP: You have to interpolate'
+         ENDIF
+c     
 c     KPP requires temperatures in CELSIUS.  If initial conditions
 c     are in Kelvin, subtract 273.15
 c
-      offset_sst = 0.
-      DO ix=1,nx
-         DO iy=1,ny
-            IF (var_in(ix,iy,1) .gt. 200 .and.
-     &           var_in(ix,iy,1) .lt. 400)
-     &           offset_sst = kpp_const_fields%TK0
+         offset_sst = 0.
+         DO ix=1,nx
+            DO iy=1,ny
+               IF (var_in(ix,iy,1) .gt. 200 .and.
+     &              var_in(ix,iy,1) .lt. 400)
+     &              offset_sst = kpp_const_fields%TK0
+            END DO
          END DO
-      END DO
-      kpp_3d_fields%X(:,:,1) = kpp_3d_fields%X(:,:,1) - offset_sst
-
-      deallocate(z_in)
-      deallocate(var_in)
-
-      status=NF_INQ_DIMID(ncid,'zsal',dimid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      start(3)=1
-      count(3)=nz_in
-
-      allocate(z_in(nz_in))
-      allocate(var_in(NX,NY,nz_in))
-
-      status=NF_INQ_VARID(ncid,'zsal',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VAR_REAL(ncid,varid,z_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_INQ_VARID(ncid,'sal',varid)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
-      IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
-      WRITE(nuout,*) 'KPP: read_init read initial salinity'
-
-      IF (L_INTERPINIT) THEN
-         DO iy=1,ny
-            DO ix=1,nx
-               ipt=(iy-1)*nx+ix
-               kin=1
-               DO k=1,NZP1
-                  IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
-                     kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,1)
-                  ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) THEN
-                     kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,nz_in)
-                  ELSE
-                     DO WHILE (z_in(kin+1) .GT. kpp_const_fields%zm(k))
-                        kin=kin+1
-                     ENDDO
-                     deltaz=z_in(kin)-z_in(kin+1)
-                     deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
-                     kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,kin)+
-     &                    deltavar*(kpp_const_fields%zm(k)-z_in(kin))/
-     +                    deltaz
-                  ENDIF
+         kpp_3d_fields%X(:,:,1) = kpp_3d_fields%X(:,:,1) - offset_sst
+         
+         deallocate(z_in)
+         deallocate(var_in)
+         
+         status=NF_INQ_DIMID(ncid,'zsal',dimid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_DIMLEN (ncid,dimid,nz_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         start(3)=1
+         count(3)=nz_in
+         
+         allocate(z_in(nz_in))
+         allocate(var_in(NX,NY,nz_in))
+         
+         status=NF_INQ_VARID(ncid,'zsal',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VAR_REAL(ncid,varid,z_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_INQ_VARID(ncid,'sal',varid)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         status=NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
+         IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         WRITE(nuout,*) 'KPP: read_init read initial salinity'
+         
+         IF (L_INTERPINIT) THEN
+            DO iy=1,ny
+               DO ix=1,nx
+                  ipt=(iy-1)*nx+ix
+                  kin=1
+                  DO k=1,NZP1
+                     IF (kpp_const_fields%zm(k) .GT. z_in(1)) THEN
+                        kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,1)
+                     ELSEIF (kpp_const_fields%zm(k) .LT. z_in(nz_in)) 
+     +                       THEN
+                        kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,nz_in)
+                     ELSE
+                        DO WHILE (z_in(kin+1).GT.kpp_const_fields%zm(k))
+                           kin=kin+1
+                        ENDDO
+                        deltaz=z_in(kin)-z_in(kin+1)
+                        deltavar=var_in(ix,iy,kin)-var_in(ix,iy,kin+1)
+                        kpp_3d_fields%X(ipt,k,2)=var_in(ix,iy,kin)+
+     &                       deltavar*(kpp_const_fields%zm(k)-z_in(kin))
+     +                       /deltaz
+                     ENDIF
+                  ENDDO
                ENDDO
             ENDDO
-         ENDDO
-      ELSE
-         write(nuerr,*) 'You have to interpolate'
-      ENDIF
+         ELSE
+            write(nuerr,*) 'You have to interpolate'
+         ENDIF
 
-      deallocate(var_in)
-      deallocate(z_in)
+         deallocate(var_in)
+         deallocate(z_in)         
+      ENDIF
 
 !     Read a global SST field and persist that as the climatological SST
 !     or SST anomaly through the simulation
@@ -295,6 +309,14 @@ c
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
          status = NF_GET_VARA_REAL(ncid,varid,start,count,var_in)
          IF (status .NE. NF_NOERR) CALL HANDLE_ERR(status)
+         offset_sst = 0.
+         DO ix=1,nx
+            DO iy=1,ny
+               IF (var_in(ix,iy,1) .gt. 200 .and.
+     &              var_in(ix,iy,1) .lt. 400)
+     &              offset_sst = kpp_const_fields%TK0
+            END DO
+         END DO
          SST_in = var_in - offset_sst
 	 deallocate(var_in)
       ENDIF
@@ -325,6 +347,11 @@ c
 
       RETURN
       END
+      
+      SUBROUTINE read_init_restart(kpp_3d_fields,kpp_const_fields)
+      IMPLICIT NONE
+      
+
 
       SUBROUTINE init_flxdata(fname,kpp_const_fields)
 
@@ -703,6 +730,7 @@ c      time=dummy_time
 
 #include <netcdf.inc>
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       INTEGER status
@@ -721,6 +749,7 @@ c      time=dummy_time
 
 #include <netcdf.inc>
 #include "parameter.inc"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 
       INTEGER status
@@ -1490,6 +1519,7 @@ c#include "location.com"
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"
@@ -1651,6 +1681,7 @@ c     Written by Nick Klingaman, 11/01/08.
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"
@@ -1821,6 +1852,7 @@ c     longitude and time.
 ! Automatically includes parameter.inc!
 #include "kpp_3d_type.com"
 #include "constants.com"
+#include "kpp_oasis3.inc"
 #include "couple.com"
 #include "times.com"
 #include "timocn.com"

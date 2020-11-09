@@ -430,6 +430,10 @@ c     values from the 2D variable.
       kpp_const_fields%L_SST_SMOOTH_Y=L_SST_SMOOTH_Y
       kpp_const_fields%L_SST_SMOOTH_ANOM=L_SST_SMOOTH_ANOM
       kpp_const_fields%L_SST_ANOM_FUDGE=L_SST_ANOM_FUDGE
+      kpp_const_fields%L_PERSIST_SST=L_PERSIST_SST
+      kpp_const_fields%L_PERSIST_SST_ANOM=L_PERSIST_SST_ANOM
+      kpp_const_fields%L_PERSIST_ICE=L_PERSIST_ICE
+      kpp_const_fields%L_PERSIST_ICE_ANOM=L_PERSIST_ICE_ANOM
 
       kpp_const_fields%L_BARRIER_REMOVE=L_BARRIER_REMOVE
       kpp_const_fields%L_BARRIER_SALISO=L_BARRIER_SALISO
