@@ -1359,10 +1359,10 @@ c
       IF ( .NOT. kpp_const_fields%L_RESTART) THEN
 c
 c     Determine hmix for initial profile:
-c#ifdef OPENMP
-c!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
-c!$OMP DO SCHEDULE(dynamic)
-c#endif
+#ifdef OPENMP
+!$OMP PARALLEL DEFAULT(PRIVATE) SHARED(kpp_3d_fields,kpp_const_fields)
+!$OMP DO SCHEDULE(dynamic)
+#endif
          DO ipt=1,npts
             CALL kpp_fields_3dto2d(kpp_3d_fields,ipt,kpp_2d_fields)
             IF (kpp_2d_fields%L_OCEAN) THEN
@@ -1440,10 +1440,10 @@ c     ENDIF
             !WRITE(6,*) 'Initial hmix = ',kpp_2d_fields%hmix
             CALL kpp_fields_2dto3d(kpp_2d_fields,ipt,kpp_3d_fields)
          ENDDO
-c#ifdef OPENMP
-c!$OMP END DO
-c!$OMP END PARALLEL
-c#endif
+#ifdef OPENMP
+!$OMP END DO
+!$OMP END PARALLEL
+#endif
       ENDIF
       return
       end
