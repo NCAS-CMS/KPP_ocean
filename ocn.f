@@ -301,14 +301,14 @@ c     NPK 16/5/2013
          DO k=1,NZ
             ! For slab ocean, do not test vertical gradient of temperature
             ! as this is likely to be very large due to the deep ocean below.
-            IF (kpp_const_fields%L_SLAB) THEN
+           IF (kpp_const_fields%L_SLAB) THEN
               IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
      +           ABS(kpp_2d_fields%U(k,2)).ge.10) THEN
                 kpp_2d_fields%comp_flag=.TRUE.
                 kpp_2d_fields%f=kpp_2d_fields%f*
      +	           (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
               ENDIF
-            ELSE IF (kpp_2d_fields%zm(k+1) .LE. kpp_2d_fields%ocdepth) THEN 
+           ELSE IF (kpp_2d_fields%zm(k+1).LE.kpp_2d_fields%ocdepth) THEN
               ! Do not test vertical gradients below bathymetru (EH)
               IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
      +           ABS(kpp_2d_fields%U(k,2)).ge.10) THEN
@@ -316,7 +316,7 @@ c     NPK 16/5/2013
                 kpp_2d_fields%f=kpp_2d_fields%f*
      +	           (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
               ENDIF
-            ELSE
+           ELSE
               IF (ABS(kpp_2d_fields%U(k,1)).ge. 10 .or.
      +            ABS(kpp_2d_fields%U(k,2)).ge.10 .or.
      +            ABS(kpp_2d_fields%X(k,1)-kpp_2d_fields%X(k+1,1))
@@ -327,7 +327,7 @@ c     NPK 16/5/2013
                 kpp_2d_fields%f=kpp_2d_fields%f*
      +			       (1.01+MOD(kpp_2d_fields%reset_flag,2.0)*(-0.02))
               ENDIF
-            ENDIF
+           ENDIF
          END DO
          IF (.NOT. kpp_2d_fields%comp_flag) THEN
             rmsd(:)=0.
