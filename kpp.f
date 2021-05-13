@@ -85,18 +85,7 @@ c     compute RI and IW interior diffusivities everywhere
       IF(kpp_const_fields%LRI) THEN
          call ri_iwmix (km,kmp1,kpp_2d_fields,kpp_const_fields)
       ENDIF
-c     zero the mixing coefficients below orography (EH)
-c      WRITE(6,*) "bathymetry at",kpp_2d_fields%ocdepth
-      DO ki=1,km
-       IF (kpp_2d_fields%zm(ki) .LE. kpp_2d_fields%ocdepth) THEN
-         kpp_2d_fields%difm(ki) = 0.0
-         kpp_2d_fields%difs(ki) = 0.0
-         kpp_2d_fields%dift(ki) = 0.0
-       ELSE
-c         WRITE(6,*) "zm at",kpp_2d_fields%zm(ki)
-       ENDIF
-      END DO
-      
+     
 
 c     add double diffusion if desired
       IF(kpp_const_fields%LDD) THEN
@@ -152,6 +141,18 @@ c     For slab, set all values to small numbers
             kpp_2d_fields%dift(1:NZtmax)=1e-20
             kpp_2d_fields%difs(1:NZtmax)=1e-20
          ENDIF
+
+c     zero the mixing coefficients below orography (EH)
+c      WRITE(6,*) "bathymetry at",kpp_2d_fields%ocdepth
+      DO ki=1,km
+       IF (kpp_2d_fields%zm(ki+1) .LE. kpp_2d_fields%ocdepth) THEN
+         kpp_2d_fields%difm(ki) = 0.0
+         kpp_2d_fields%difs(ki) = 0.0
+         kpp_2d_fields%dift(ki) = 0.0
+       ELSE
+c         WRITE(6,*) "zm at",kpp_2d_fields%zm(ki)
+       ENDIF
+      END DO
          
 
 c     
