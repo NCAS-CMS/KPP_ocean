@@ -1670,7 +1670,7 @@ c      real swdk                 !  short wave (radiation) fractional decay
 c  local
 c      real swfrac_save(NPTS,NZP1)
       real  rfac(nwtype),a1(nwtype),a2(nwtype)
-      real rmin,r1,r2,z_linear,r1_lin,r2_lin,swfrac_lin
+      real rmin,r1,r2
       integer l
 c      save  rfac,a1,a2,rmin
 c      common /save_swfrac/swfrac_save
@@ -1682,41 +1682,23 @@ c
       data a1           /  0.35 ,  0.6  ,  1.0  ,  1.5  ,  1.4  /
       data a2           / 23.0  , 20.0  , 17.0  , 14.0  ,  7.9  /
       data rmin         / -80. /
-
-c  EH, 20210512: modify swdk such that it reaches 0 at the bathymetry (order 1 continuous)
-c  to do: generalise across watertypes. currently only IB.
-      kpp_2d_fields%ocdepth
-      z_b = kpp_2d_fields%ocdepth
-      z_linear = z_b+a2+(a2-a1)*(0.048*(z_b+12.75)
-     +             /(1+abs(0.096*(zb+12.75))**7)**(1/7)+0.5)
-      r1_lin = MAX(z_linear*fact/kpp_2d_fields%h1,rmin)
-      r2_lin = MAX(z_linear*fact/kpp_2d_fields%h2,rmin)
-      swfrac_lin = kpp_2d_fields%rfac*exp(r1_lin)
-     +             +(1-kpp_2d_fields%rfac)*exp(r2_lin)
 c
 c      IF ((kpp_const_fields%ntime .eq. 1) .and. (k .eq. 2)) THEN
       DO l=1,NZP1
-        IF kpp_2d_fields%zm(l)>z_linear THEN
 c     do 100 i = ipt,ipt
 c         r1      = MAX(kpp_2d_fields%zm(l)*
 c     +        fact/a1(kpp_2d_fields%jerlov), rmin)
-          r1 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h1,rmin)
+         r1 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h1,rmin)
          
 c         r2      = MAX(kpp_2d_fields%zm(l)*
 c     +        fact/a2(kpp_2d_fields%jerlov), rmin)
-          r2 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h2,rmin)
+         r2 = MAX(kpp_2d_fields%zm(l)*fact/kpp_2d_fields%h2,rmin)
          
 c         kpp_2d_fields%swfrac(l) = rfac(kpp_2d_fields%jerlov)  *
 c     +        exp(r1) + (1.-rfac(kpp_2d_fields%jerlov)) * exp(r2)
-          kpp_2d_fields%swfrac(l) = kpp_2d_fields%rfac*exp(r1)+
-     +         (1-kpp_2d_fields%rfac)*exp(r2)
-        ELSE IF  kpp_2d_fields%zm(l)>z_b THEN
-          kpp_2d_fields%swfrac(l) = swfrac_lin*kpp_2d_fields%zm(l)
-     +                        /(z_linear-z_b)
-        ELSE
-          kpp_2d_fields%swfrac(l) = 0
-        END IF
-       
+         kpp_2d_fields%swfrac(l) = kpp_2d_fields%rfac*exp(r1)+
+     +        (1-kpp_2d_fields%rfac)*exp(r2)
+         
 c     100        continue
       ENDDO
 

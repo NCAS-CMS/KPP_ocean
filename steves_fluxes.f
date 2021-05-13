@@ -284,12 +284,13 @@ c     ENDDO
 
 *******************************************************************
 
-      REAL FUNCTION SWDK(z,jerlov)
+      REAL FUNCTION SWDK(z,jerlov,z_b)
 #include "parameter.inc"
 c     include 'proc_pars.com'
 c     include 'local_pt.com'
 
       parameter(max=5)
+      real z_linear,swfrac_lin
       real Rfac(max),a1(max),a2(max)
 c         types =  I       IA      IB      II      III
 c             j =  1       2       3       4       5
@@ -299,10 +300,30 @@ c             j =  1       2       3       4       5
 
          j = jerlov
 
+
+c     Apply linear decay of SWDK to 0 at bathymetry
+c     Hardcoded for jerlov 1B
+c     EH 2021/05
+
+      z_linear = z_b+17.-(17.-1.)*(0.048*(z_b+12.75)
+     +         /(1+abs(0.096*(z_b+12.75))**7.0)**(1.0/7.0)+0.5)
+      swfrac_lin =     Rfac(j) *dexp(dble(z_linear/a1(j)))
+     +           +(1.0-Rfac(j))*dexp(dble(z_linear/a2(j)))
+
+
+
 c      write(nuout,*) 'time=',ftime,' mon=',mon,' j=',j
 
-      SWDK =        Rfac(j)  * dexp(dble(z/a1(j))) 
-     >       + (1.0-Rfac(j)) * dexp(dble(z/a2(j)))
+      IF (z>z_linear) THEN
+        SWDK =        Rfac(j)  * dexp(dble(z/a1(j)))
+     >         + (1.0-Rfac(j)) * dexp(dble(z/a2(j)))
+
+      ELSEIF (z>z_b) THEN
+c        WRITE(6,*) 'KPP: EH ',z_b,z_linear,z
+        SWDK = swfrac_lin * dble((z-z_b)/(z_linear-z_b))
+      ELSE
+        SWDK = 0
+      END IF
 
       return
       end
