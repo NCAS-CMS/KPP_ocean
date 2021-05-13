@@ -258,7 +258,7 @@ c      WRITE(6,*) 'ntime = ',kpp_const_fields%ntime
          IF (.NOT. kpp_const_fields%L_VARY_OPT) THEN
             DO k=0,NZ
                kpp_2d_fields%swdk_opt(k)=swdk(-dm(k),
-     +              kpp_2d_fields%jerlov) 
+     +              kpp_2d_fields%jerlov,kpp_2d_fields%ocdepth) 
             ENDDO
          ENDIF
       ENDIF
