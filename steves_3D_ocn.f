@@ -1908,7 +1908,7 @@ c
 c                 EH
                   IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
                     kpp_3d_fields%relax_sal(ipoint)=1./
-     +                   (kpp_3d_fields%ocdepth(ipoint)
+     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
      +                   *kpp_const_fields%spd)
                   ELSE
                     kpp_3d_fields%relax_sal(ipoint)=1./
@@ -1927,7 +1927,7 @@ c                 EH
 c                 EH
                   IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
                     kpp_3d_fields%relax_ocnT(ipoint)=1./
-     +                   (kpp_3d_fields%ocdepth(ipoint)
+     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
      +                   *kpp_const_fields%spd)
                   ELSE
                     kpp_3d_fields%relax_ocnT(ipoint)=1./
