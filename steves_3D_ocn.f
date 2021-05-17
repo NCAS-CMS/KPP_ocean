@@ -1906,9 +1906,9 @@ c
                DO ix=1,nx
                   ipoint=(iy-1)*nx+ix
 c                 EH
-                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -30) THEN
+                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
                     kpp_3d_fields%relax_sal(ipoint)=1./
-     +                   (-0.5*kpp_3d_fields%ocdepth(ipoint)
+     +                   (kpp_3d_fields%ocdepth(ipoint)
      +                   *kpp_const_fields%spd)
                   ELSE
                     kpp_3d_fields%relax_sal(ipoint)=1./
@@ -1925,9 +1925,9 @@ c                 EH
                DO ix=1,nx
                   ipoint=(iy-1)*nx+ix
 c                 EH
-                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -30) THEN
+                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
                     kpp_3d_fields%relax_ocnT(ipoint)=1./
-     +                   (-0.5*kpp_3d_fields%ocdepth(ipoint)
+     +                   (kpp_3d_fields%ocdepth(ipoint)
      +                   *kpp_const_fields%spd)
                   ELSE
                     kpp_3d_fields%relax_ocnT(ipoint)=1./
