@@ -1906,14 +1906,14 @@ c
                DO ix=1,nx
                   ipoint=(iy-1)*nx+ix
 c                 EH
-                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
-                    kpp_3d_fields%relax_sal(ipoint)=1./
-     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
-     +                   *kpp_const_fields%spd)
-                  ELSE
-                    kpp_3d_fields%relax_sal(ipoint)=1./
+c                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
+c                    kpp_3d_fields%relax_sal(ipoint)=1./
+c     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
+c     +                   *kpp_const_fields%spd)
+c                  ELSE
+                  kpp_3d_fields%relax_sal(ipoint)=1./
      +                   (relax_sal_in(iy)*kpp_const_fields%spd)
-                  ENDIF
+c                  ENDIF
                ENDDO
             ENDIF
             IF (L_RELAX_OCNT .and. relax_ocnt_in(iy) .EQ. 0.0) THEN
@@ -1925,14 +1925,14 @@ c                 EH
                DO ix=1,nx
                   ipoint=(iy-1)*nx+ix
 c                 EH
-                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
-                    kpp_3d_fields%relax_ocnT(ipoint)=1./
-     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
-     +                   *kpp_const_fields%spd)
-                  ELSE
-                    kpp_3d_fields%relax_ocnT(ipoint)=1./
+c                  IF (kpp_3d_fields%ocdepth(ipoint) .ge. -15) THEN
+c                    kpp_3d_fields%relax_ocnT(ipoint)=1./
+c     +                   (-1*kpp_3d_fields%ocdepth(ipoint)
+c     +                   *kpp_const_fields%spd)
+c                  ELSE
+                  kpp_3d_fields%relax_ocnT(ipoint)=1./
      +                   (relax_ocnT_in(iy)*kpp_const_fields%spd)
-                  ENDIF
+c                  ENDIF
                ENDDO
             ENDIF
             IF (L_RELAX_CURR .and. relax_curr_in(iy) .EQ. 0.0) THEN
