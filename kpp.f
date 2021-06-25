@@ -590,23 +590,17 @@ c     real Rig,Rigg             ! local richardson number
 c      integer i,ki,mr,mRi
       INTEGER ki,mRi,j
 
+      real difm0  ! max visc due to shear instability
+      real difs0  ! max diff ..  .. ..    ..
+      real difmiw ! background/internal waves visc(m^2/s)
+      real difsiw ! ..         ..       ..    diff(m^2/s)
+
 c      save epsln,Riinfty,Ricon,difm0,difs0,difmcon,difscon,
 c     &     difmiw,difsiw,c1
       
       data  epsln   / 1.e-16 /  ! a small number          
       data  Riinfty /  0.8     / ! LMD default was = 0.7
       data  Ricon   / -0.2    / ! note: exp was repl by multiplication
-      IF (kpp_const_fields%L_SLAB) THEN
-         data  difm0   / 0.000005  / ! max visc due to shear instability
-         data  difs0   / 0.000005  / ! max diff ..  .. ..    ..
-         data  difmiw  / 0.000001  / ! background/internal waves visc(m^2/s)
-         data  difsiw  / 0.000001 / ! ..         ..       ..    diff(m^2/s)
-      ELSE
-         data difm0   / 0.005   /
-         data difs0   / 0.005   /
-         data difmiw  / 0.0001  /
-         data difsiw  / 0.00001 /
-      ENDIF
       data  difmcon / 0.0000   / ! max visc for convection  (m^2/s)
       data  difscon / 0.0000   / ! max diff for convection  (m^2/s)
       data  c1/ 1.0/
@@ -620,7 +614,19 @@ c     compute interior gradient Ri at all interfaces ki=1,km, (not surface)
 c     use visc(imt,ki=1,km) as temporary storage to be smoothed
 c     use dift(imt,ki=1,km) as temporary storage of unsmoothed Ri
 c     use difs(imt,ki=1,km) as dummy in smoothing call
-      
+ 
+      IF (kpp_const_fields%L_SLAB) THEN
+         difm0  = 0.000005  
+         difs0  = 0.000005 
+         difmiw = 0.000001  
+         difsiw = 0.000001 
+      ELSE
+         difm0  = 0.005   
+         difs0  = 0.005   
+         difmiw = 0.0001  
+         difsiw = 0.00001 
+      ENDIF
+     
       do 110 ki = 1, km
 c     WRITE(6,*) ki
 c     WRITE(6,*) 'Shsq(ki) = ',Shsq(ki)
