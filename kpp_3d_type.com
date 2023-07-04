@@ -1,6 +1,7 @@
 #include "parameter.inc"
 #include "kpp_timer.com"
 	TYPE kpp_3D_type
+        SEQUENCE
 
 	real :: U(NPTS,NZP1,NVEL),
      +     X(NPTS,NZP1,NSCLR),
@@ -61,6 +62,7 @@
       ENDTYPE kpp_3D_type
 
       TYPE kpp_2D_type
+      SEQUENCE
       real :: U(NZP1,NVEL),
      +     X(NZP1,NSCLR),
      +     Rig(NZP1),
@@ -108,6 +110,7 @@
       ENDTYPE kpp_2D_type
 
       TYPE kpp_const_type
+      SEQUENCE
       real :: zm(nzp1),
      +     hm(nzp1),
      +     dm(0:nz),
@@ -138,6 +141,7 @@ c      real wst(0:891,0:49)      ! lookup table for ws
       ENDTYPE kpp_const_type
 
       TYPE kpp_timer_type
+      SEQUENCE
 #ifdef OPENMP
       REAL,dimension(timer_max_timers) ::
      +     timer_elapsed_time,timer_start_time
